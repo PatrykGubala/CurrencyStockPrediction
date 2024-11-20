@@ -1,0 +1,53 @@
+<resources>
+    <string name="default_web_client_id">81703782262-onb5u7cn12rvgnj6j42q4fofe7piro6o.apps.googleusercontent.com</string>
+
+
+    <string name="app_name">Currency Stock Prediction</string>
+    <string name="title_home">Wiadomości</string>
+    <string name="title_friends">Znajomi</string>
+    <string name="title_profile">Profil</string>
+    <string name="title_login">LOGIN</string>
+    <string name="title_register">Register</string>
+    <string name="logout"><u>Wyloguj</u></string>
+
+
+    <string name="start_fragment_button_login">Zaloguj się</string>
+    <string name="start_fragment_button_register">Zarejestruj się</string>
+
+
+    <string name="login_fragment_input_email">Adres e-mail:</string>
+    <string name="login_fragment_input_password">Hasło:</string>
+    <string name="login_fragment_button_login">Zaloguj się</string>
+    <string name="login_fragment_button_google_login">Zaloguj się GOOGLE</string>
+    <string name="login_fragment_text_forgot_password">Zapomniałeś hasła? Kliknij tutaj!</string>
+    <string name="login_fragment_title_name">Logowanie</string>
+    <string name="login_fragment_title_back_button">Go Back</string>
+
+
+    <string name="register_fragment_input_email">Adres e-mail:</string>
+    <string name="register_fragment_input_password">Hasło:</string>
+    <string name="register_fragment_input_repeat_password">Powtórz hasło:</string>
+    <string name="register_fragment_input_username">Nazwa użytkownika:</string>
+
+
+    <string name="register_fragment_button_register">Zarejestruj się</string>
+
+    <string name="register_fragment_title_name">Rejestracja użytkownika</string>
+    <string name="register_fragment_title_back_button">Go Back</string>
+
+
+
+    <string name="home_fragment_title">Strona główna</string>
+
+
+    <string name="notifications_fragment_title">Powiadomienia</string>
+
+
+    <string name="profile_fragment_title">Profil</string>
+
+
+    <string name="currency_fragment_title">Waluty</string>
+
+
+    <string name="stock_fragment_title">Kursy giełdowe</string>
+</resources>

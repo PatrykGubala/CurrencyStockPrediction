@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        tools:layout="@layout/fragment_home"
+        android:id="@+id/homeFragment"
+        android:name="com.example.currencystockprediction.home.HomeFragment"
+        android:label="HomeFragment" >
+
+        <action
+            android:id="@+id/action_homeFragment_to_notificationsFragment"
+            app:destination="@id/notificationsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_currencyFragment"
+            app:destination="@id/currencyFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_stockFragment"
+            app:destination="@id/stockFragment">
+        </action>
+        <action
+            android:id="@+id/action_homeFragment_to_profileFragment"
+            app:destination="@id/profileFragment">
+        </action>
+    </fragment>
+
+    <fragment
+        tools:layout="@layout/fragment_notifications"
+        android:id="@+id/notificationsFragment"
+        android:name="com.example.currencystockprediction.notifications.NotificationsFragment"
+        android:label="NotificationsFragment" >
+    </fragment>
+    <fragment
+        tools:layout="@layout/fragment_currency"
+        android:id="@+id/currencyFragment"
+        android:name="com.example.currencystockprediction.currency.CurrencyFragment"
+        android:label="CurrencyFragment" >
+    </fragment>
+    <fragment
+        tools:layout="@layout/fragment_stock"
+        android:id="@+id/stockFragment"
+        android:name="com.example.currencystockprediction.stock.StockFragment"
+        android:label="StockFragment" >
+    </fragment>
+    <fragment
+        tools:layout="@layout/fragment_profile"
+        android:id="@+id/profileFragment"
+        android:name="com.example.currencystockprediction.profile.ProfileFragment"
+        android:label="ProfileFragment" >
+    </fragment>
+</navigation>

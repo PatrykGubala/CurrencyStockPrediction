@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <style name="RadioButton" parent="@android:style/Widget.CompoundButton.RadioButton">
+        <item name="android:button">@color/radio_button_status_color</item>
+    </style>
+
+
+
+    <!-- FONTS -->
+
+    <style name="KanitLightUltraSmall">
+        <item name="android:fontFamily">@font/kanit_light</item>
+        <item name="android:textSize">9sp</item>
+    </style>
+
+    <style name="KanitLightSmall">
+        <item name="android:fontFamily">@font/kanit_light</item>
+        <item name="android:textSize">16sp</item>
+    </style>
+
+    <style name="KanitLightMedium">
+        <item name="android:fontFamily">@font/kanit_light</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="KanitRegularSmall">
+        <item name="android:fontFamily">@font/kanit_regular</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="KanitRegularMedium">
+        <item name="android:fontFamily">@font/kanit_regular</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="KanitRegularLarge">
+        <item name="android:fontFamily">@font/kanit_regular</item>
+        <item name="android:textSize">24sp</item>
+    </style>
+
+</resources>

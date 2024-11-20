@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/reg_nav_graph"
+    app:startDestination="@id/startFragment">
+    <fragment
+        tools:layout="@layout/fragment_start"
+        android:id="@+id/startFragment"
+        android:name="com.example.currencystockprediction.auth.start.StartFragment"
+        android:label="StartFragment" >
+        <action
+            android:id="@+id/action_startFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+        <action
+            android:id="@+id/action_startFragment_to_registrationFragment"
+            app:destination="@id/registerFragment" />
+    </fragment>
+
+    <fragment
+        tools:layout="@layout/fragment_register"
+        android:id="@+id/registerFragment"
+        android:name="com.example.currencystockprediction.auth.register.RegisterFragment"
+        android:label="RegistrationFragment" />
+    <fragment
+        tools:layout="@layout/fragment_login"
+        android:id="@+id/loginFragment"
+        android:name="com.example.currencystockprediction.auth.login.LoginFragment"
+        android:label="LoginFragment" />
+</navigation>

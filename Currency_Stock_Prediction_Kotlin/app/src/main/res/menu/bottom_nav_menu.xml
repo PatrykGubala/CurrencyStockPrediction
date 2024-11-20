@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/home"
+        android:title="@string/home_fragment_title" />
+
+    <item
+        android:id="@+id/notificationsFragment"
+        android:icon="@drawable/bell"
+        android:title="@string/notifications_fragment_title" />
+
+    <item
+        android:id="@+id/currencyFragment"
+        android:icon="@drawable/dollar_sign"
+        android:title="@string/currency_fragment_title" />
+    <item
+        android:id="@+id/stockFragment"
+        android:icon="@drawable/bar_chart_2"
+        android:title="@string/stock_fragment_title" />
+    <item
+        android:id="@+id/profileFragment"
+        android:icon="@drawable/user"
+        android:title="@string/profile_fragment_title" />
+
+</menu>
