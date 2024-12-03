@@ -1,4 +1,4 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@drawable/chevron_right30dpx30dp"  android:state_selected="false"/>
+    <item android:drawable="@drawable/chevron_right28dpx28dp"  android:state_selected="false"/>
     <item android:drawable="@drawable/chevron_down"  android:state_selected="true"/>
 </selector>

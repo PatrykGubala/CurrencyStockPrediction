@@ -2,6 +2,7 @@ from .database import db
 from .association_tables import country_regions, country_currencies
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy import Computed
 
 ################### SERVER TABLES #######################
 # 1. Countries Table
@@ -79,10 +80,10 @@ class Currency(db.Model):
         back_populates='base_currency',
         foreign_keys='CurrencyPair.base_currency_id'
     )
-    quote_currency_pairs = relationship(
+    target_currency_pairs = relationship(
         'CurrencyPair',
-        back_populates='quote_currency',
-        foreign_keys='CurrencyPair.quote_currency_id'
+        back_populates='target_currency',
+        foreign_keys='CurrencyPair.target_currency_id'
     )
     accounts = relationship(
         'Account',
@@ -108,7 +109,7 @@ class Currency(db.Model):
     )
     user_preferences = relationship(
         'UserPreference',
-        back_populates='default_currency'
+        back_populates='default_display_currency'
     )
 
     def __repr__(self):
@@ -120,17 +121,17 @@ class CurrencyPair(db.Model):
     __tablename__ = 'currency_pairs'
     id = db.Column(db.Integer, primary_key=True)
     base_currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)
-    quote_currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)
+    target_currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)
 
     base_currency = relationship(
         'Currency',
         back_populates='base_currency_pairs',
         foreign_keys=[base_currency_id]
     )
-    quote_currency = relationship(
+    target_currency = relationship(
         'Currency',
-        back_populates='quote_currency_pairs',
-        foreign_keys=[quote_currency_id]
+        back_populates='target_currency_pairs',
+        foreign_keys=[target_currency_id]
     )
     data = relationship(
         'CurrencyPairData',
@@ -138,13 +139,13 @@ class CurrencyPair(db.Model):
         cascade='all, delete-orphan'
     )
     predictions = relationship(
-        'CurrencyPrediction',
+        'CurrencyPairPrediction',
         back_populates='currency_pair',
         cascade='all, delete-orphan'
     )
 
     def __repr__(self):
-        return f"<CurrencyPair {self.base_currency.code}/{self.quote_currency.code}>"
+        return f"<CurrencyPair {self.base_currency.code}/{self.target_currency.code}>"
 
 
 # 7. Exchanges Table
@@ -232,7 +233,7 @@ class StockData(db.Model):
     low_price = db.Column(db.Numeric(20, 8), nullable=False)
     close_price = db.Column(db.Numeric(20, 8), nullable=False)
     volume = db.Column(db.Numeric(20, 4), nullable=False)
-    day_of_week = db.Column(db.String(10))
+    day_of_week = db.Column(db.String(10), Computed("DAYNAME(timestamp)", persisted=True))
 
     stock = relationship('Stock', back_populates='stock_data')
 
@@ -251,7 +252,7 @@ class CurrencyPairData(db.Model):
     low_price = db.Column(db.Numeric(20, 8), nullable=False)
     close_price = db.Column(db.Numeric(20, 8), nullable=False)
     volume = db.Column(db.Numeric(20, 4), nullable=False)
-    day_of_week = db.Column(db.String(10))
+    day_of_week = db.Column(db.String(10), Computed("DAYNAME(timestamp)", persisted=True))
 
     currency_pair = relationship('CurrencyPair', back_populates='data')
 
@@ -274,9 +275,9 @@ class StockPrediction(db.Model):
         return f"<StockPrediction {self.stock.stock_symbol} on {self.prediction_date}>"
 
 
-# 13. Currency_Predictions Table
-class CurrencyPrediction(db.Model):
-    __tablename__ = 'currency_predictions'
+# 13. Currency_Pair_Predictions Table
+class CurrencyPairPrediction(db.Model):
+    __tablename__ = 'currency_pair_predictions'
     id = db.Column(db.Integer, primary_key=True)
     currency_pair_id = db.Column(db.Integer, db.ForeignKey('currency_pairs.id'), nullable=False)
     predicted_value = db.Column(db.Numeric(20, 8), nullable=False)
@@ -286,7 +287,7 @@ class CurrencyPrediction(db.Model):
     currency_pair = relationship('CurrencyPair', back_populates='predictions')
 
     def __repr__(self):
-        return f"<CurrencyPrediction {self.currency_pair} on {self.prediction_date}>"
+        return f"<CurrencyPairPrediction {self.currency_pair} on {self.prediction_date}>"
 
 
 # 14. Country_Translations Table
@@ -308,20 +309,20 @@ class CountryTranslation(db.Model):
 class GDPData(db.Model):
     __tablename__ = 'gdp_data'
     id = db.Column(db.Integer, primary_key=True)
-    period = db.Column(db.Date, nullable=False)
+    period_date = db.Column(db.Date, nullable=False)
     country_id = db.Column(db.Integer, db.ForeignKey('countries.id'), nullable=False)
     gdp_current_usd = db.Column(db.Numeric(18, 2))
     gdp_growth_rate = db.Column(db.Numeric(5, 2))
     frequency = db.Column(db.Enum('A', 'Q', name='frequency_enum'), nullable=False)
 
     __table_args__ = (
-        db.UniqueConstraint('period', 'country_id', name='unique_period_country'),
+        db.UniqueConstraint('period_date', 'country_id', name='unique_period_country'),
     )
 
     country = relationship('Country', back_populates='gdp_data')
 
     def __repr__(self):
-        return f"<GDPData {self.country.country_code} - {self.period}>"
+        return f"<GDPData {self.country.country_code} - {self.period_date}>"
 
 
 ############################ USERS TABLES ############################
@@ -332,6 +333,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     firebase_uid = db.Column(db.String(128), nullable=False, unique=True)
     email = db.Column(db.String(255), nullable=False, unique=True)
+    username = db.Column(db.String(50), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
@@ -363,7 +365,7 @@ class Account(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     account_name = db.Column(db.String(100), nullable=False)
     public_account_id = db.Column(db.String(16), nullable=False, unique=True)
-    currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)  # Base currency
+    currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False, default=lambda: get_usd_currency_id())
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     user = relationship('User', back_populates='accounts')
@@ -396,6 +398,11 @@ class Account(db.Model):
 
     def __repr__(self):
         return f"<Account {self.account_name} - User ID {self.user_id}>"
+
+
+def get_usd_currency_id():
+    usd_currency = Currency.query.filter_by(code='USD').first()
+    return usd_currency.id if usd_currency else None
 
 
 # 3. Account_Currencies Table
@@ -509,13 +516,18 @@ class UserPreference(db.Model):
     __tablename__ = 'user_preferences'
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    default_currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)
+    default_display_currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False, default=lambda: get_usd_currency_id())
     dark_mode = db.Column(db.Enum('DEFAULT', 'DARK_MODE', 'LIGHT_MODE', name='dark_mode_enum'), default='DEFAULT')
     notifications_enabled = db.Column(db.Boolean, default=True)
     user_language = db.Column(db.Enum('PL', 'EN', name='user_language_enum'), default='EN')
 
     user = relationship('User', back_populates='preferences')
-    default_currency = relationship('Currency', back_populates='user_preferences')
+    default_display_currency = relationship('Currency', back_populates='user_preferences')
 
     def __repr__(self):
         return f"<UserPreference User ID {self.user_id}>"
+
+
+def get_usd_currency_id():
+    usd_currency = Currency.query.filter_by(code='USD').first()
+    return usd_currency.id if usd_currency else None

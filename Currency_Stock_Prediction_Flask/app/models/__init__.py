@@ -1,4 +1,4 @@
-from .association_tables import country_regions, currency_pair_countries, country_currencies
+from .association_tables import country_regions, country_currencies
 
 from .models import (
     Country,
@@ -11,7 +11,7 @@ from .models import (
     Stock,
     StockData,
     StockPrediction,
-    CurrencyPrediction,
+    CurrencyPairPrediction,
     CountryTranslation,
     GDPData,
     User,
@@ -22,6 +22,13 @@ from .models import (
     AccountStockTransaction,
     UserNotification,
     UserPreference
+)
+
+from .dtos import (
+    CountryDTO,
+    RegionDTO,
+    CurrencyDTO,
+    CurrencyPairDTO,
 )
 
 __all__ = [
@@ -35,7 +42,7 @@ __all__ = [
     'Stock',
     'StockData',
     'StockPrediction',
-    'CurrencyPrediction',
+    'CurrencyPairPrediction',
     'CountryTranslation',
     'GDPData',
     'User',
@@ -45,5 +52,12 @@ __all__ = [
     'AccountCurrencyTransaction',
     'AccountStockTransaction',
     'UserNotification',
-    'UserPreference'
+    'UserPreference',
+
+    'CountryDTO',
+    'RegionDTO',
+    'CurrencyDTO',
+    'CurrencyPairDTO',
+
+
 ]

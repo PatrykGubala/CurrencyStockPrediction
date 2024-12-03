@@ -1,6 +1,5 @@
 USE currency_stock_db;
 
-
 -- ################### SERVER TABLES ####################### --
 -- 1. Countries Table
 CREATE TABLE IF NOT EXISTS countries (
@@ -36,6 +35,15 @@ CREATE TABLE IF NOT EXISTS currencies (
     symbol VARCHAR(10)
 );
 
+INSERT INTO currencies (code, name, symbol)
+VALUES ('USD', 'United States Dollar', '$')
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    symbol = VALUES(symbol);
+
+
+
+
 -- 5. Country_Currencies (Many-to-Many)
 CREATE TABLE IF NOT EXISTS country_currencies (
     country_id INT NOT NULL,
@@ -53,12 +61,12 @@ CREATE TABLE IF NOT EXISTS country_currencies (
 CREATE TABLE IF NOT EXISTS currency_pairs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     base_currency_id INT NOT NULL,
-    quote_currency_id INT NOT NULL,
-    UNIQUE KEY unique_currency_pair (base_currency_id, quote_currency_id),
+    target_currency_id INT NOT NULL,
+    UNIQUE KEY unique_currency_pair (base_currency_id, target_currency_id),
     FOREIGN KEY (base_currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY (quote_currency_id) REFERENCES currencies(id)
+    FOREIGN KEY (target_currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -146,8 +154,8 @@ CREATE TABLE IF NOT EXISTS stock_predictions (
         ON UPDATE CASCADE
 );
 
--- 13. Currency_Predictions Table
-CREATE TABLE IF NOT EXISTS currency_predictions (
+-- 13. Currency__Pair_Predictions Table
+CREATE TABLE IF NOT EXISTS currency_pair_predictions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     currency_pair_id INT NOT NULL,
     predicted_value DECIMAL(20,8) NOT NULL,
@@ -185,32 +193,34 @@ CREATE TABLE IF NOT EXISTS gdp_data (
     UNIQUE KEY unique_period_country (period_date, country_id)
 );
 
-
 -- ############################ USERS TABLES ############################ --
 -- 1. Users Table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     firebase_uid VARCHAR(128) NOT NULL UNIQUE,
+    username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- 2. Accounts Table
-CREATE TABLE IF NOT EXISTS accounts (
+CREATE TABLE IF NOT EXISTS accounts
+(
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     account_name VARCHAR(100) NOT NULL,
     public_account_id VARCHAR(16) NOT NULL UNIQUE,
-    currency_id INT NOT NULL, -- Base currency of the account
+    currency_id INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    CONSTRAINT fk_accounts_user_id FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY (currency_id) REFERENCES currencies(id)
+    CONSTRAINT fk_accounts_currency_id FOREIGN KEY (currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
 
 -- 3. Account_Currencies Table
 CREATE TABLE IF NOT EXISTS account_currencies (
@@ -277,7 +287,6 @@ CREATE TABLE IF NOT EXISTS account_stock_transactions (
     shares DECIMAL(20,8) NOT NULL,
     price_per_share DECIMAL(20,8) NOT NULL,
     currency_id INT NOT NULL,
-    total_amount DECIMAL(20,8) AS (shares * price_per_share) STORED,
     transaction_fee DECIMAL(20,8) DEFAULT 0.00000000,
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES accounts(id)
@@ -308,41 +317,46 @@ CREATE TABLE IF NOT EXISTS user_notifications (
 CREATE TABLE IF NOT EXISTS user_preferences (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    default_currency_id INT NOT NULL,
+    default_display_currency_id INT NOT NULL,
     dark_mode ENUM('DEFAULT', 'DARK_MODE', 'LIGHT_MODE') DEFAULT 'DEFAULT',
     notifications_enabled BOOLEAN DEFAULT TRUE,
-    user_language ENUM('PL','EN') DEFAULT 'EN',
+    user_language ENUM('PL', 'EN') DEFAULT 'EN',
     FOREIGN KEY (user_id) REFERENCES users(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    FOREIGN KEY (default_currency_id) REFERENCES currencies(id)
+    FOREIGN KEY (default_display_currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 
 
 
+DELIMITER $$
 
+CREATE TRIGGER before_insert_currency_pairs
+BEFORE INSERT ON currency_pairs
+FOR EACH ROW
+BEGIN
+    DECLARE usd_id INT;
+    SELECT id INTO usd_id FROM currencies WHERE code = 'USD' LIMIT 1;
 
+    IF NEW.base_currency_id != usd_id THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Base currency must be USD.';
+    END IF;
+END $$
 
--- Indexes
-CREATE INDEX idx_country_regions_country_id ON country_regions(country_id);
-CREATE INDEX idx_country_regions_region_id ON country_regions(region_id);
-CREATE INDEX idx_country_currencies_country_id ON country_currencies(country_id);
-CREATE INDEX idx_country_currencies_currency_id ON country_currencies(currency_id);
-CREATE INDEX idx_currency_pairs_base_currency_id ON currency_pairs(base_currency_id);
-CREATE INDEX idx_currency_pairs_quote_currency_id ON currency_pairs(quote_currency_id);
-CREATE INDEX idx_stock_data_stock_id ON stock_data(stock_id);
-CREATE INDEX idx_currency_pairs_data_currency_pair_id ON currency_pairs_data(currency_pair_id);
-CREATE INDEX idx_stock_predictions_stock_id ON stock_predictions(stock_id);
-CREATE INDEX idx_currency_predictions_currency_pair_id ON currency_predictions(currency_pair_id);
-CREATE INDEX idx_account_currencies_account_id ON account_currencies(account_id);
-CREATE INDEX idx_account_currencies_currency_id ON account_currencies(currency_id);
-CREATE INDEX idx_account_stocks_account_id ON account_stocks(account_id);
-CREATE INDEX idx_account_stocks_stock_id ON account_stocks(stock_id);
-CREATE INDEX idx_account_currency_transactions_sender_account_id ON account_currency_transactions(sender_account_id);
-CREATE INDEX idx_account_currency_transactions_receiver_account_id ON account_currency_transactions(receiver_account_id);
-CREATE INDEX idx_account_stock_transactions_account_id ON account_stock_transactions(account_id);
-CREATE INDEX idx_account_stock_transactions_stock_id ON account_stock_transactions(stock_id);
-CREATE INDEX idx_user_notifications_user_id ON user_notifications(user_id);
-CREATE INDEX idx_user_preferences_user_id ON user_preferences(user_id);
+CREATE TRIGGER before_update_currency_pairs
+BEFORE UPDATE ON currency_pairs
+FOR EACH ROW
+BEGIN
+    DECLARE usd_id INT;
+
+    SELECT id INTO usd_id FROM currencies WHERE code = 'USD' LIMIT 1;
+    IF NEW.base_currency_id != usd_id THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Base currency must be USD.';
+    END IF;
+END $$
+
+DELIMITER ;

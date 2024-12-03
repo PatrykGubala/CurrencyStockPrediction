@@ -7,27 +7,31 @@
     >
 
 
-    <fragment
-        android:id="@+id/mainNavHost"
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/mainNavHostFragment"
         android:name="androidx.navigation.fragment.NavHostFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_above="@+id/bottomNavView"
         app:defaultNavHost="true"
-        app:navGraph="@navigation/main_nav_graph" />
+        app:navGraph="@navigation/mobile_navigation" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavView"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/bottom_tab_background_style"
+        android:layout_marginBottom="0dp"
+        app:backgroundTint="@color/dark_grey"
+
         app:itemIconTint="@android:color/white"
         app:itemTextColor="@android:color/white"
         app:itemTextAppearanceActive="@style/KanitLightUltraSmall"
         app:itemTextAppearanceInactive="@style/KanitLightUltraSmall"
         app:menu="@menu/bottom_nav_menu"
         />
+
+
 
 
 </RelativeLayout>

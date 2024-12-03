@@ -5,18 +5,20 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.example.currencystockprediction.BaseFragment
+import com.example.currencystockprediction.databinding.FragmentCurrencyBinding
+import com.example.currencystockprediction.databinding.FragmentHomeBinding
 import com.example.currencystockprediction.databinding.FragmentStartBinding
 
 class HomeFragment : BaseFragment() {
 
-    private lateinit var binding: FragmentStartBinding
+    private lateinit var binding: FragmentHomeBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View{
-        binding = FragmentStartBinding.inflate(inflater, container, false)
+        binding = FragmentHomeBinding.inflate(inflater, container, false)
         return binding.root
     }
 

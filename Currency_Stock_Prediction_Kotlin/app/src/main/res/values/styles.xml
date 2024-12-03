@@ -12,7 +12,7 @@
 
     <style name="KanitLightUltraSmall">
         <item name="android:fontFamily">@font/kanit_light</item>
-        <item name="android:textSize">9sp</item>
+        <item name="android:textSize">10sp</item>
     </style>
 
     <style name="KanitLightSmall">
@@ -39,5 +39,38 @@
         <item name="android:fontFamily">@font/kanit_regular</item>
         <item name="android:textSize">24sp</item>
     </style>
+
+
+
+    <style name="PinButtonStyle" parent="Widget.MaterialComponents.Button">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerRadius">360dp</item>
+        <item name="android:backgroundTint">@color/mild_blue</item>
+
+        <item name="android:layout_margin">8dp</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:fontFamily">@font/kanit_light</item>
+        <item name="android:textSize">36sp</item>
+
+    </style>
+
+
+    <style name="CircularShape">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">100%</item>
+
+    </style>
+
+    <style name="PinShapeableButton" parent="Widget.MaterialComponents.Button">
+        <item name="shapeAppearanceOverlay">@style/CircularShape</item>
+        <item name="backgroundTint">@color/mild_blue</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:fontFamily">@font/kanit_extralight</item>
+        <item name="android:textSize">36sp</item>
+        <item name="android:layout_margin">8dp</item>
+    </style>
+
+
+
 
 </resources>

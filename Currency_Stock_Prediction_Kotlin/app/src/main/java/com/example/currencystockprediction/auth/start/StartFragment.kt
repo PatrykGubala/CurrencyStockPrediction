@@ -35,7 +35,7 @@ class StartFragment : BaseFragment() {
     private fun setupRegistrationClick() {
 
         binding.registerButton.setOnClickListener {
-            findNavController().navigate(StartFragmentDirections.actionStartFragmentToRegistrationFragment())
+            findNavController().navigate(StartFragmentDirections.actionStartFragmentToRegisterFragment())
         }
     }
 

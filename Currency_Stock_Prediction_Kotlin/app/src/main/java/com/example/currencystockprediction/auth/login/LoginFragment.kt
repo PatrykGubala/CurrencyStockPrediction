@@ -1,3 +1,4 @@
+// LoginFragment.kt
 package com.example.currencystockprediction.auth.login
 
 import android.content.Intent
@@ -7,12 +8,14 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
+import com.example.currencystockprediction.activities.MainActivity
+import com.example.currencystockprediction.auth.start.StartFragmentDirections
 import com.example.currencystockprediction.databinding.FragmentLoginBinding
-import com.example.currencystockprediction.BaseFragment
-import com.example.currencystockprediction.auth.register.RegisterViewModel
+import com.example.currencystockprediction.utils.FirebaseAuthManager
+import com.example.currencystockprediction.utils.SecurityUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -24,11 +27,10 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
 
-class LoginFragment : BaseFragment() {
+class LoginFragment : Fragment() {
     private lateinit var binding: FragmentLoginBinding
     private val fbAuth = FirebaseAuth.getInstance()
     private val LOG_DEBUG = "LOG_DEBUG"
-    private val regVm by viewModels<RegisterViewModel>()
 
     private lateinit var googleSignInClient: GoogleSignInClient
     private val RC_SIGN_IN = 9001
@@ -84,7 +86,7 @@ class LoginFragment : BaseFragment() {
             fbAuth.signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener { authRes ->
                     binding.progressBar.visibility = View.GONE
-                    startApp()
+                    navigateToMainActivity()
                 }
                 .addOnFailureListener { exc ->
                     binding.progressBar.visibility = View.GONE
@@ -97,8 +99,17 @@ class LoginFragment : BaseFragment() {
                     Log.d(LOG_DEBUG, exc.message.toString())
                 }
         }
+    }
 
 
+
+    private fun navigateToMainActivity() {
+        activity?.let {
+            val intent = Intent(it, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            it.startActivity(intent)
+        }
     }
 
     private fun setupGoogleSignIn() {
@@ -109,7 +120,6 @@ class LoginFragment : BaseFragment() {
 
         googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
 
-
         binding.customGoogleSignInButton.setOnClickListener {
             signInWithGoogle()
         }
@@ -119,7 +129,6 @@ class LoginFragment : BaseFragment() {
         val signInIntent = googleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
-
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -144,7 +153,7 @@ class LoginFragment : BaseFragment() {
                 binding.progressBar.visibility = View.GONE
                 if (task.isSuccessful) {
                     Log.d(LOG_DEBUG, "signInWithCredential:success")
-                    startApp()
+                    navigateToMainActivity()
                 } else {
                     Log.w(LOG_DEBUG, "signInWithCredential:failure", task.exception)
                     Toast.makeText(requireContext(), "Authentication Failed.", Toast.LENGTH_SHORT).show()

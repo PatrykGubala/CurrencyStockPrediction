@@ -51,14 +51,15 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.1")
-    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
-    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.8.4")
+    implementation("androidx.navigation:navigation-ui-ktx:2.8.4")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-storage-ktx")
     implementation("com.github.bumptech.glide:glide:4.14.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1")
     implementation("com.google.firebase:firebase-functions-ktx")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
     implementation("com.google.code.gson:gson:2.10.1")
 
@@ -75,5 +76,12 @@ dependencies {
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
 
     implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    implementation ("com.squareup.okhttp3:okhttp:4.10.0")
+    implementation ("androidx.security:security-crypto:1.1.0-alpha06")
+
+    implementation("androidx.biometric:biometric:1.1.0")
+
+
 
 }

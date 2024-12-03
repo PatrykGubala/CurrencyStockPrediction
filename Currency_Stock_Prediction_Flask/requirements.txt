@@ -83,3 +83,5 @@ Flask-Migrate~=4.0.7
 python-dateutil~=2.9.0.post0
 pytz~=2024.2
 SQLAlchemy~=2.0.36
+firebase-admin~=6.6.0
+urllib3~=2.2.3

@@ -185,3 +185,7 @@ ib_logfile*             # InnoDB log files
 ibdata*                 # InnoDB data files
 ib_buffer_pool          # InnoDB buffer pool file
 db.opt                  # MySQL options file
+
+
+firebase-admin-key.json
+key.pem

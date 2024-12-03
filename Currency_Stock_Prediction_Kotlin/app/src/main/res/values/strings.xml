@@ -19,7 +19,7 @@
     <string name="login_fragment_input_password">Hasło:</string>
     <string name="login_fragment_button_login">Zaloguj się</string>
     <string name="login_fragment_button_google_login">Zaloguj się GOOGLE</string>
-    <string name="login_fragment_text_forgot_password">Zapomniałeś hasła? Kliknij tutaj!</string>
+    <string name="login_fragment_text_forgot_password">Nie pamiętam PINu</string>
     <string name="login_fragment_title_name">Logowanie</string>
     <string name="login_fragment_title_back_button">Go Back</string>
 
