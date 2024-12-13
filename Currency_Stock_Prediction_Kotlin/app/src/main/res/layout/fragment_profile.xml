@@ -35,7 +35,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
-        android:text="Patryg"
+        android:text="default"
         android:textAlignment="textEnd"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="@+id/profileAvatarCardView"
@@ -65,7 +65,9 @@
             app:layout_constraintStart_toStartOf="parent"
             android:contentDescription="Logout"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/log_out" />
+            app:srcCompat="@drawable/log_out"
+            android:scaleType="fitCenter"
+            android:padding="12dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -75,6 +77,7 @@
         android:layout_height="48dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="24dp"
+
         android:background="@drawable/fragment_profile_layout_background"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
@@ -82,6 +85,7 @@
         app:layout_constraintTop_toBottomOf="@+id/profileAvatarCardView">
 
         <TextView
+
             android:id="@+id/emailTextView"
             style="@style/KanitRegularSmall"
             android:layout_width="wrap_content"
@@ -98,14 +102,16 @@
 
         <ImageButton
             android:id="@+id/emailImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Email"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/mail28dpx28dp" />
+            app:srcCompat="@drawable/mail"
+            android:scaleType="fitCenter"
+            android:padding="8dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -138,14 +144,16 @@
 
         <ImageButton
             android:id="@+id/passwordImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Password"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/key28dpx28dp" />
+            app:srcCompat="@drawable/key"
+            android:scaleType="fitCenter"
+            android:padding="8dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -177,14 +185,16 @@
 
         <ImageButton
             android:id="@+id/usernameChangeImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Username"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/user28dpx28dp" />
+            app:srcCompat="@drawable/user"
+            android:scaleType="fitCenter"
+            android:padding="8dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
@@ -214,14 +224,16 @@
 
         <ImageButton
             android:id="@+id/accountImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Account"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/link28dpx28dp" />
+            app:srcCompat="@drawable/link"
+            android:scaleType="fitCenter"
+            android:padding="8dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -252,51 +264,16 @@
 
         <ImageButton
             android:id="@+id/settingsImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Settings"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/settings" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/twoFactorAuthLayout"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/fragment_profile_layout_background"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/settingsLayout">
-
-        <TextView
-            android:id="@+id/twoFactorAuthTextView"
-            style="@style/KanitRegularSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="Uwierzytelnienie dwu etapowe"
-            android:textColor="@color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageButton
-            android:id="@+id/twoFactorAuthImageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/dark_grey"
-            android:contentDescription="Two-Factor Authentication"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/link28dpx28dp" />
+            app:srcCompat="@drawable/settings"
+            android:scaleType="fitCenter"
+            android:padding="8dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 

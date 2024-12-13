@@ -1,0 +1,14 @@
+
+
+requests~=2.32.3
+wbdata~=1.0.0
+yfinance~=0.2.48
+python-dateutil~=2.9.0.post0
+pytz~=2024.2
+firebase-admin~=6.6.0
+urllib3~=2.2.3
+
+
+Django~=5.1.4
+python-decouple~=3.8
+python-dotenv~=1.0.1

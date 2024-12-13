@@ -62,6 +62,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
     androidTestImplementation("org.mockito:mockito-android:4.0.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")

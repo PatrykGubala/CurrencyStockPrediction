@@ -182,13 +182,20 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/textInputEditTextUsername"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/fragment_login_input_height"
             android:layout_marginHorizontal="@dimen/fragment_register_textinput_margin_horizontal"
+            android:backgroundTint="@color/dark_grey"
+
             android:hint="@string/register_fragment_input_username"
-            android:textColor="@color/white"
-            android:textColorHint="@color/grey"
             android:inputType="textPersonName"
-            style="@style/KanitLightSmall" />
+            style="@style/KanitLightSmall"
+
+
+            android:textAlignment="viewStart"
+            android:textColor="@color/white"
+            android:textColorHighlight="@color/grey"
+            android:textColorHint="@color/grey"
+            android:textColorLink="@color/grey"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <ProgressBar

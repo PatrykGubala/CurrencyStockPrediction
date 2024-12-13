@@ -12,7 +12,11 @@
 
         <item name="android:navigationBarColor">@color/black</item>
 
+        <item name="colorSwitchThumbNormal">@color/mild_blue</item>
+
 
     </style>
+
+
 
 </resources>

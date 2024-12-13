@@ -303,4 +303,15 @@ db.opt                  # MySQL options file
 
 
 firebase-admin-key.json
+key.pem
+
+
+
+
+### Django ###
+*.pyc
+media
+
+
+.data
    

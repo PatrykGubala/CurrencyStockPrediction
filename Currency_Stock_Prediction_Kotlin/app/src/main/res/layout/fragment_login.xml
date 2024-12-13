@@ -32,7 +32,9 @@
             android:onClick="onBackPressed"
             android:src="@drawable/chevron_left"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/goBackToolbar" />
+            app:layout_constraintTop_toTopOf="@+id/goBackToolbar"
+            android:scaleType="fitCenter"
+            android:padding="10dp"/>
 
         <TextView
             android:id="@+id/title_text"

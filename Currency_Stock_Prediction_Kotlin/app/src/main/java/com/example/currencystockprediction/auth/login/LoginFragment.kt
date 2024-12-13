@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.activities.MainActivity
 import com.example.currencystockprediction.auth.start.StartFragmentDirections
@@ -27,7 +28,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
 
-class LoginFragment : Fragment() {
+classLoginFragment : BaseFragment() {
     private lateinit var binding: FragmentLoginBinding
     private val fbAuth = FirebaseAuth.getInstance()
     private val LOG_DEBUG = "LOG_DEBUG"
@@ -86,7 +87,7 @@ class LoginFragment : Fragment() {
             fbAuth.signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener { authRes ->
                     binding.progressBar.visibility = View.GONE
-                    navigateToMainActivity()
+                    startMainActivity()
                 }
                 .addOnFailureListener { exc ->
                     binding.progressBar.visibility = View.GONE
@@ -102,15 +103,6 @@ class LoginFragment : Fragment() {
     }
 
 
-
-    private fun navigateToMainActivity() {
-        activity?.let {
-            val intent = Intent(it, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            }
-            it.startActivity(intent)
-        }
-    }
 
     private fun setupGoogleSignIn() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -153,7 +145,7 @@ class LoginFragment : Fragment() {
                 binding.progressBar.visibility = View.GONE
                 if (task.isSuccessful) {
                     Log.d(LOG_DEBUG, "signInWithCredential:success")
-                    navigateToMainActivity()
+                    startMainActivity()
                 } else {
                     Log.w(LOG_DEBUG, "signInWithCredential:failure", task.exception)
                     Toast.makeText(requireContext(), "Authentication Failed.", Toast.LENGTH_SHORT).show()

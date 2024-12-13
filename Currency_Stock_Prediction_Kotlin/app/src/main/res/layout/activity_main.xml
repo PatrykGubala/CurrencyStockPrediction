@@ -25,11 +25,10 @@
         app:backgroundTint="@color/dark_grey"
 
         app:itemIconTint="@android:color/white"
-        app:itemTextColor="@android:color/white"
         app:itemTextAppearanceActive="@style/KanitLightUltraSmall"
         app:itemTextAppearanceInactive="@style/KanitLightUltraSmall"
-        app:menu="@menu/bottom_nav_menu"
-        />
+        app:itemTextColor="@android:color/white"
+        app:menu="@menu/bottom_nav_menu" />
 
 
 

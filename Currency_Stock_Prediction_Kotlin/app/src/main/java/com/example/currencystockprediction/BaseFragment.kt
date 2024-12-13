@@ -17,22 +17,25 @@ abstract class BaseFragment : Fragment() {
         exitTransition = transInflater.inflateTransition(R.transition.fade_out)
     }
 
-    protected fun startMainApp() {
-        val intent = Intent(requireContext(), MainActivity::class.java).apply {
-            flags = (Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
-        startActivity(intent)
-        requireActivity().finish()
+    protected fun startMainActivity() {
+        activity?.let {
+            val intent = Intent(it, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            it.startActivity(intent)
+            requireActivity().finish()
 
+        }
     }
 
-    protected fun logoutApp() {
-        FirebaseAuthManager.signOut()
-        val intent = Intent(requireContext(), AuthenticationActivity::class.java).apply {
-            flags = (Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        }
-        startActivity(intent)
-        requireActivity().finish()
+    protected fun finishMainActivity() {
+        activity?.let {
+            val intent = Intent(it, AuthenticationActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            }
+            it.startActivity(intent)
+            requireActivity().finish()
 
+        }
     }
 }
