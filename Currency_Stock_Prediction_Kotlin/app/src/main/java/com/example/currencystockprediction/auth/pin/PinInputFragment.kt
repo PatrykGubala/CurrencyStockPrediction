@@ -43,12 +43,18 @@ class PinInputFragment : BaseFragment() {
 
         loadStoredPin()
         setupNumericKeypad()
+
+
+        if (!SecurityUtils.isBiometricEnabled(requireContext()) || !SecurityUtils.isBiometricReady(requireContext())) {
+            binding.buttonFingerprint.visibility = View.GONE
+        } else {
+            binding.buttonFingerprint.setOnClickListener { handleBiometricAuthentication() }
+        }
+
         binding.buttonBackwards.setOnClickListener {
             removeLastPinDigit()
         }
-        binding.buttonFingerprint.setOnClickListener {
-            handleBiometricAuthentication()
-        }
+
         binding.backButton.setOnClickListener {
             findNavController().popBackStack(R.id.startFragment, false)
         }
@@ -101,11 +107,9 @@ class PinInputFragment : BaseFragment() {
         val inputPin = pinInput.toString()
         if (inputPin == storedPin) {
             Log.d(TAG, "PIN validation successful.")
-
             authenticateWithStoredCredentials()
         } else {
             Log.e(TAG, "PIN validation failed.")
-
             Toast.makeText(requireContext(), "Niepoprawny PIN. Spróbuj ponownie.", Toast.LENGTH_SHORT).show()
             pinInput.clear()
             updatePinDots()
@@ -134,6 +138,42 @@ class PinInputFragment : BaseFragment() {
         }
     }
 
+
+    private fun handleBiometricAuthentication() {
+        val biometricPrompt = BiometricPrompt(
+            this,
+            ContextCompat.getMainExecutor(requireContext()),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    super.onAuthenticationError(errorCode, errString)
+                    if (errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                        Toast.makeText(context, "Authentication error: $errString", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    super.onAuthenticationSucceeded(result)
+                    authenticateWithStoredCredentials()
+                }
+
+                override fun onAuthenticationFailed() {
+                    super.onAuthenticationFailed()
+                    Toast.makeText(context, "Authentication failed", Toast.LENGTH_SHORT).show()
+                }
+            }
+        )
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("Biometric Authentication")
+            .setSubtitle("Authenticate using biometrics")
+            .setNegativeButtonText("Use PIN")
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
+    }
+
+
+
     private fun loadStoredPin() {
         storedPin = SecurityUtils.getPin(requireContext()) ?: ""
         Log.d(TAG, "Loaded stored PIN: $storedPin")
@@ -141,41 +181,6 @@ class PinInputFragment : BaseFragment() {
         if (storedPin.isEmpty()) {
             Toast.makeText(requireContext(), "PIN nie został ustawiony. Proszę się zarejestrować ponownie.", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.action_pinInputFragment_to_startFragment)
-        }
-    }
-
-    private fun handleBiometricAuthentication() {
-        if (SecurityUtils.isBiometricReady(requireContext())) {
-            val biometricPrompt = BiometricPrompt(this,
-                ContextCompat.getMainExecutor(requireContext()),
-                object : BiometricPrompt.AuthenticationCallback() {
-                    override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                        super.onAuthenticationError(errorCode, errString)
-                        if (errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
-                            Toast.makeText(context, "Authentication error: $errString", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-
-                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                        super.onAuthenticationSucceeded(result)
-                        navigateToMainActivity()
-                    }
-
-                    override fun onAuthenticationFailed() {
-                        super.onAuthenticationFailed()
-                        Toast.makeText(context, "Authentication failed", Toast.LENGTH_SHORT).show()
-                    }
-                })
-
-            val promptInfo = BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Biometric Authentication")
-                .setSubtitle("Authenticate using biometrics")
-                .setNegativeButtonText("Use PIN")
-                .build()
-
-            biometricPrompt.authenticate(promptInfo)
-        } else {
-            Toast.makeText(context, "Biometric authentication not available.", Toast.LENGTH_SHORT).show()
         }
     }
 

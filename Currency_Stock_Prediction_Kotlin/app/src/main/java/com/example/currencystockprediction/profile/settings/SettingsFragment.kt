@@ -4,11 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
+import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentProfileSettingsBinding
-
+import com.example.currencystockprediction.utils.SecurityUtils
 
 class SettingsFragment : BaseFragment() {
 
@@ -18,7 +18,7 @@ class SettingsFragment : BaseFragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View{
+    ): View {
         binding = FragmentProfileSettingsBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -26,6 +26,24 @@ class SettingsFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.backButton.setOnClickListener {
+            findNavController().popBackStack(R.id.profileFragment, false)
         }
-    
+
+        binding.pinSwitch.isChecked = SecurityUtils.hasPin(requireContext())
+        binding.pinSwitch.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                findNavController().navigate(
+                    SettingsFragmentDirections.actionSettingsFragmentToSetPinFragment()
+                )
+            } else {
+                SecurityUtils.savePin(requireContext(), "")
+            }
+        }
+
+        binding.biometricsSwitch.isChecked = SecurityUtils.isBiometricEnabled(requireContext())
+        binding.biometricsSwitch.setOnCheckedChangeListener { _, isChecked ->
+            SecurityUtils.setBiometricEnabled(requireContext(), isChecked)
+        }
+    }
 }
