@@ -1,4 +1,3 @@
-// LoginFragment.kt
 package com.example.currencystockprediction.auth.login
 
 import android.content.Intent
@@ -28,7 +27,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
 
-classLoginFragment : BaseFragment() {
+class LoginFragment : BaseFragment() {
     private lateinit var binding: FragmentLoginBinding
     private val fbAuth = FirebaseAuth.getInstance()
     private val LOG_DEBUG = "LOG_DEBUG"

@@ -19,6 +19,9 @@
         <action
             android:id="@+id/action_splashFragment_to_setPinFragment"
             app:destination="@id/setPinFragment" />
+        <action
+            android:id="@+id/action_splashFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         tools:layout="@layout/fragment_start"

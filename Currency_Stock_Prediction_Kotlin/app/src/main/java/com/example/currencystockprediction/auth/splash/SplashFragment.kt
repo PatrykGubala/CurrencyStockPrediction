@@ -35,7 +35,7 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
             }
 
         } else {
-            navigateToStart()
+            navigateToLogin()
         }
     }
 
@@ -72,6 +72,9 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
 
     private fun navigateToStart() {
         findNavController().navigate(SplashFragmentDirections.actionSplashFragmentToStartFragment())
+    }
+    private fun navigateToLogin() {
+        findNavController().navigate(SplashFragmentDirections.actionSplashFragmentToLoginFragment())
     }
 
 

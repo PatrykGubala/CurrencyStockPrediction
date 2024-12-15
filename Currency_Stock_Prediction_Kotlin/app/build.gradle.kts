@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.currencystockprediction"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.currencystockprediction"
@@ -43,6 +43,7 @@ android {
     }
 }
 
+
 dependencies {
     implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
     implementation("androidx.core:core-ktx:1.13.1")
@@ -60,6 +61,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.1")
     implementation("com.google.firebase:firebase-functions-ktx")
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
+    implementation("androidx.compose.ui:ui-viewbinding:1.7.6")
+    implementation("androidx.test.espresso:espresso-core:3.5.1")
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
@@ -82,6 +85,9 @@ dependencies {
     implementation ("androidx.security:security-crypto:1.1.0-alpha06")
 
     implementation("androidx.biometric:biometric:1.1.0")
+
+    implementation("com.github.AppDevNext:AndroidChart:3.1.0.25")
+
 
 
 
