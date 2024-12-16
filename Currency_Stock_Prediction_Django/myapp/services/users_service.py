@@ -1,8 +1,17 @@
+import base64
+import os
+import uuid
+
+from django.conf import settings
 from django.db import transaction
 from firebase_admin import auth
 import firebase_admin
 from myapp.repositories.users_repository import UsersRepository
 from myapp.services.accounts_service import AccountsService
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 class UsersService:
     def __init__(self):
@@ -44,6 +53,7 @@ class UsersService:
             'firebase_uid': user.firebase_uid,
             'email': user.email,
             'username': user.username,
+            'profile_image_url': user.profile_image_url,
             'created_at': user.created_at.isoformat() if user.created_at else None,
             'updated_at': user.updated_at.isoformat() if user.updated_at else None
         }
@@ -51,3 +61,39 @@ class UsersService:
     def get_user_by_firebase_uid(self, firebase_uid: str):
         user = self.users_repo.get_user_by_firebase_uid(firebase_uid)
         return user
+
+    def upload_profile_image(self, user, image_base64: str) -> str:
+        try:
+            if ',' in image_base64:
+                header, imgstr = image_base64.split(',', 1)
+                format = header.split('/')[-1].split(';')[0]
+            else:
+                imgstr = image_base64
+                format = 'jpg'
+
+            img_data = base64.b64decode(imgstr)
+            filename = f"profile_{uuid.uuid4()}.{format}"
+            user_folder = os.path.join(settings.MEDIA_ROOT, 'profile_images', str(user.id))
+            os.makedirs(user_folder, exist_ok=True)
+            file_path = os.path.join(user_folder, filename)
+
+            existing_image_url = user.profile_image_url
+            if existing_image_url:
+                relative_path = existing_image_url.replace(settings.MEDIA_URL, '')
+                existing_file_path = os.path.join(settings.MEDIA_ROOT, relative_path)
+                if os.path.exists(existing_file_path):
+                    os.remove(existing_file_path)
+                    logger.info(f"Deleted existing profile image for user {user.id}: {existing_file_path}")
+
+            with open(file_path, 'wb') as f:
+                f.write(img_data)
+            logger.info(f"Saved new profile image for user {user.id}: {file_path}")
+
+            relative_path = os.path.join('profile_images', str(user.id), filename).replace('\\', '/')
+            self.users_repo.update_user_profile_image(user, relative_path)
+
+            full_url = f"{settings.MEDIA_URL}{relative_path}"
+            return full_url
+        except Exception as e:
+            logger.error(f"Error uploading profile image for user {user.id}: {e}")
+            raise e

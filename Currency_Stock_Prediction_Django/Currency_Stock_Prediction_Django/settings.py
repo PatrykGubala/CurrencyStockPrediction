@@ -30,7 +30,7 @@ SECRET_KEY = 'django-insecure-qz6f^jonv8b30zzdag8yuw(=&il)_9mru=82_yj$#c66-at8fp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cf54-37-31-48-145.ngrok-free.app', 'localhost']
+ALLOWED_HOSTS = ['cf54-37-31-48-145.ngrok-free.app', 'localhost', '*']
 
 
 INSTALLED_APPS = [
@@ -106,6 +106,11 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 # Internationalization

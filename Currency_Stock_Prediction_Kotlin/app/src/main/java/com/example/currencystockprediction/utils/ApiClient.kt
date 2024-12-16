@@ -12,7 +12,7 @@ object ApiClient {
 
     private const val TAG = "ApiClient"
 
-    private const val BACKEND_URL = "https://cf54-37-31-48-145.ngrok-free.app"
+    private const val BACKEND_URL = "https://e6f2-37-31-33-59.ngrok-free.app"
 
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -51,7 +51,8 @@ object ApiClient {
                         override fun onResponse(call: Call, response: Response) {
                             response.use {
                                 if (response.isSuccessful) {
-                                    callback(true, null)
+                                    val responseBody = response.body?.string()
+                                    callback(true, responseBody)
                                 } else {
                                     val responseBody = response.body?.string()
                                     val errorMessage = try {

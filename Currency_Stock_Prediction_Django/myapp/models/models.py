@@ -1,14 +1,25 @@
+import os
+import uuid
+
 from django.db import models
+
+
+def user_image_upload_path(instance, filename):
+    ext = filename.split('.')[-1]
+    new_filename = f"{uuid.uuid4()}.{ext}"
+    return os.path.join('profile_images', str(instance.user.id), new_filename)
 
 class User(models.Model):
     firebase_uid = models.CharField(max_length=128, unique=True)
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50, unique=True)
+    profile_image_url = models.URLField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'users'
+
 
 
 class Region(models.Model):

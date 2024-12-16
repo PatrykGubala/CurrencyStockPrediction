@@ -11,12 +11,10 @@ import android.widget.*
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
-import com.example.currencystockprediction.databinding.FragmentLoginBinding
 import com.example.currencystockprediction.databinding.FragmentRegisterBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.example.currencystockprediction.utils.SecurityUtils
-import com.google.android.material.textfield.TextInputEditText
 import org.json.JSONObject
 
 class RegisterFragment : BaseFragment() {
@@ -60,13 +58,8 @@ class RegisterFragment : BaseFragment() {
         }
     }
 
-
-
-
-
-
     private fun registerUser() {
-        val email = binding.textInputEditTextPassword.text.toString().trim()
+        val email = binding.textInputEditTextEmail.text.toString().trim()
         val password = binding.textInputEditTextPassword.text.toString().trim()
         val repeatPassword = binding.textInputEditTextRepeatPassword.text.toString().trim()
         val username = binding.textInputEditTextUsername.text.toString().trim()

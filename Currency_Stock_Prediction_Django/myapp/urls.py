@@ -1,13 +1,18 @@
+
 from django.urls import path
-from myapp.controllers.users_controller import register_user
+from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image
 from myapp.controllers.currency_pairs_controller import create_currency_pair, get_all_currency_pairs, get_currency_pair, delete_currency_pair
 from myapp.controllers.accounts_controller import create_account
 from myapp.controllers.account_currencies_controller import add_currency_to_account, get_account_currencies, update_account_currency_balance, remove_currency_from_account
 from myapp.controllers.countries_controller import load_only_countries, load_countries_with_details, get_all_countries, get_country
 from myapp.controllers.regions_controller import get_all_regions, get_region, load_regions, create_region, update_region, delete_region
-
+from django.conf import settings
+from django.conf.urls.static import static
 urlpatterns = [
     path('users/register', register_user, name='register_user'),
+    path('users/get_user_by_id', get_user_by_id, name='get_user_by_id'),
+    path('users/get_user_info', get_user_info, name='get_user_info'),
+    path('users/upload_profile_image', upload_profile_image, name='upload_profile_image'),
     path('currency-pairs/create', create_currency_pair, name='create_currency_pair'),
     path('currency-pairs/', get_all_currency_pairs, name='get_all_currency_pairs'),
     path('currency-pairs/<int:pair_id>', get_currency_pair, name='get_currency_pair'),
@@ -28,3 +33,6 @@ urlpatterns = [
     path('regions/<int:region_id>/update', update_region, name='update_region'),
     path('regions/<int:region_id>/delete', delete_region, name='delete_region'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

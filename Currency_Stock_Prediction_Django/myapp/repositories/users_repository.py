@@ -21,3 +21,7 @@ class UsersRepository:
         user = User(firebase_uid=firebase_uid, email=email, username=username)
         user.save()
         return user
+
+    def update_user_profile_image(self, user: User, image_url: str):
+        user.profile_image_url = image_url
+        user.save()
