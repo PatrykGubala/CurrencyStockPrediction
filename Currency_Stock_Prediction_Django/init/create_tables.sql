@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS currency_pairs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     base_currency_id INT NOT NULL,
     target_currency_id INT NOT NULL,
+    name VARCHAR(20) UNIQUE NOT NULL,
+    data_availability BOOLEAN,
     UNIQUE KEY unique_currency_pair (base_currency_id, target_currency_id),
     FOREIGN KEY (base_currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
@@ -135,7 +137,7 @@ CREATE TABLE IF NOT EXISTS currency_pairs_data (
     high_price DECIMAL(20,8) NOT NULL,
     low_price DECIMAL(20,8) NOT NULL,
     close_price DECIMAL(20,8) NOT NULL,
-    volume DECIMAL(20,4) NOT NULL,
+    volume DECIMAL(20,8) NOT NULL,
     day_of_week VARCHAR(10) GENERATED ALWAYS AS (DAYNAME(timestamp)) STORED,
     FOREIGN KEY (currency_pair_id) REFERENCES currency_pairs(id)
         ON DELETE CASCADE

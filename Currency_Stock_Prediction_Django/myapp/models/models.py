@@ -107,11 +107,29 @@ class Stock(models.Model):
 class CurrencyPair(models.Model):
     base_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='base_currency_pairs')
     target_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='target_currency_pairs')
+    name = models.CharField(max_length=20, unique=True, blank=True)
+    data_availability = models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('base_currency', 'target_currency')
         db_table = 'currency_pairs'
 
+    def save(self, *args, **kwargs):
+        if not self.name:
+            self.name = f"{self.base_currency.code}{self.target_currency.code}=X"
+        super().save(*args, **kwargs)
+
+class CurrencyPairData(models.Model):
+    currency_pair = models.ForeignKey(CurrencyPair, on_delete=models.CASCADE, related_name='data')
+    timestamp = models.DateTimeField()
+    open_price = models.DecimalField(max_digits=20, decimal_places=8)
+    high_price = models.DecimalField(max_digits=20, decimal_places=8)
+    low_price = models.DecimalField(max_digits=20, decimal_places=8)
+    close_price = models.DecimalField(max_digits=20, decimal_places=8)
+    volume = models.DecimalField(max_digits=20, decimal_places=8)
+
+    class Meta:
+        db_table = 'currency_pairs_data'
 
 class StockData(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='stock_data')
@@ -124,19 +142,6 @@ class StockData(models.Model):
 
     class Meta:
         db_table = 'stock_data'
-
-
-class CurrencyPairData(models.Model):
-    currency_pair = models.ForeignKey(CurrencyPair, on_delete=models.CASCADE, related_name='data')
-    timestamp = models.DateTimeField()
-    open_price = models.DecimalField(max_digits=20, decimal_places=8)
-    high_price = models.DecimalField(max_digits=20, decimal_places=8)
-    low_price = models.DecimalField(max_digits=20, decimal_places=8)
-    close_price = models.DecimalField(max_digits=20, decimal_places=8)
-    volume = models.DecimalField(max_digits=20, decimal_places=4)
-
-    class Meta:
-        db_table = 'currency_pairs_data'
 
 
 class StockPrediction(models.Model):

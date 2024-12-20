@@ -1,6 +1,10 @@
 from typing import Optional, List
 from myapp.models import CurrencyPair
+import logging
 
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 class CurrencyPairsRepository:
     def get_currency_pair_by_id(self, pair_id: int) -> Optional[CurrencyPair]:
         try:

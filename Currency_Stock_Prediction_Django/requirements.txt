@@ -1,10 +1,11 @@
 
-
+mysqlclient~=2.2.6
 requests~=2.32.3
 wbdata~=1.0.0
 yfinance~=0.2.48
 python-dateutil~=2.9.0.post0
 pytz~=2024.2
+celery~=5.5.0rc4
 firebase-admin~=6.6.0
 urllib3~=2.2.3
 
