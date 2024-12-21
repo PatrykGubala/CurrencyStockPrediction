@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS currencies (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(6) NOT NULL UNIQUE,
     name VARCHAR(50) NOT NULL,
-    symbol VARCHAR(10)
+    symbol VARCHAR(10),
+    data_availability BOOLEAN default false
 );
 
 INSERT INTO currencies (code, name, symbol)
@@ -41,7 +42,21 @@ ON DUPLICATE KEY UPDATE
     name = VALUES(name),
     symbol = VALUES(symbol);
 
-
+-- 11. Currencies_Data Table
+CREATE TABLE IF NOT EXISTS currencies_data (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    currency_id INT NOT NULL,
+    open_price DECIMAL(20,8) NOT NULL,
+    high_price DECIMAL(20,8) NOT NULL,
+    low_price DECIMAL(20,8) NOT NULL,
+    close_price DECIMAL(20,8) NOT NULL,
+    volume DECIMAL(20,8) NOT NULL,
+    day_of_week VARCHAR(10) GENERATED ALWAYS AS (DAYNAME(timestamp)) STORED,
+    FOREIGN KEY (currency_id) REFERENCES currencies(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 
 -- 5. Country_Currencies (Many-to-Many)
@@ -57,21 +72,6 @@ CREATE TABLE IF NOT EXISTS country_currencies (
         ON UPDATE CASCADE
 );
 
--- 6. Currency_Pairs Table
-CREATE TABLE IF NOT EXISTS currency_pairs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    base_currency_id INT NOT NULL,
-    target_currency_id INT NOT NULL,
-    name VARCHAR(20) UNIQUE NOT NULL,
-    data_availability BOOLEAN,
-    UNIQUE KEY unique_currency_pair (base_currency_id, target_currency_id),
-    FOREIGN KEY (base_currency_id) REFERENCES currencies(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (target_currency_id) REFERENCES currencies(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
 
 -- 7. Exchanges Table
 CREATE TABLE IF NOT EXISTS exchanges (
@@ -128,21 +128,7 @@ CREATE TABLE IF NOT EXISTS stock_data (
         ON UPDATE CASCADE
 );
 
--- 11. Currency_Pairs_Data Table
-CREATE TABLE IF NOT EXISTS currency_pairs_data (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    timestamp DATETIME NOT NULL,
-    currency_pair_id INT NOT NULL,
-    open_price DECIMAL(20,8) NOT NULL,
-    high_price DECIMAL(20,8) NOT NULL,
-    low_price DECIMAL(20,8) NOT NULL,
-    close_price DECIMAL(20,8) NOT NULL,
-    volume DECIMAL(20,8) NOT NULL,
-    day_of_week VARCHAR(10) GENERATED ALWAYS AS (DAYNAME(timestamp)) STORED,
-    FOREIGN KEY (currency_pair_id) REFERENCES currency_pairs(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
+
 
 -- 12. Stock_Predictions Table
 CREATE TABLE IF NOT EXISTS stock_predictions (
@@ -156,14 +142,14 @@ CREATE TABLE IF NOT EXISTS stock_predictions (
         ON UPDATE CASCADE
 );
 
--- 13. Currency__Pair_Predictions Table
-CREATE TABLE IF NOT EXISTS currency_pair_predictions (
+-- 13. Currency_Predictions Table
+CREATE TABLE IF NOT EXISTS currencies_predictions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    currency_pair_id INT NOT NULL,
+    currency_id INT NOT NULL,
     predicted_value DECIMAL(20,8) NOT NULL,
     prediction_date DATETIME NOT NULL,
     model_name VARCHAR(50) NOT NULL,
-    FOREIGN KEY (currency_pair_id) REFERENCES currency_pairs(id)
+    FOREIGN KEY (currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
@@ -332,34 +318,3 @@ CREATE TABLE IF NOT EXISTS user_preferences (
         ON UPDATE CASCADE
 );
 
-
-
-DELIMITER $$
-
-CREATE TRIGGER before_insert_currency_pairs
-BEFORE INSERT ON currency_pairs
-FOR EACH ROW
-BEGIN
-    DECLARE usd_id INT;
-    SELECT id INTO usd_id FROM currencies WHERE code = 'USD' LIMIT 1;
-
-    IF NEW.base_currency_id != usd_id THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Base currency must be USD.';
-    END IF;
-END $$
-
-CREATE TRIGGER before_update_currency_pairs
-BEFORE UPDATE ON currency_pairs
-FOR EACH ROW
-BEGIN
-    DECLARE usd_id INT;
-
-    SELECT id INTO usd_id FROM currencies WHERE code = 'USD' LIMIT 1;
-    IF NEW.base_currency_id != usd_id THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Base currency must be USD.';
-    END IF;
-END $$
-
-DELIMITER ;

@@ -1,0 +1,56 @@
+from datetime import datetime
+from typing import Optional, List
+
+import logging
+from django.db.models import Max
+
+from myapp.models import Currency, CurrenciesData
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class CurrenciesDataRepository:
+    def get_currency_by_id(self, currency_id: int) -> Optional[Currency]:
+        return Currency.objects.filter(pk=currency_id).first()
+
+    def bulk_upsert_data(self, currency: Currency, data: List[dict]):
+        objs = []
+        for record in data:
+            objs.append(CurrenciesData(
+                currency=currency,
+                timestamp=record['timestamp'],
+                open_price=record['open_price'],
+                high_price=record['high_price'],
+                low_price=record['low_price'],
+                close_price=record['close_price'],
+                volume=record['volume']
+            ))
+        CurrenciesData.objects.bulk_create(objs, ignore_conflicts=True)
+        logger.info(f"Successfully upserted {len(objs)} records for {currency.code}")
+
+    def get_latest_timestamp_for_currency(self, currency: Currency) -> Optional[datetime]:
+        result = CurrenciesData.objects.filter(currency=currency).aggregate(latest=Max('timestamp'))
+        return result['latest']
+
+    def get_latest_record(self, currency: Currency) -> Optional[CurrenciesData]:
+        return CurrenciesData.objects.filter(currency=currency).order_by('-timestamp').first()
+
+    def get_previous_record(self, currency: Currency, current_timestamp: datetime) -> Optional[CurrenciesData]:
+        return CurrenciesData.objects.filter(
+            currency=currency,
+            timestamp__lt=current_timestamp
+        ).order_by('-timestamp').first()
+
+    def get_all_data(self) -> List[dict]:
+        result = []
+        for data in CurrenciesData.objects.select_related('currency').order_by('-id'):
+            result.append({
+                'currency_id': data.currency.id,
+                'timestamp': data.timestamp,
+                'open': str(data.open_price),
+                'high': str(data.high_price),
+                'low': str(data.low_price),
+                'close': str(data.close_price),
+                'volume': str(data.volume)
+            })
+        return result

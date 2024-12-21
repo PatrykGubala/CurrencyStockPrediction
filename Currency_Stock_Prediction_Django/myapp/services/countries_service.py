@@ -3,14 +3,12 @@ from typing import List, Optional
 from myapp.repositories.countries_repository import CountriesRepository
 from myapp.repositories.regions_repository import RegionsRepository
 from myapp.repositories.currencies_repository import CurrenciesRepository
-from myapp.repositories.currency_pairs_repository import CurrencyPairsRepository
 
 class CountriesService:
     def __init__(self):
         self.countries_repo = CountriesRepository()
         self.regions_repo = RegionsRepository()
         self.currencies_repo = CurrenciesRepository()
-        self.currency_pairs_repo = CurrencyPairsRepository()
 
     def fetch_countries_data(self, api_url='https://restcountries.com/v2/all') -> List[dict]:
         response = requests.get(api_url, timeout=60)
@@ -55,18 +53,6 @@ class CountriesService:
                         currency = self.currencies_repo.add_currency(code, cname, symbol)
                     self.countries_repo.associate_currency_to_country(existing_country, currency)
 
-    def create_currency_pairs(self):
-        usd_currency = self.currencies_repo.get_currency_by_code('USD')
-        if not usd_currency:
-            raise ValueError("USD not found")
-
-        currencies = self.currencies_repo.get_all_currencies()
-        for currency in currencies:
-            if currency.id == usd_currency.id:
-                continue
-            if not self.currency_pairs_repo.get_currency_pair(usd_currency.id, currency.id):
-                self.currency_pairs_repo.add_currency_pair(usd_currency.id, currency.id)
-
     def get_all_countries_dto(self) -> List[dict]:
         countries = self.countries_repo.get_all_countries()
         result = []
@@ -107,4 +93,3 @@ class CountriesService:
     def load_all_data(self):
         data = self.fetch_countries_data()
         self.load_countries_with_details(data)
-        self.create_currency_pairs()

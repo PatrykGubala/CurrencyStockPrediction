@@ -28,6 +28,15 @@ object CacheManager {
         return getPreferences(context).getString(KEY_PROFILE_IMAGE_URL, null)
     }
 
+    fun saveCurrencies(context: Context, region: String, data: String) {
+        getPreferences(context).edit().putString("${region}_currencies", data).apply()
+    }
+
+    fun getCurrencies(context: Context, region: String): String? {
+        return getPreferences(context).getString("${region}_currencies", null)
+    }
+
+
     fun clearCache(context: Context) {
         getPreferences(context).edit().clear().apply()
     }

@@ -12,7 +12,7 @@ object ApiClient {
 
     private const val TAG = "ApiClient"
 
-    private const val BACKEND_URL = "https://e6f2-37-31-33-59.ngrok-free.app"
+    private const val BACKEND_URL = "https://f07d-37-31-33-59.ngrok-free.app"
 
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
