@@ -12,6 +12,7 @@ import com.example.currencystockprediction.models.Currency
 import com.example.currencystockprediction.utils.ApiClient
 import org.json.JSONObject
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.utils.CacheManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -139,9 +140,12 @@ class CurrencyFragment : BaseFragment() {
 
     private fun handleCurrencyClick(currency: Currency) {
         lifecycleScope.launch(Dispatchers.Main) {
-            Toast.makeText(context, "Clicked: ${currency.name}", Toast.LENGTH_SHORT).show()
+            val action = CurrencyFragmentDirections.actionCurrencyFragmentToCurrencyDataFragment(currencyCode = currency.code)
+            findNavController().navigate(action)
         }
     }
+
+
 
     private fun showError(message: String) {
         lifecycleScope.launch(Dispatchers.Main) {

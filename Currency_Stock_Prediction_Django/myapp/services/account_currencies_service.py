@@ -1,4 +1,11 @@
-from typing import List
+from decimal import Decimal
+from typing import List, Optional
+
+from django.db import transaction
+from django.utils import timezone
+
+from myapp.apps import logger
+from myapp.models.models import AccountCurrencyValueHistory
 from myapp.repositories.account_currencies_repository import AccountCurrenciesRepository
 from myapp.repositories.accounts_repository import AccountsRepository
 from myapp.repositories.currencies_repository import CurrenciesRepository
@@ -56,3 +63,49 @@ class AccountCurrenciesService:
         if not result:
             raise ValueError(f"Currency {currency_code} not associated with account {account_id}")
         return True
+
+    def record_currency_value(self, account_currency):
+        latest_currency_data = self.currencies_repo.get_latest_currency_data(account_currency.currency.code)
+        if latest_currency_data:
+            balance_usd = Decimal(account_currency.balance) * Decimal(latest_currency_data.close_price)
+            AccountCurrencyValueHistory.objects.create(
+                account_currency=account_currency,
+                balance_usd=balance_usd,
+                timestamp=timezone.now()
+            )
+
+    def record_currency_deletion(self, account_currency):
+        latest_currency_data = self.currencies_repo.get_latest_currency_data(account_currency.currency.code)
+        if latest_currency_data:
+            balance_usd = Decimal(account_currency.balance) * Decimal(latest_currency_data.close_price)
+            AccountCurrencyValueHistory.objects.create(
+                account_currency=account_currency,
+                balance_usd=balance_usd,
+                timestamp=timezone.now()
+            )
+
+    def deposit_to_usd_account(self, account_id: int, amount: float) -> Optional[dict]:
+        try:
+            if amount <= 0:
+                raise ValueError("Deposit amount must be positive.")
+            currency = self.currencies_repo.get_currency_by_code("USD")
+            if not currency:
+                raise ValueError("USD currency not found.")
+            account_currency = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
+            if not account_currency:
+                raise ValueError("USD account currency not found.")
+            new_balance = Decimal(account_currency.balance) + Decimal(amount)
+            with transaction.atomic():
+                self.account_currency_repo.update_balance(account_id, currency.id, float(new_balance))
+                AccountCurrencyValueHistory.objects.create(
+                    account_currency=account_currency,
+                    balance_usd=new_balance,
+                    timestamp=timezone.now()
+                )
+            return {
+                "currency_code": "USD",
+                "new_balance": float(new_balance)
+            }
+        except Exception as e:
+            logger.error(f"Error in deposit_to_usd_account: {e}")
+            return None

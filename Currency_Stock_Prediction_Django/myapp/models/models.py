@@ -255,3 +255,21 @@ class UserPreference(models.Model):
 
     class Meta:
         db_table = 'user_preferences'
+
+
+
+class AccountCurrencyValueHistory(models.Model):
+    account_currency = models.ForeignKey(AccountCurrency, on_delete=models.CASCADE, related_name='value_history')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    balance_usd = models.DecimalField(max_digits=30, decimal_places=8)
+
+    class Meta:
+        db_table = 'account_currency_value_history'
+
+class AccountStockValueHistory(models.Model):
+    account_stock = models.ForeignKey(AccountStock, on_delete=models.CASCADE, related_name='value_history')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    value_usd = models.DecimalField(max_digits=30, decimal_places=8)
+
+    class Meta:
+        db_table = 'account_stock_value_history'

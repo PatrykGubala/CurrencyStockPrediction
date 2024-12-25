@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 from pathlib import Path
 import os
 import firebase_admin
+from celery.schedules import crontab
 from firebase_admin import credentials
 from decouple import config
 
@@ -139,6 +140,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+
+CELERY_BEAT_SCHEDULE = {
+    'recount_currency_values_hourly': {
+        'task': 'myapp.tasks.recount_currency_values',
+        'schedule': crontab(minute='*/10'),
+    },
+}
 
 
 CELERY_ACCEPT_CONTENT = ['json']

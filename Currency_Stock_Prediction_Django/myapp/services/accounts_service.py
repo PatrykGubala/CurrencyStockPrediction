@@ -1,5 +1,11 @@
 import uuid
+from decimal import Decimal
+
 from django.db import transaction, IntegrityError
+from django.utils import timezone
+
+from myapp.apps import logger
+from myapp.models.models import AccountCurrencyValueHistory
 from myapp.repositories.accounts_repository import AccountsRepository
 from myapp.repositories.currencies_repository import CurrenciesRepository
 from myapp.repositories.account_currencies_repository import AccountCurrenciesRepository
@@ -45,3 +51,34 @@ class AccountsService:
         uuid_part = uuid.uuid4().hex[:12]
         currency_code_part = currency_code[-4:].zfill(4)
         return f"{uuid_part}{currency_code_part.upper()}"
+
+    def record_currency_value(self, account_currency):
+        latest_currency_data = self.currencies_repo.get_latest_currency_data(account_currency.currency.code)
+        if latest_currency_data:
+            balance_usd = Decimal(account_currency.balance) * Decimal(latest_currency_data.close_price)
+            AccountCurrencyValueHistory.objects.create(
+                account_currency=account_currency,
+                balance_usd=balance_usd,
+                timestamp=timezone.now()
+            )
+
+    def recount_currency_values(self):
+        accounts = self.accounts_repo.get_all_accounts()
+        logger.info(f"Found {len(accounts)} accounts.")
+        for account in accounts:
+            logger.info(f"Processing Account ID: {account.id}")
+            account_currencies = self.account_currency_repo.get_account_currencies(account.id)
+            logger.info(f" - Found {len(account_currencies)} currencies for Account ID: {account.id}")
+            for ac in account_currencies:
+                logger.info(f" -- Processing Currency: {ac.currency.code}")
+                latest_currency_data = self.currencies_repo.get_latest_currency_data(ac.currency.code)
+                if latest_currency_data:
+                    balance_usd = Decimal(ac.balance) * Decimal(latest_currency_data.close_price)
+                    AccountCurrencyValueHistory.objects.create(
+                        account_currency=ac,
+                        balance_usd=balance_usd,
+                        timestamp=timezone.now()
+                    )
+                    logger.info(f" --- Recorded USD Balance: {balance_usd}")
+                else:
+                    logger.warning(f" --- No latest currency data for {ac.currency.code}")

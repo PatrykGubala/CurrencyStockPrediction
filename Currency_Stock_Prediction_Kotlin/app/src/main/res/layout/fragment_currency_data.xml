@@ -12,45 +12,73 @@
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:titleCentered="true">
 
-        <ImageButton
-            android:id="@+id/back_button"
-            android:layout_width="48dp"
-            android:layout_height="56dp"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/login_fragment_title_back_button"
-            android:onClick="onBackPressed"
-            android:src="@drawable/chevron_left"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/goBackToolbar" />
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
 
-        <TextView
-            android:id="@+id/title_text"
-            style="@style/KanitRegularLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="56dp"
-            android:gravity="center_vertical"
-            android:text="DEFDEF=X"
-            android:textColor="@color/white"
-            app:flow_horizontalAlign="center"
-            app:layout_constraintBottom_toBottomOf="@+id/goBackToolbar"
-            app:layout_constraintStart_toEndOf="@+id/back_button"
-            app:layout_constraintTop_toTopOf="@+id/goBackToolbar" />
+            <ImageButton
+                android:id="@+id/back_button"
+                android:layout_width="48dp"
+                android:layout_height="56dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/login_fragment_title_back_button"
+                android:onClick="onBackPressed"
+                android:src="@drawable/chevron_left"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+            <TextView
+                android:id="@+id/title_text"
+                style="@style/KanitRegularLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="DEFDEF=X"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="@+id/right_button"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageButton
+                android:id="@+id/right_button"
+                android:layout_width="48dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="16dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/chevron_right"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.appbar.MaterialToolbar>
 
+    <TextView
+        android:id="@+id/subtitle_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:text="Euro to American Dolar"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/goBackToolbar"
+        style="@style/KanitLightMedium"
+        />
 
     <com.github.mikephil.charting.charts.CandleStickChart
         android:id="@+id/candleStickChart"
         android:layout_width="match_parent"
-        android:layout_height="320dp"
+        android:layout_height="350dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goBackToolbar">
+        app:layout_constraintTop_toBottomOf="@+id/subtitle_text">
 
     </com.github.mikephil.charting.charts.CandleStickChart>
 

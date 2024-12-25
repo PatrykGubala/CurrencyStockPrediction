@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from myapp.models.models import Account
 
 class AccountsRepository:
@@ -18,3 +18,6 @@ class AccountsRepository:
         account = Account(user_id=user_id, account_name=account_name, public_account_id=public_account_id, currency_id=currency_id)
         account.save()
         return account
+
+    def get_all_accounts(self) -> List[Account]:
+        return list(Account.objects.all())

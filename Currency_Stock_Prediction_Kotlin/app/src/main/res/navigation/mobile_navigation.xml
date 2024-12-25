@@ -38,6 +38,20 @@
         android:id="@+id/currencyFragment"
         android:name="com.example.currencystockprediction.currency.CurrencyFragment"
         android:label="CurrencyFragment" >
+
+        <action
+            android:id="@+id/action_currencyFragment_to_currencyDataFragment"
+            app:destination="@id/currencyDataFragment" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/currencyDataFragment"
+        android:name="com.example.currencystockprediction.currency.CurrencyDataFragment"
+        android:label="Currency Data">
+        <argument
+            android:name="currencyCode"
+            app:argType="string" />
     </fragment>
     <fragment
         tools:layout="@layout/fragment_stock"

@@ -9,69 +9,491 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-    <com.github.mikephil.charting.charts.CandleStickChart
-        android:id="@+id/candleStickChart"
+    <TextView
+        android:id="@+id/accountAmountTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Account Amount: $0.00"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:layout_margin="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        style="@style/KanitRegularMedium"
+        />
+
+
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/accountChart"
         android:layout_width="match_parent"
         android:layout_height="320dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/accountAmountTextView">
 
 
-    </com.github.mikephil.charting.charts.CandleStickChart>
-
+    </com.github.mikephil.charting.charts.LineChart>
 
     <LinearLayout
         android:id="@+id/buttonContainer"
-        android:layout_width="wrap_content"
-        android:layout_height="32dp"
+        style="?android:attr/buttonBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginHorizontal="16dp"
         android:background="@drawable/background_style_darkgrey_rectangle_stroke"
         android:orientation="horizontal"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/candleStickChart">
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+
+        app:layout_constraintTop_toBottomOf="@+id/accountChart">
 
         <Button
             android:id="@+id/dailyButton"
-            android:layout_width="80dp"
-            android:layout_height="32dp"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:text="1d" />
 
         <Button
             android:id="@+id/weeklyButton"
-            android:layout_width="80dp"
-            android:layout_height="32dp"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:text="1t" />
 
         <Button
             android:id="@+id/monthlyButton"
-            android:layout_width="80dp"
-            android:layout_height="32dp"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:text="1m" />
 
         <Button
             android:id="@+id/yearlyButton"
-            android:layout_width="80dp"
-            android:layout_height="32dp"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:text="1y" />
 
         <Button
             android:id="@+id/allTimeButton"
-            android:layout_width="80dp"
-            android:layout_height="32dp"
+            style="?android:attr/buttonBarButtonStyle"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="42dp"
             android:background="@android:color/transparent"
             android:padding="0dp"
             android:text="ALL" />
     </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:padding="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/buttonContainer">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/depositButtonLayout"
+            android:layout_width="96dp"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/emailImageButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:background="@drawable/background_style_mildblue_round_stroke"
+                android:contentDescription="Email"
+                android:gravity="center_horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/plus" />
+
+            <TextView
+                style="@style/KanitLightSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="Wpłać"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/emailImageButton" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/sellButtonLayout"
+            android:layout_width="96dp"
+            android:layout_height="wrap_content"
+
+            >
+
+            <ImageButton
+                android:id="@+id/sellImageButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:background="@drawable/background_style_mildblue_round_stroke"
+                android:gravity="center_horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/minus" />
+
+            <TextView
+                style="@style/KanitLightSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="Sprzedaj"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/sellImageButton" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/sendButtonLayout"
+            android:layout_width="96dp"
+            android:layout_height="wrap_content"
+
+            >
+
+            <ImageButton
+                android:id="@+id/sendImageButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:background="@drawable/background_style_mildblue_round_stroke"
+                android:contentDescription="Email"
+                android:gravity="center_horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/arrow_up" />
+
+            <TextView
+                style="@style/KanitLightSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="Wyślij"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/sendImageButton" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/calculateButtonLayout"
+            android:layout_width="96dp"
+            android:layout_height="wrap_content"
+
+            >
+
+            <ImageButton
+                android:id="@+id/calculateImageButton"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:scaleType="fitCenter"
+                android:padding="12dp"
+                android:background="@drawable/background_style_mildblue_round_stroke"
+                android:contentDescription="Email"
+                android:gravity="center_horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/repeat" />
+
+            <TextView
+                style="@style/KanitLightSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="Przelicz"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/calculateImageButton" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/depositLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/depositAmountTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/depositAmountTextInputEditText"
+                style="@style/KanitLightSmall"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/dark_grey"
+                android:hint="Kwota do wpłaty:"
+                android:inputType="numberDecimal"
+                android:textAlignment="viewStart"
+                android:textColor="@color/white"
+                android:textColorHighlight="@color/grey"
+                android:textColorHint="@color/grey"
+                android:textColorLink="@color/grey"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <Button
+            android:id="@+id/depositSubmitButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wpłać"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/depositAmountTextInputLayout" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/sendLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/depositLayout">
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/sendAmountTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/sendAmountTextInputEditText"
+                style="@style/KanitLightSmall"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/dark_grey"
+                android:hint="Kwota:"
+                android:inputType="numberDecimal"
+                android:textAlignment="viewEnd"
+                android:textColor="@color/white"
+                android:textColorHighlight="@color/grey"
+                android:textColorHint="@color/grey"
+                android:textColorLink="@color/grey"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/sendPublicAccountTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/sendAmountTextInputLayout">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/sendPublicAccountTextInputEditText"
+                style="@style/KanitLightSmall"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/dark_grey"
+                android:hint="Numer konta:"
+                android:inputType="text"
+                android:textAlignment="viewStart"
+                android:textColor="@color/white"
+                android:textColorHighlight="@color/grey"
+                android:textColorHint="@color/grey"
+                android:textColorLink="@color/grey"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <Button
+            android:id="@+id/sendSubmitButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Wyślij"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/sendPublicAccountTextInputLayout" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/calculateLayout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout">
+
+
+        <TextView
+            android:id="@+id/fromTextView"
+            style="@style/KanitLightMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="From:"
+            android:textColor="@color/white"
+            app:layout_constraintEnd_toStartOf="@+id/calculateSubmitButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </TextView>
+
+        <Spinner
+            android:id="@+id/fromCurrencySpinner"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            app:layout_constraintEnd_toStartOf="@+id/calculateSubmitButton"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/fromTextView" />
+
+        <ImageButton
+            android:id="@+id/calculateSubmitButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:scaleType="fitCenter"
+            android:padding="12dp"
+            android:background="@drawable/background_style_darkgrey_rectangle_stroke"
+            android:gravity="center_horizontal"
+            app:layout_constraintBottom_toBottomOf="@+id/fromCurrencySpinner"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/fromTextView"
+            app:srcCompat="@drawable/repeat" />
+
+        <TextView
+            android:id="@+id/toTextView"
+            style="@style/KanitLightMedium"
+            android:layout_width="wrap_content"
+
+            android:layout_height="wrap_content"
+            android:text="To:"
+
+            android:textColor="@color/white"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/calculateSubmitButton"
+            app:layout_constraintTop_toTopOf="parent">
+
+        </TextView>
+
+        <Spinner
+            android:id="@+id/toCurrencySpinner"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+
+            app:layout_constraintStart_toEndOf="@+id/calculateSubmitButton"
+            app:layout_constraintTop_toBottomOf="@+id/toTextView" />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/calculateAmountTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/fromCurrencySpinner">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/calculateAmountEditText"
+                style="@style/KanitLightSmall"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/dark_grey"
+                android:hint="Kwota do przewalutowania:"
+                android:inputType="numberDecimal"
+                android:textAlignment="viewEnd"
+                android:textColor="@color/white"
+                android:textColorHighlight="@color/grey"
+                android:textColorHint="@color/grey"
+                android:textColorLink="@color/grey"
+
+
+                />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/resultAmountTextInputLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/calculateAmountTextInputLayout">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/resultAmountEditText"
+                style="@style/KanitLightSmall"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:backgroundTint="@color/dark_grey"
+                android:hint="Wynik przewalutowania:"
+                android:inputType="numberDecimal"
+                android:textAlignment="viewEnd"
+                android:textColor="@color/white"
+                android:textColorHighlight="@color/grey"
+                android:textColorHint="@color/grey"
+                android:textColorLink="@color/grey"
+
+
+                />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

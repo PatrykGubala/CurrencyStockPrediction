@@ -318,3 +318,24 @@ CREATE TABLE IF NOT EXISTS user_preferences (
         ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS account_currency_value_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_currency_id INT NOT NULL,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    balance_usd DECIMAL(30,8) NOT NULL,
+    FOREIGN KEY (account_currency_id) REFERENCES account_currencies(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS account_stock_value_history (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    account_stock_id INT NOT NULL,
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    value_usd DECIMAL(30,8) NOT NULL,
+    FOREIGN KEY (account_stock_id) REFERENCES account_stocks(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
