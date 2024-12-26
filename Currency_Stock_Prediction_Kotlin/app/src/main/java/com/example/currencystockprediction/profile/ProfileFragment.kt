@@ -120,7 +120,7 @@ class ProfileFragment : BaseFragment() {
 
     private fun uploadProfileImage(bitmap: Bitmap) {
         val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos) // Compress to 80% quality for optimization
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
         val imageBase64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT)
         val json = JSONObject()
         json.put("image_base64", imageBase64)

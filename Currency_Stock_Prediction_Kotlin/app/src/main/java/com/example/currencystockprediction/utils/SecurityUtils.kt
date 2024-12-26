@@ -72,7 +72,17 @@ object SecurityUtils {
     }
 
     fun hasPin(context: Context): Boolean {
-        return getPin(context) != null
+        val pin = getPin(context)
+        return !pin.isNullOrEmpty()
+    }
+
+    fun clearPin(context: Context) {
+        try {
+            val sharedPreferences = getEncryptedSharedPreferences(context)
+            sharedPreferences.edit().remove(PIN_KEY).apply()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun setBiometricEnabled(context: Context, enabled: Boolean) {

@@ -81,4 +81,14 @@
         </action>
 
     </fragment>
+
+    <fragment
+        tools:layout="@layout/fragment_set_pin"
+        android:id="@+id/setPinFragment"
+        android:name="com.example.currencystockprediction.auth.pin.SetPinFragment"
+        android:label="SetPinFragment" >
+
+
+
+    </fragment>
 </navigation>

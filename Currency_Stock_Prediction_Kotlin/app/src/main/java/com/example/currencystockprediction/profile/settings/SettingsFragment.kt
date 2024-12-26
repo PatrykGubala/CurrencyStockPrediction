@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
@@ -37,13 +38,39 @@ class SettingsFragment : BaseFragment() {
                     SettingsFragmentDirections.actionSettingsFragmentToSetPinFragment()
                 )
             } else {
-                SecurityUtils.savePin(requireContext(), "")
+                SecurityUtils.clearPin(requireContext())
+                binding.biometricsSwitch.isChecked = false
+                SecurityUtils.setBiometricEnabled(requireContext(), false)
+                Toast.makeText(context, "PIN został wyłączony.", Toast.LENGTH_SHORT).show()
             }
         }
 
         binding.biometricsSwitch.isChecked = SecurityUtils.isBiometricEnabled(requireContext())
+        binding.biometricsSwitch.isEnabled = SecurityUtils.hasPin(requireContext())
+
         binding.biometricsSwitch.setOnCheckedChangeListener { _, isChecked ->
-            SecurityUtils.setBiometricEnabled(requireContext(), isChecked)
+            if (isChecked) {
+                if (SecurityUtils.hasPin(requireContext())) {
+                    if (SecurityUtils.isBiometricReady(requireContext())) {
+                        SecurityUtils.setBiometricEnabled(requireContext(), true)
+                        Toast.makeText(context, "Biometric authentication enabled.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        binding.biometricsSwitch.isChecked = false
+                        SecurityUtils.setBiometricEnabled(requireContext(), false)
+                        SecurityUtils.promptBiometricEnrollment(requireActivity())
+                        Toast.makeText(context, "Biometric features not available. Enrollment prompted.", Toast.LENGTH_SHORT).show()
+                    }
+                } else {
+                    binding.biometricsSwitch.isChecked = false
+                    findNavController().navigate(
+                        SettingsFragmentDirections.actionSettingsFragmentToSetPinFragment()
+                    )
+                    Toast.makeText(context, "Please set up a PIN before enabling biometrics.", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                SecurityUtils.setBiometricEnabled(requireContext(), false)
+                Toast.makeText(context, "Biometric authentication disabled.", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

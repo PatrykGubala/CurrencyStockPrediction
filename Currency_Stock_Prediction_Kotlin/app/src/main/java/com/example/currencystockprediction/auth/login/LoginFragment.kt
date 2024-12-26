@@ -12,7 +12,6 @@ import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.activities.MainActivity
-import com.example.currencystockprediction.auth.start.StartFragmentDirections
 import com.example.currencystockprediction.databinding.FragmentLoginBinding
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.example.currencystockprediction.utils.SecurityUtils
@@ -22,14 +21,13 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.GoogleAuthProvider
 
 class LoginFragment : BaseFragment() {
     private lateinit var binding: FragmentLoginBinding
-    private val fbAuth = FirebaseAuth.getInstance()
+    private val fbAuth = FirebaseAuthManager.firebaseAuth
     private val LOG_DEBUG = "LOG_DEBUG"
 
     private lateinit var googleSignInClient: GoogleSignInClient
@@ -60,8 +58,8 @@ class LoginFragment : BaseFragment() {
 
     private fun setupLoginClick() {
         binding.loginButton.setOnClickListener {
-            val email = binding.textInputLayoutEmail.editText?.text.toString()
-            val pass = binding.textInputLayoutPassword.editText?.text.toString()
+            val email = binding.textInputLayoutEmail.editText?.text.toString().trim()
+            val pass = binding.textInputLayoutPassword.editText?.text.toString().trim()
 
             if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
                 Toast.makeText(requireContext(), "Niepoprawny format email", Toast.LENGTH_SHORT)
@@ -82,10 +80,17 @@ class LoginFragment : BaseFragment() {
                 ).show()
                 return@setOnClickListener
             }
+
             binding.progressBar.visibility = View.VISIBLE
             fbAuth.signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener { authRes ->
                     binding.progressBar.visibility = View.GONE
+                    val credentialsSaved = SecurityUtils.saveCredentials(requireContext(), email, pass)
+                    if (credentialsSaved) {
+                        Log.d(LOG_DEBUG, "Credentials saved successfully.")
+                    } else {
+                        Log.e(LOG_DEBUG, "Failed to save credentials.")
+                    }
                     startMainActivity()
                 }
                 .addOnFailureListener { exc ->
@@ -100,8 +105,6 @@ class LoginFragment : BaseFragment() {
                 }
         }
     }
-
-
 
     private fun setupGoogleSignIn() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -144,6 +147,15 @@ class LoginFragment : BaseFragment() {
                 binding.progressBar.visibility = View.GONE
                 if (task.isSuccessful) {
                     Log.d(LOG_DEBUG, "signInWithCredential:success")
+                    val email = fbAuth.currentUser?.email
+                    if (email != null) {
+                        val credentialsSaved = SecurityUtils.saveCredentials(requireContext(), email, "")
+                        if (credentialsSaved) {
+                            Log.d(LOG_DEBUG, "Credentials saved successfully (Google).")
+                        } else {
+                            Log.e(LOG_DEBUG, "Failed to save credentials (Google).")
+                        }
+                    }
                     startMainActivity()
                 } else {
                     Log.w(LOG_DEBUG, "signInWithCredential:failure", task.exception)
