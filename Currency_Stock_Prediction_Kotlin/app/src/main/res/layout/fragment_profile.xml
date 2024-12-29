@@ -74,7 +74,7 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/emailLayout"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="56dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="24dp"
 
@@ -87,7 +87,7 @@
         <TextView
 
             android:id="@+id/emailTextView"
-            style="@style/KanitRegularSmall"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -102,23 +102,23 @@
 
         <ImageButton
             android:id="@+id/emailImageButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:padding="12dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Email"
+
+            android:scaleType="fitCenter"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/mail"
-            android:scaleType="fitCenter"
-            android:padding="8dp"/>
+            app:srcCompat="@drawable/mail" />
     </androidx.constraintlayout.widget.ConstraintLayout>
-
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/passwordLayout"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="56dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
         android:background="@drawable/fragment_profile_layout_background"
@@ -129,7 +129,7 @@
 
         <TextView
             android:id="@+id/passwordTextView"
-            style="@style/KanitRegularSmall"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -144,8 +144,9 @@
 
         <ImageButton
             android:id="@+id/passwordImageButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:padding="12dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Password"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -153,13 +154,13 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/key"
             android:scaleType="fitCenter"
-            android:padding="8dp"/>
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/usernameChangeLayout"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="56dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
         android:background="@drawable/fragment_profile_layout_background"
@@ -170,7 +171,7 @@
 
         <TextView
             android:id="@+id/usernameChangeTextView"
-            style="@style/KanitRegularSmall"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -185,8 +186,9 @@
 
         <ImageButton
             android:id="@+id/usernameChangeImageButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:padding="12dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Username"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -194,14 +196,14 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/user"
             android:scaleType="fitCenter"
-            android:padding="8dp"/>
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/accountLayout"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="56dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="48dp"
         android:background="@drawable/fragment_profile_layout_background"
@@ -212,7 +214,7 @@
 
         <TextView
             android:id="@+id/accountTextView"
-            style="@style/KanitRegularSmall"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -224,8 +226,9 @@
 
         <ImageButton
             android:id="@+id/accountImageButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:padding="12dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Account"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -233,13 +236,13 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/link"
             android:scaleType="fitCenter"
-            android:padding="8dp"/>
+         />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/settingsLayout"
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="56dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="48dp"
         android:background="@drawable/fragment_profile_layout_background"
@@ -250,7 +253,7 @@
 
         <TextView
             android:id="@+id/settingsTextView"
-            style="@style/KanitRegularSmall"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -264,8 +267,9 @@
 
         <ImageButton
             android:id="@+id/settingsImageButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="56dp"
+            android:layout_height="match_parent"
+            android:padding="12dp"
             android:backgroundTint="@color/dark_grey"
             android:contentDescription="Settings"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -273,7 +277,7 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/settings"
             android:scaleType="fitCenter"
-            android:padding="8dp"/>
+       />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 

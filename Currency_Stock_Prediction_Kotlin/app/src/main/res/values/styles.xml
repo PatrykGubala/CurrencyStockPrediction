@@ -24,6 +24,10 @@
         <item name="android:fontFamily">@font/kanit_light</item>
         <item name="android:textSize">20sp</item>
     </style>
+    <style name="KanitLightLarge">
+        <item name="android:fontFamily">@font/kanit_light</item>
+        <item name="android:textSize">26sp</item>
+    </style>
 
     <style name="KanitRegularSmall">
         <item name="android:fontFamily">@font/kanit_regular</item>
@@ -37,7 +41,7 @@
 
     <style name="KanitRegularLarge">
         <item name="android:fontFamily">@font/kanit_regular</item>
-        <item name="android:textSize">24sp</item>
+        <item name="android:textSize">26sp</item>
     </style>
 
 

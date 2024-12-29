@@ -5,13 +5,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentProfileSettingsBinding
 import com.example.currencystockprediction.utils.SecurityUtils
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class SettingsFragment : BaseFragment() {
+    private var insetsController: WindowInsetsControllerCompat? = null
+    private lateinit var bottomNavView: BottomNavigationView
+    private var originalBottomNavVisibility: Int = View.VISIBLE
 
     private lateinit var binding: FragmentProfileSettingsBinding
 
@@ -27,9 +33,16 @@ class SettingsFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.backButton.setOnClickListener {
-            findNavController().popBackStack(R.id.profileFragment, false)
-        }
+        val window = requireActivity().window
+        insetsController = WindowInsetsControllerCompat(window, window.decorView)
+        hideSystemUI()
+
+        bottomNavView = requireActivity().findViewById(R.id.bottomNavView)
+        originalBottomNavVisibility = bottomNavView.visibility
+        bottomNavView.visibility = View.GONE
+
+        setupToolbar()
+
 
         binding.pinSwitch.isChecked = SecurityUtils.hasPin(requireContext())
         binding.pinSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -73,4 +86,42 @@ class SettingsFragment : BaseFragment() {
             }
         }
     }
+
+    private fun setupToolbar() {
+        binding.backButton.setOnClickListener {
+            findNavController().popBackStack(R.id.profileFragment, false)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        hideSystemUI()
+        if (bottomNavView.visibility != View.GONE) {
+            bottomNavView.visibility = View.GONE
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        showSystemUI()
+        bottomNavView.visibility = originalBottomNavVisibility
+
+    }
+    private fun hideSystemUI() {
+        insetsController?.let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+    private fun showSystemUI() {
+        insetsController?.show(WindowInsetsCompat.Type.systemBars())
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        bottomNavView.visibility = originalBottomNavVisibility
+        insetsController = null
+    }
+
 }

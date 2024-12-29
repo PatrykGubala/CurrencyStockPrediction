@@ -8,6 +8,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -24,6 +26,7 @@ import com.github.mikephil.charting.data.CandleEntry
 import com.github.mikephil.charting.formatter.IAxisValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.utils.MPPointF
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,8 +40,13 @@ class CurrencyDataFragment : Fragment() {
     private var _binding: FragmentCurrencyDataBinding? = null
     private val binding get() = _binding!!
 
+    private var insetsController: WindowInsetsControllerCompat? = null
+    private lateinit var bottomNavView: BottomNavigationView
+    private var originalBottomNavVisibility: Int = View.VISIBLE
+
     private lateinit var currencyCode: String
-    private val dateFormat = SimpleDateFormat("dd MMM HH", Locale.getDefault())
+    private val hourlyDateFormat = SimpleDateFormat("dd.MM HH:00", Locale.getDefault())
+    private val dailyDateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
     private val logDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
     private var currentMode: String = "last_month"
@@ -63,9 +71,15 @@ class CurrencyDataFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.backButton.setOnClickListener {
-            findNavController().popBackStack(R.id.currencyFragment, false)
-        }
+        val window = requireActivity().window
+        insetsController = WindowInsetsControllerCompat(window, window.decorView)
+        hideSystemUI()
+
+        bottomNavView = requireActivity().findViewById(R.id.bottomNavView)
+        originalBottomNavVisibility = bottomNavView.visibility
+        bottomNavView.visibility = View.GONE
+
+
 
 
         setupToolbar()
@@ -82,7 +96,7 @@ class CurrencyDataFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        binding.goBackToolbar.setNavigationOnClickListener {
+        binding.backButton.setOnClickListener {
             findNavController().popBackStack(R.id.currencyFragment, false)
         }
         binding.titleText.text = "USD$currencyCode=X"
@@ -93,8 +107,8 @@ class CurrencyDataFragment : Fragment() {
             description.text = "$currencyCode CandleStick Chart"
             axisRight.isEnabled = false
             xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.granularity = 1f
-            xAxis.labelRotationAngle = -45f
+            xAxis.granularity = 3f
+            xAxis.labelRotationAngle = 0f
             setBackgroundColor(Color.BLACK)
             setDrawGridBackground(false)
             xAxis.setDrawGridLines(false)
@@ -216,12 +230,12 @@ class CurrencyDataFragment : Fragment() {
             increasingPaintStyle = Paint.Style.FILL
             decreasingPaintStyle = Paint.Style.FILL
             shadowColor = Color.WHITE
-            shadowWidth = 0.2f
+            shadowWidth = 0.1f
             setDrawValues(false)
         }
         binding.candleStickChart.data = CandleData(dataSet)
         val isHourly = mode == "last_month"
-        val marker = CustomMarkerView(requireContext(), R.layout.marker_view, dateFormat, dates)
+        val marker = CustomMarkerView(requireContext(), R.layout.marker_view, hourlyDateFormat, dates)
         binding.candleStickChart.marker = marker
         binding.candleStickChart.xAxis.valueFormatter = DateAxisFormatter(dates, isHourly)
         binding.candleStickChart.invalidate()
@@ -245,10 +259,12 @@ class CurrencyDataFragment : Fragment() {
     }
 
     inner class DateAxisFormatter(private val dates: List<Long>, private val isHourly: Boolean) : IAxisValueFormatter {
-        private val sdfHourly = SimpleDateFormat("dd MMM HH", Locale.getDefault()).apply {
+        private val sdfHourly = hourlyDateFormat.apply {
             timeZone = TimeZone.getDefault()
+
         }
-        private val sdfDaily = SimpleDateFormat("dd MMM", Locale.getDefault()).apply {
+
+        private val sdfDaily = dailyDateFormat.apply {
             timeZone = TimeZone.getDefault()
         }
 
@@ -370,9 +386,30 @@ class CurrencyDataFragment : Fragment() {
             }
         }
     }
+    override fun onPause() {
+        super.onPause()
+        showSystemUI()
+        bottomNavView.visibility = originalBottomNavVisibility
+
+    }
+    private fun hideSystemUI() {
+        insetsController?.let { controller ->
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+            controller.systemBarsBehavior =
+                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        }
+    }
+    private fun showSystemUI() {
+        insetsController?.show(WindowInsetsCompat.Type.systemBars())
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        bottomNavView.visibility = originalBottomNavVisibility
+        insetsController = null
         _binding = null
+
     }
+
+
 }
