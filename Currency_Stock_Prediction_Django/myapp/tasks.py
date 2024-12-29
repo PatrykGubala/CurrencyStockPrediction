@@ -1,20 +1,31 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from celery import shared_task
 from django.utils import timezone
 
-from myapp.models.models import AccountCurrencyValueHistory
-from myapp.repositories.account_currencies_repository import AccountCurrenciesRepository
-from myapp.repositories.accounts_repository import AccountsRepository
-from myapp.repositories.currencies_repository import CurrenciesRepository
+
 from myapp.services.accounts_service import AccountsService
 from myapp.services.currencies_data_service import CurrenciesDataService
 
 @shared_task
-def load_currency_data_task(pair_ids=1, frequency='daily'):
+def load_currency_data_task(*args, **kwargs):
     service = CurrenciesDataService()
-    service.load_hourly_data(pair_ids)
-    service.load_daily_data(pair_ids)
+    currencies_to_load = ['EUR','GBP' ,'PLN' ,'JPY' ,'CNY' ,'AUD' ,'CHF' ,'NOK' ,'INR' ,'AUD' , 'SEK' ,'NZD' ,'MXN']
+    now = timezone.now()
+    last_31_days = now - timedelta(days=31)
+
+    for currency_code in currencies_to_load:
+        latest_ts = service.repository.get_latest_timestamp_for_currency_code(currency_code)
+        if not latest_ts:
+            service.load_daily_data_for_range(currency_code, start_date="2012-01-01", end_date=last_31_days)
+            service.load_hourly_data_for_range(currency_code, start_date=last_31_days, end_date=now)
+        else:
+            if latest_ts < last_31_days:
+                service.load_daily_data_for_range(currency_code, start_date=latest_ts, end_date=last_31_days)
+                service.load_hourly_data_for_range(currency_code, start_date=last_31_days, end_date=now)
+            else:
+                service.load_hourly_data_for_range(currency_code, start_date=latest_ts, end_date=now)
 
 
 @shared_task

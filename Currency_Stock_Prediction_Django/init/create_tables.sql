@@ -55,7 +55,9 @@ CREATE TABLE IF NOT EXISTS currencies_data (
     day_of_week VARCHAR(10) GENERATED ALWAYS AS (DAYNAME(timestamp)) STORED,
     FOREIGN KEY (currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+   UNIQUE KEY unique_currency_timestamp (currency_id, timestamp)
+
 );
 
 

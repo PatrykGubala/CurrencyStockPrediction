@@ -49,6 +49,13 @@ class CurrenciesData(models.Model):
 
     class Meta:
         db_table = 'currencies_data'
+        unique_together = ('currency', 'timestamp')
+        indexes = [
+            models.Index(fields=['currency', 'timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.currency.code} at {self.timestamp}"
 
 
 class Country(models.Model):

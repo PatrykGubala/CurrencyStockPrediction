@@ -2,8 +2,9 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 import pandas as pd
 import yfinance as yf
+from django.db.models import Min, Max
 from django.utils import timezone
-from myapp.models import Currency
+from myapp.models import Currency, CurrenciesData
 from myapp.repositories.currencies_data_repository import CurrenciesDataRepository
 import logging
 
@@ -14,52 +15,31 @@ class CurrenciesDataService:
     def __init__(self):
         self.repository = CurrenciesDataRepository()
 
-    def load_hourly_data(self, currency_ids=None):
-        logger.info("Starting hourly data load process")
-        currencies = Currency.objects.all()
-        if currency_ids:
-            currencies = currencies.filter(id__in=currency_ids)
-        for currency in currencies:
-            end_date = timezone.now()
-            start_date = end_date - timedelta(days=31)
-            hourly_data = self.fetch_data(
-                currency,
-                frequency='1h',
-                start_date=start_date.strftime('%Y-%m-%d'),
-                end_date=end_date.strftime('%Y-%m-%d')
-            )
-            if hourly_data is not None:
-                processed_hourly = self.process_data(hourly_data, daily=False)
-                if processed_hourly:
-                    self.repository.bulk_upsert_data(currency, processed_hourly)
-                    currency.data_availability = True
-                    currency.save()
-                    logger.info(f"Successfully loaded hourly data for currency: {currency.code}")
-        logger.info("Hourly data load process completed")
+    def load_daily_data_for_range(self, currency_code, start_date, end_date):
+        currency = self.repository.get_currency_by_code(currency_code)
+        if not currency:
+            return
+        daily_data = self.fetch_data(currency, frequency='1d', start_date=start_date, end_date=end_date)
+        if daily_data is not None:
+            processed = self.process_data(daily_data, daily=True)
+            if processed:
+                self.repository.bulk_upsert_data(currency, processed)
+                currency.data_availability = True
+                currency.save()
 
-    def load_daily_data(self, currency_ids=None):
-        logger.info("Starting daily data load process")
-        currencies = Currency.objects.all()
-        if currency_ids:
-            currencies = currencies.filter(id__in=currency_ids)
-        for currency in currencies:
-            start_date = datetime(2013, 1, 1)
-            start_date = timezone.make_aware(start_date, timezone.get_current_timezone())
-            end_date = timezone.now().strftime('%Y-%m-%d')
-            daily_data = self.fetch_data(
-                currency,
-                frequency='1d',
-                start_date=start_date.strftime('%Y-%m-%d'),
-                end_date=end_date
-            )
-            if daily_data is not None:
-                processed_daily = self.process_data(daily_data, daily=True)
-                if processed_daily:
-                    self.repository.bulk_upsert_data(currency, processed_daily)
-                    currency.data_availability = True
-                    currency.save()
-                    logger.info(f"Successfully loaded daily data for currency: {currency.code}")
-        logger.info("Daily data load process completed")
+    def load_hourly_data_for_range(self, currency_code, start_date, end_date):
+        currency = self.repository.get_currency_by_code(currency_code)
+        if not currency:
+            return
+        hourly_data = self.fetch_data(currency, frequency='1h', start_date=start_date, end_date=end_date)
+        if hourly_data is not None:
+            processed = self.process_data(hourly_data, daily=False)
+            if processed:
+                self.repository.bulk_upsert_data(currency, processed)
+                currency.data_availability = True
+                currency.save()
+
+
 
     def fetch_data(self, currency: Currency, frequency: str, start_date: str, end_date: str) -> Optional[pd.DataFrame]:
         try:
@@ -168,4 +148,65 @@ class CurrenciesDataService:
             'current_close': str(current_close),
             'previous_close': str(previous_close),
             'percent_change': str(percent_change)
+        }
+
+    def get_currency_data(self, currency_code: str, frequency: str, range_param: str) -> Optional[List[dict]]:
+        currency = self.repository.get_currency_by_code(currency_code)
+        if not currency:
+            return None
+        end_date = timezone.now()
+        if range_param == "last_month":
+            start_date = end_date - timedelta(days=31)
+        elif range_param == "all_data":
+            start_date = datetime(2013, 1, 1, tzinfo=timezone.get_current_timezone())
+        else:
+            start_date = end_date - timedelta(days=31)
+        data = self.repository.get_data(currency, frequency, start_date, end_date)
+        if not data:
+            return None
+        return [
+            {
+                "timestamp": int(record.timestamp.timestamp() * 1000),
+                "open": float(record.open_price),
+                "high": float(record.high_price),
+                "low": float(record.low_price),
+                "close": float(record.close_price),
+                "volume": float(record.volume)
+            }
+            for record in data
+        ]
+
+
+
+    def get_weekly_monthly_yearly_change(self, currency_code: str):
+        currency = self.repository.get_currency_by_code(currency_code)
+        if not currency:
+            return None
+
+        latest = self.repository.get_latest_record(currency)
+        if not latest:
+            return None
+        current_close = float(latest.close_price)
+
+        weekly_ts = timezone.now() - timedelta(days=7)
+        monthly_ts = timezone.now() - timedelta(days=30)
+        yearly_ts = timezone.now() - timedelta(days=365)
+
+        def get_change(ts):
+            record = self.repository.get_previous_record(currency, ts)
+            if record:
+                old_close = float(record.close_price)
+                if old_close == 0:
+                    return None
+                return round(((current_close - old_close) / old_close) * 100, 2)
+            return None
+
+        weekly_change = get_change(weekly_ts)
+        monthly_change = get_change(monthly_ts)
+        yearly_change = get_change(yearly_ts)
+
+        return {
+            "weekly_change": f"{weekly_change}%" if weekly_change is not None else "N/A",
+            "monthly_change": f"{monthly_change}%" if monthly_change is not None else "N/A",
+            "yearly_change": f"{yearly_change}%" if yearly_change is not None else "N/A"
         }

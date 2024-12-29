@@ -3,30 +3,34 @@ package com.example.currencystockprediction.currency
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentCurrencyDataBinding
+import com.example.currencystockprediction.models.CurrencyData
+import com.example.currencystockprediction.utils.ApiClient
 import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.XAxis
+import com.github.mikephil.charting.components.MarkerView
 import com.github.mikephil.charting.data.CandleData
 import com.github.mikephil.charting.data.CandleDataSet
 import com.github.mikephil.charting.data.CandleEntry
 import com.github.mikephil.charting.formatter.IAxisValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
-import com.github.mikephil.charting.components.MarkerView
 import com.github.mikephil.charting.utils.MPPointF
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.random.Random
 
 class CurrencyDataFragment : Fragment() {
 
@@ -35,7 +39,10 @@ class CurrencyDataFragment : Fragment() {
 
     private lateinit var currencyCode: String
     private val dateFormat = SimpleDateFormat("dd MMM HH", Locale.getDefault())
-    private val entriesDates = mutableListOf<Long>()
+    private val logDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+
+    private var currentMode: String = "last_month"
+    private val TAG = "CurrencyDataFragment"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,21 +63,29 @@ class CurrencyDataFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        binding.backButton.setOnClickListener {
+            findNavController().popBackStack(R.id.currencyFragment, false)
+        }
+
+
         setupToolbar()
         setupChart()
+        setupButtons()
+        setupBuyButton()
 
         lifecycleScope.launch {
-            fetchAndDisplayCurrencyData()
+            fetchAndDisplayCurrencyData("last_month")
+            fetchAndDisplayAccountUsdValue()
+            fetchAndDisplayPercentageChanges()
+            fetchAndDisplayThisCurrencyBalance()
         }
     }
 
     private fun setupToolbar() {
         binding.goBackToolbar.setNavigationOnClickListener {
-            requireActivity().onBackPressed()
+            findNavController().popBackStack(R.id.currencyFragment, false)
         }
-
-        val titleText = "USD${currencyCode}=X"
-        binding.titleText.text = titleText
+        binding.titleText.text = "USD$currencyCode=X"
     }
 
     private fun setupChart() {
@@ -78,7 +93,6 @@ class CurrencyDataFragment : Fragment() {
             description.text = "$currencyCode CandleStick Chart"
             axisRight.isEnabled = false
             xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.valueFormatter = DateAxisFormatter(entriesDates)
             xAxis.granularity = 1f
             xAxis.labelRotationAngle = -45f
             setBackgroundColor(Color.BLACK)
@@ -104,69 +118,149 @@ class CurrencyDataFragment : Fragment() {
         }
     }
 
-    private suspend fun fetchAndDisplayCurrencyData() {
-
-        withContext(Dispatchers.IO) {
-            val dataSet = CandleDataSet(generateDailyEntries(), "$currencyCode=X").apply {
-                increasingColor = Color.GREEN
-                decreasingColor = Color.RED
-                increasingPaintStyle = Paint.Style.FILL
-                decreasingPaintStyle = Paint.Style.FILL
-                shadowColor = Color.WHITE
-                shadowWidth = 0.2f
-                setDrawValues(false)
-            }
-
-            val candleData = CandleData(dataSet)
-
-            withContext(Dispatchers.Main) {
-                binding.candleStickChart.data = candleData
-
-                val marker = CustomMarkerView(requireContext(), R.layout.marker_view, dateFormat, entriesDates)
-                binding.candleStickChart.marker = marker
-
-                binding.candleStickChart.post {
-                    val totalEntries = entriesDates.size
-                    val lastDayStartIndex = if (totalEntries > 48) totalEntries - 48 else 0
-                    binding.candleStickChart.moveViewToX(lastDayStartIndex.toFloat())
-                    binding.candleStickChart.setVisibleXRangeMaximum(48f)
-                    binding.candleStickChart.invalidate()
+    private fun setupButtons() {
+        binding.lastMonthButton.setOnClickListener {
+            if (currentMode != "last_month") {
+                currentMode = "last_month"
+                lifecycleScope.launch {
+                    fetchAndDisplayCurrencyData("last_month")
                 }
-
-                binding.candleStickChart.invalidate()
+                updateButtonStyles("last_month")
+            }
+        }
+        binding.allDataButton.setOnClickListener {
+            if (currentMode != "all_data") {
+                currentMode = "all_data"
+                lifecycleScope.launch {
+                    fetchAndDisplayCurrencyData("all_data")
+                }
+                updateButtonStyles("all_data")
             }
         }
     }
 
-    private fun generateDailyEntries(): List<CandleEntry> {
-        val entries = mutableListOf<CandleEntry>()
-        var lastClose = 4.45f
-        val calendar = Calendar.getInstance().apply {
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            add(Calendar.DAY_OF_YEAR, -7)
+    private fun setupBuyButton() {
+        binding.buyCurrencyButton.setOnClickListener {
+            val amountText = binding.buyCurrencyAmountEditText.text.toString()
+            if (amountText.isEmpty()) {
+                Toast.makeText(requireContext(), "Amount is empty", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val amount = amountText.toDoubleOrNull() ?: 0.0
+            lifecycleScope.launch {
+                buyCurrency(amount)
+            }
         }
-        for (i in 0 until 7 * 24) {
-            val timestamp = calendar.timeInMillis
-            entriesDates.add(timestamp)
-            val open = lastClose
-            val close = (open + Random.nextFloat() * 0.2f - 0.1f).coerceIn(4.20f, 4.70f)
-            val high = maxOf(open, close) + Random.nextFloat() * 0.05f
-            val low = minOf(open, close) - Random.nextFloat() * 0.05f
-            entries.add(CandleEntry(i.toFloat(), high, low, open, close))
-            lastClose = close
-            calendar.add(Calendar.HOUR_OF_DAY, 1)
-        }
-        return entries
     }
 
-    inner class DateAxisFormatter(private val dates: List<Long>) : IAxisValueFormatter {
-        private val sdf = SimpleDateFormat("dd MMM\nHH", Locale.getDefault())
+    private suspend fun fetchAndDisplayCurrencyData(mode: String) {
+        withContext(Dispatchers.IO) {
+            val endpoint = "/myapp/currencies/data/$currencyCode/fetch"
+            val frequency = if (mode == "last_month") "hourly" else "daily"
+            val range = if (mode == "last_month") "last_month" else "all_data"
+            ApiClient.getRequest("$endpoint?frequency=$frequency&range=$range") { success, responseBody ->
+                if (success && responseBody != null) {
+                    val jsonData = JSONObject(responseBody).getJSONArray("data")
+                    val currencyDataList = mutableListOf<CurrencyData>()
+                    val entries = mutableListOf<CandleEntry>()
+                    val dates = mutableListOf<Long>()
+
+                    for (i in 0 until jsonData.length()) {
+                        val obj = jsonData.getJSONObject(i)
+                        val currencyData = CurrencyData(
+                            timestamp = obj.getLong("timestamp"),
+                            open = BigDecimal(obj.getString("open")),
+                            high = BigDecimal(obj.getString("high")),
+                            low = BigDecimal(obj.getString("low")),
+                            close = BigDecimal(obj.getString("close")),
+                            volume = BigDecimal(obj.getString("volume"))
+                        )
+                        currencyDataList.add(currencyData)
+                    }
+
+                    currencyDataList.forEachIndexed { index, data ->
+                        val dateReadable = Date(data.timestamp)
+                        val dateStr = logDateFormat.format(dateReadable)
+                        Log.d(
+                            TAG,
+                            "Fetched data #$index -> [$dateStr] open: ${data.open}, high: ${data.high}, low: ${data.low}, close: ${data.close}, volume: ${data.volume}"
+                        )
+                        entries.add(
+                            CandleEntry(
+                                index.toFloat(),
+                                data.high.toFloat(),
+                                data.low.toFloat(),
+                                data.open.toFloat(),
+                                data.close.toFloat()
+                            )
+                        )
+                        dates.add(data.timestamp)
+                    }
+
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        updateChart(entries, dates, mode)
+                    }
+                } else {
+                    activity?.runOnUiThread {
+                        Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateChart(entries: List<CandleEntry>, dates: List<Long>, mode: String) {
+        val dataSet = CandleDataSet(entries, "$currencyCode=X").apply {
+            increasingColor = Color.GREEN
+            decreasingColor = Color.RED
+            increasingPaintStyle = Paint.Style.FILL
+            decreasingPaintStyle = Paint.Style.FILL
+            shadowColor = Color.WHITE
+            shadowWidth = 0.2f
+            setDrawValues(false)
+        }
+        binding.candleStickChart.data = CandleData(dataSet)
+        val isHourly = mode == "last_month"
+        val marker = CustomMarkerView(requireContext(), R.layout.marker_view, dateFormat, dates)
+        binding.candleStickChart.marker = marker
+        binding.candleStickChart.xAxis.valueFormatter = DateAxisFormatter(dates, isHourly)
+        binding.candleStickChart.invalidate()
+    }
+
+    private fun updateButtonStyles(selectedMode: String) {
+        binding.lastMonthButton.setBackgroundColor(Color.TRANSPARENT)
+        binding.lastMonthButton.setTextColor(Color.WHITE)
+        binding.allDataButton.setBackgroundColor(Color.TRANSPARENT)
+        binding.allDataButton.setTextColor(Color.WHITE)
+        when (selectedMode) {
+            "last_month" -> {
+                binding.lastMonthButton.setBackgroundResource(R.drawable.background_style_mildblue_rectangle)
+                binding.lastMonthButton.setTextColor(Color.BLACK)
+            }
+            "all_data" -> {
+                binding.allDataButton.setBackgroundResource(R.drawable.background_style_mildblue_rectangle)
+                binding.allDataButton.setTextColor(Color.BLACK)
+            }
+        }
+    }
+
+    inner class DateAxisFormatter(private val dates: List<Long>, private val isHourly: Boolean) : IAxisValueFormatter {
+        private val sdfHourly = SimpleDateFormat("dd MMM HH", Locale.getDefault()).apply {
+            timeZone = TimeZone.getDefault()
+        }
+        private val sdfDaily = SimpleDateFormat("dd MMM", Locale.getDefault()).apply {
+            timeZone = TimeZone.getDefault()
+        }
+
         override fun getFormattedValue(value: Float, axis: AxisBase?): String {
             val index = value.toInt()
             return if (index in dates.indices) {
-                sdf.format(Date(dates[index]))
+                val date = Date(dates[index])
+                if (isHourly) {
+                    sdfHourly.format(date)
+                } else {
+                    sdfDaily.format(date)
+                }
             } else {
                 ""
             }
@@ -180,24 +274,100 @@ class CurrencyDataFragment : Fragment() {
         private val dates: List<Long>
     ) : MarkerView(context, layoutResource) {
         private val tvContent = findViewById<android.widget.TextView>(R.id.tvContent)
+
         override fun refreshContent(e: com.github.mikephil.charting.data.Entry?, highlight: Highlight?) {
             if (e is CandleEntry) {
                 val index = e.x.toInt()
                 if (index in dates.indices) {
                     val date = Date(dates[index])
                     val dateStr = dateFormat.format(date)
-                    val content = "Date: $dateStr\n" +
-                            "Open: ${e.open}\n" +
-                            "Close: ${e.close}\n" +
-                            "High: ${e.high}\n" +
-                            "Low: ${e.low}"
+                    val content = "Date: $dateStr\nOpen: ${e.open}\nClose: ${e.close}\nHigh: ${e.high}\nLow: ${e.low}"
                     tvContent.text = content
+                    Log.d("CustomMarkerView", "Marker content: $content")
                 }
             }
             super.refreshContent(e, highlight)
         }
+
         override fun getOffset(): MPPointF {
             return MPPointF(-(width / 2).toFloat(), -height.toFloat())
+        }
+    }
+
+    private suspend fun fetchAndDisplayAccountUsdValue() {
+        withContext(Dispatchers.IO) {
+            val endpoint = "/myapp/accounts/usd_value"
+            ApiClient.getRequest(endpoint) { success, responseBody ->
+                if (success && responseBody != null) {
+                    val obj = JSONObject(responseBody)
+                    val usdValue = obj.optDouble("usd_balance", 0.0)
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        binding.accountUsdValueTextView.text = "Account USD Balance: $$usdValue"
+                    }
+                } else {
+                    Log.e(TAG, "Failed to get USD account value")
+                }
+            }
+        }
+    }
+
+    private suspend fun fetchAndDisplayPercentageChanges() {
+        withContext(Dispatchers.IO) {
+            val endpoint = "/myapp/currencies/changes/$currencyCode"
+            ApiClient.getRequest(endpoint) { success, responseBody ->
+                if (success && responseBody != null) {
+                    val obj = JSONObject(responseBody)
+                    val weeklyChange = obj.optString("weekly_change", "0%")
+                    val monthlyChange = obj.optString("monthly_change", "0%")
+                    val yearlyChange = obj.optString("yearly_change", "0%")
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        binding.weeklyChangeTextView.text = "Weekly: $weeklyChange"
+                        binding.monthlyChangeTextView.text = "Monthly: $monthlyChange"
+                        binding.yearlyChangeTextView.text = "Yearly: $yearlyChange"
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun fetchAndDisplayThisCurrencyBalance() {
+        withContext(Dispatchers.IO) {
+            val endpoint = "/myapp/accounts/currencies/$currencyCode/balance"
+            ApiClient.getRequest(endpoint) { success, responseBody ->
+                if (success && responseBody != null) {
+                    val obj = JSONObject(responseBody)
+                    val balance = obj.optString("balance", "0.0")
+                    val code = obj.optString("currency_code", currencyCode)
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        binding.accountOtherCurrencyValueTextView.text = "You have $balance $code"
+                    }
+                } else {
+                    Log.e(TAG, "Failed to get balance for $currencyCode")
+                }
+            }
+        }
+    }
+
+    private suspend fun buyCurrency(amount: Double) {
+        withContext(Dispatchers.IO) {
+            val endpoint = "/myapp/accounts/currencies/buy"
+            val json = JSONObject().apply {
+                put("currency_code", currencyCode)
+                put("amount", amount)
+            }
+            ApiClient.postRequest(endpoint, json) { success, responseBody ->
+                if (success) {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Currency bought successfully", Toast.LENGTH_SHORT).show()
+                        fetchAndDisplayAccountUsdValue()
+                        fetchAndDisplayThisCurrencyBalance()
+                    }
+                } else {
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        Toast.makeText(requireContext(), "Buy failed: $responseBody", Toast.LENGTH_LONG).show()
+                    }
+                }
+            }
         }
     }
 

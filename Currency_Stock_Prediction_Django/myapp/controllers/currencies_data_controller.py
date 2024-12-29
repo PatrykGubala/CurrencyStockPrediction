@@ -1,44 +1,85 @@
 import json
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
 from myapp.services.currencies_data_service import CurrenciesDataService
 import logging
 
 from myapp.tasks import load_currency_data_task
 logger = logging.getLogger(__name__)
+@api_view(['GET'])
 def get_all_currencies_data(request):
     service = CurrenciesDataService()
-    data = service.get_all_data()
-    return JsonResponse({"data": data}, status=200)
+    try:
+        data = service.get_all_data()
+        return Response({"data": data}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error in get_all_currencies_data: {e}")
+        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@csrf_exempt
+
+@api_view(['POST'])
 def load_currency_data(request):
     logger.info("Request received for loading currency data")
-    if request.method != 'POST':
-        logger.warning("Invalid request method for loading data")
-        return JsonResponse({'error': 'Only POST allowed'}, status=405)
-    data = json.loads(request.body)
-    currency_ids = data.get('currency_ids', None)
-    frequency = data.get('frequency', 'daily')
-    logger.info(f"Loading data with frequency: {frequency}")
-    task = load_currency_data_task.delay(currency_ids, frequency)
-    logger.info("Data load completed")
-    return JsonResponse({"message": "Data load initiated.", "task_id": task.id}, status=202)
+    try:
+        data = request.data
+        currency_ids = data.get('currency_ids', None)
+        frequency = data.get('frequency', 'daily')
+        logger.info(f"Loading data with frequency: {frequency}")
+        task = load_currency_data_task.delay(currency_ids, frequency)
+        logger.info("Data load initiated")
+        return Response({"message": "Data load initiated.", "task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+    except Exception as e:
+        logger.error(f"Error in load_currency_data: {e}")
+        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['GET'])
 def get_latest_currency_data(request, currency_id):
     service = CurrenciesDataService()
-    latest_data = service.get_latest_data_for_currency(currency_id)
-    if not latest_data:
-        return JsonResponse({"error": "No data found for this currency."}, status=404)
-    return JsonResponse({"latest_data": latest_data}, status=200)
+    try:
+        latest_data = service.get_latest_data_for_currency(currency_id)
+        if not latest_data:
+            return Response({"error": "No data found for this currency."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"latest_data": latest_data}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error in get_latest_currency_data: {e}")
+        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['GET'])
 def get_percentage_change_for_currency(request, currency_id):
     service = CurrenciesDataService()
-    change_data = service.get_percentage_change(currency_id)
-    if not change_data:
-        return JsonResponse({"error": "Unable to calculate percentage change."}, status=404)
-    return JsonResponse({"change_data": change_data}, status=200)
+    try:
+        change_data = service.get_percentage_change(currency_id)
+        if not change_data:
+            return Response({"error": "Unable to calculate percentage change."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"change_data": change_data}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error in get_percentage_change_for_currency: {e}")
+        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['GET'])
+def fetch_currency_data(request, currency_code):
+    try:
+        service = CurrenciesDataService()
+        frequency = request.GET.get('frequency')
+        range_param = request.GET.get('range')
+        data = service.get_currency_data(currency_code, frequency, range_param)
+        if data is None:
+            return Response({"error": "No data found for this currency."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"data": data}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Error fetching currency data for {currency_code}: {e}")
+        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
+@api_view(['GET'])
+def get_currency_percentage_changes(request, currency_code):
+    service = CurrenciesDataService()
+    changes = service.get_weekly_monthly_yearly_change(currency_code)
+    if not changes:
+        return Response({"error": "No data found for this currency"}, status=status.HTTP_404_NOT_FOUND)
+    return Response(changes, status=status.HTTP_200_OK)

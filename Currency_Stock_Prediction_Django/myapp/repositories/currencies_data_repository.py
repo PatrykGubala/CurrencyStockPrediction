@@ -13,6 +13,9 @@ class CurrenciesDataRepository:
     def get_currency_by_id(self, currency_id: int) -> Optional[Currency]:
         return Currency.objects.filter(pk=currency_id).first()
 
+    def get_currency_by_code(self, currency_code: str) -> Optional[Currency]:
+        return Currency.objects.filter(code=currency_code).first()
+
     def bulk_upsert_data(self, currency: Currency, data: List[dict]):
         objs = []
         for record in data:
@@ -54,3 +57,19 @@ class CurrenciesDataRepository:
                 'volume': str(data.volume)
             })
         return result
+
+    def get_data(self, currency: Currency, frequency: str, start_date: datetime, end_date: datetime) -> Optional[
+        List[CurrenciesData]]:
+        return list(
+            CurrenciesData.objects.filter(
+                currency=currency,
+                timestamp__range=(start_date, end_date)
+            ).order_by('timestamp')
+        )
+
+    def get_latest_timestamp_for_currency_code(self, currency_code: str) -> Optional[datetime]:
+        currency = Currency.objects.filter(code=currency_code).first()
+        if not currency:
+            return None
+        result = CurrenciesData.objects.filter(currency=currency).aggregate(latest=Max('timestamp'))
+        return result['latest']
