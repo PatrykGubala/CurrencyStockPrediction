@@ -162,3 +162,15 @@ CELERY_TIMEZONE = 'UTC'
 FIREBASE_ADMIN_CREDENTIALS = os.path.join(BASE_DIR, 'firebase-admin-key.json')
 cred = credentials.Certificate(FIREBASE_ADMIN_CREDENTIALS)
 firebase_admin.initialize_app(cred)
+
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025
+EMAIL_USE_TLS = False
+DEFAULT_FROM_EMAIL = 'Currency Stock Prediction <no-reply@localtest.com>'
+
+
+FRONTEND_URL = config('FRONTEND_URL')

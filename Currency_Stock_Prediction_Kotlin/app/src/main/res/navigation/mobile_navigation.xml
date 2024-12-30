@@ -65,21 +65,53 @@
         android:name="com.example.currencystockprediction.profile.ProfileFragment"
         android:label="ProfileFragment" >
         <action
+            android:id="@+id/action_profileFragment_to_profileChangeEmailFragment"
+            app:destination="@id/profileChangeEmailFragment">
+        </action>
+        <action
+            android:id="@+id/action_profileFragment_to_profileChangePasswordFragment"
+            app:destination="@id/profileChangePasswordFragment">
+        </action>
+        <action
+            android:id="@+id/action_profileFragment_to_profileChangeUsernameFragment"
+            app:destination="@id/profileChangeUsernameFragment">
+        </action>
+        <action
             android:id="@+id/action_profileFragment_to_profileSettingsFragment"
             app:destination="@id/settingsFragment">
         </action>
     </fragment>
+
+
     <fragment
         tools:layout="@layout/fragment_profile_settings"
         android:id="@+id/settingsFragment"
         android:name="com.example.currencystockprediction.profile.settings.SettingsFragment"
         android:label="SettingsFragment" >
-
         <action
             android:id="@+id/action_settingsFragment_to_setPinFragment"
             app:destination="@id/setPinFragment">
         </action>
+    </fragment>
 
+    <fragment
+        tools:layout="@layout/fragment_profile_change_email"
+        android:id="@+id/profileChangeEmailFragment"
+        android:name="com.example.currencystockprediction.profile.ProfileChangeEmailFragment"
+        android:label="ProfileChangeEmailFragment" >
+    </fragment>
+
+    <fragment
+        tools:layout="@layout/fragment_profile_change_username"
+        android:id="@+id/profileChangeUsernameFragment"
+        android:name="com.example.currencystockprediction.profile.ProfileChangeUsernameFragment"
+        android:label="ProfileChangeUsernameFragment" >
+    </fragment>
+    <fragment
+        tools:layout="@layout/fragment_profile_change_password"
+        android:id="@+id/profileChangePasswordFragment"
+        android:name="com.example.currencystockprediction.profile.ProfileChangePasswordFragment"
+        android:label="ProfileChangePasswordFragment" >
     </fragment>
 
     <fragment

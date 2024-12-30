@@ -5,13 +5,17 @@ import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.currencystockprediction.R
+import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
+import com.example.currencystockprediction.utils.SecurityUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -50,7 +54,13 @@ class MainActivity : AppCompatActivity() {
 
         navView.itemIconTintList = getColorStateList(R.color.bottom_nav_icon_color)
         navView.itemTextColor = getColorStateList(R.color.bottom_nav_icon_color)
+
+
     }
+
+
+
+
 
     override fun onStart() {
         super.onStart()

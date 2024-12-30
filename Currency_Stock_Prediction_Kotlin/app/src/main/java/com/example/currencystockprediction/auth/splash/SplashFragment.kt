@@ -66,13 +66,6 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
         findNavController().navigate(SplashFragmentDirections.actionSplashFragmentToPinInputFragment())
     }
 
-    private fun navigateToSetPin() {
-        findNavController().navigate(SplashFragmentDirections.actionSplashFragmentToSetPinFragment())
-    }
-
-    private fun navigateToStart() {
-        findNavController().navigate(SplashFragmentDirections.actionSplashFragmentToStartFragment())
-    }
     private fun navigateToLogin() {
         findNavController().navigate(SplashFragmentDirections.actionSplashFragmentToLoginFragment())
     }

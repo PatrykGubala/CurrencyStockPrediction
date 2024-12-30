@@ -1,6 +1,7 @@
 
 from django.urls import path
-from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image
+from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image, \
+    initiate_change_email, verify_change_email
 from myapp.controllers.accounts_controller import create_account, recount_currency_values_test, get_account_usd_value, \
     get_account_transactions
 from myapp.controllers.account_currencies_controller import add_currency_to_account, get_account_currencies, \
@@ -22,7 +23,8 @@ urlpatterns = [
     path('users/get_user_by_id', get_user_by_id, name='get_user_by_id'),
     path('users/get_user_info', get_user_info, name='get_user_info'),
     path('users/upload_profile_image', upload_profile_image, name='upload_profile_image'),
-
+    path('users/initiate_change_email', initiate_change_email, name='initiate_change_email'),
+    path('users/verify_change_email', verify_change_email, name='verify_change_email'),
 
     path('currencies/', get_all_currencies, name='get_all_currencies'),
     path('currencies/european/', get_european_currencies, name='get_european_currencies'),

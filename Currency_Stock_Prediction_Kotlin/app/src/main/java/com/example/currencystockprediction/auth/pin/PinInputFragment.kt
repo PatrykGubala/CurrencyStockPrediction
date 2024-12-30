@@ -58,6 +58,9 @@ class PinInputFragment : BaseFragment() {
         binding.backButton.setOnClickListener {
             findNavController().popBackStack(R.id.startFragment, false)
         }
+        binding.forgotPasswordButton.setOnClickListener{
+            findNavController().navigate(R.id.action_pinInputFragment_to_loginFragment)
+        }
     }
 
     private fun setupNumericKeypad() {

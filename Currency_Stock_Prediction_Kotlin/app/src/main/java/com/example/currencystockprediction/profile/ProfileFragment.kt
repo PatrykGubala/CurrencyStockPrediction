@@ -47,6 +47,15 @@ class ProfileFragment : BaseFragment() {
         binding.settingsImageButton.setOnClickListener {
             findNavController().navigate(ProfileFragmentDirections.actionProfileFragmentToProfileSettingsFragment())
         }
+        binding.emailImageButton.setOnClickListener {
+            findNavController().navigate(ProfileFragmentDirections.actionProfileFragmentToProfileChangeEmailFragment())
+        }
+        binding.passwordImageButton.setOnClickListener {
+            findNavController().navigate(ProfileFragmentDirections.actionProfileFragmentToProfileChangePasswordFragment())
+        }
+        binding.usernameChangeImageButton.setOnClickListener {
+            findNavController().navigate(ProfileFragmentDirections.actionProfileFragmentToProfileChangeUsernameFragment())
+        }
         binding.profileAvatarCardView.setOnClickListener {
             selectImageFromGallery()
         }

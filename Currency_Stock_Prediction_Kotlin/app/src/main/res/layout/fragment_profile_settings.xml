@@ -57,7 +57,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/securityConstraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="72dp"
+        android:layout_marginTop="24dp"
         android:background="@drawable/background_style_black_rectangle_stroke_topbottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/goBackToolbar">
@@ -80,14 +81,14 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/securityBiometricsConstraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="64dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/securityConstraintLayout"
         android:background="@drawable/background_style_black_rectangle_stroke_bottom">
 
         <TextView
             android:id="@+id/securityBiometricsTextView"
-            style="@style/KanitRegularMedium"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -101,19 +102,23 @@
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/biometricsSwitch"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:scaleX="1.2"
+            android:scaleY="1.2"
             android:checked="false"
+
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:thumbTint="@color/mild_blue"
-            app:trackTint="@color/white" />
+            app:trackTint="@color/mild_white" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/securityEnablePINConstraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="64dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/securityBiometricsConstraintLayout"
         android:background="@drawable/background_style_black_rectangle_stroke_bottom">
@@ -121,7 +126,7 @@
 
         <TextView
             android:id="@+id/securityEnablePINTextView"
-            style="@style/KanitRegularMedium"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -135,8 +140,12 @@
         <com.google.android.material.switchmaterial.SwitchMaterial
             android:id="@+id/pinSwitch"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="8dp"
+            android:scaleX="1.2"
+            android:scaleY="1.2"
             android:checked="false"
+
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -148,13 +157,13 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/securityChangePINConstraintLayout"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
+        android:layout_height="64dp"
         app:layout_constraintTop_toBottomOf="@+id/securityEnablePINConstraintLayout"
         android:background="@drawable/background_style_black_rectangle_stroke_bottom">
 
         <TextView
             android:id="@+id/securityChangePINTextView"
-            style="@style/KanitRegularMedium"
+            style="@style/KanitLightMedium"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"

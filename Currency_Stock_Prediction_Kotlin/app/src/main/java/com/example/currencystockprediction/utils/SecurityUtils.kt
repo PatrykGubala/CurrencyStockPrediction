@@ -206,4 +206,21 @@ object SecurityUtils {
             e.printStackTrace()
         }
     }
+
+
+
+    fun updateEmail(context: Context, newEmail: String): Boolean {
+        return try {
+            val credentials = getCredentials(context)
+            if (credentials != null) {
+                saveCredentials(context, newEmail, credentials.second)
+            } else {
+                false
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating email: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
 }

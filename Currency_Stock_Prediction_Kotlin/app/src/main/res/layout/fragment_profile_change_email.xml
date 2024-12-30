@@ -9,7 +9,6 @@
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/goBackToolbar"
         android:layout_width="match_parent"
@@ -18,6 +17,7 @@
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -28,7 +28,7 @@
             android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/register_fragment_title_back_button"
+            android:contentDescription="@string/login_fragment_title_back_button"
             android:onClick="onBackPressed"
             android:src="@drawable/chevron_left"
             app:layout_constraintStart_toStartOf="parent"
@@ -39,7 +39,7 @@
             android:layout_width="wrap_content"
             android:layout_height="56dp"
             android:gravity="center_vertical"
-            android:text="@string/register_fragment_title_name"
+            android:text="Zmiana adresu e-mail"
             android:textColor="@color/white"
             app:flow_horizontalAlign="center"
             app:flow_verticalAlign="center"
@@ -49,181 +49,137 @@
             style="@style/KanitRegularLarge" />
     </com.google.android.material.appbar.MaterialToolbar>
 
+
     <TextView
-        android:id="@+id/textViewEmail"
+        android:id="@+id/emailTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
         android:layout_marginStart="16dp"
-        android:text="@string/login_fragment_input_email"
+        android:text="Adres e-mail:"
         android:textColor="@color/white"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/goBackToolbar"
         style="@style/KanitLightSmall"/>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayoutEmail"
+        android:id="@+id/emailTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewEmail">
+        app:layout_constraintTop_toBottomOf="@+id/emailTextView">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/textInputEditTextEmail"
+            android:id="@+id/emailTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="@dimen/fragment_login_input_height"
-            android:layout_marginHorizontal="@dimen/fragment_register_textinput_margin_horizontal"
+            style="@style/KanitLightSmall"
+            android:layout_marginHorizontal="16dp"
             android:backgroundTint="@color/dark_grey"
-            android:hint="@string/login_fragment_input_email"
+            android:hint="Adres e-mail:"
             android:inputType="textEmailAddress"
             android:textAlignment="viewStart"
             android:textColor="@color/white"
             android:textColorHighlight="@color/grey"
             android:textColorHint="@color/grey"
-            android:textColorLink="@color/grey"
-            style="@style/KanitLightSmall"/>
-    </com.google.android.material.textfield.TextInputLayout>
-
-
-    <TextView
-        android:id="@+id/textViewPassword"
-        style="@style/KanitLightSmall"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:text="@string/register_fragment_input_password"
-        android:textColor="@color/white"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayoutEmail" />
-
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayoutPassword"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewPassword"
-        app:endIconMode="password_toggle"  >
-
-
-    <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/textInputEditTextPassword"
-            style="@style/KanitLightSmall"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/fragment_login_input_height"
-            android:layout_marginHorizontal="@dimen/fragment_register_textinput_margin_horizontal"
-            android:backgroundTint="@color/dark_grey"
-            android:hint="@string/register_fragment_input_password"
-            android:inputType="textPassword"
-            android:textAlignment="viewStart"
-            android:textColor="@color/white"
-            android:textColorHighlight="@color/grey"
-            android:textColorHint="@color/grey"
             android:textColorLink="@color/grey" />
     </com.google.android.material.textfield.TextInputLayout>
 
 
     <TextView
-        android:id="@+id/textViewRepeatPassword"
+        android:id="@+id/passwordTextView"
         style="@style/KanitLightSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:text="@string/register_fragment_input_repeat_password"
+        android:layout_marginTop="8dp"
+        android:text="Hasło:"
         android:textColor="@color/white"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayoutPassword" />
+        app:layout_constraintTop_toBottomOf="@+id/emailTextInputLayout" />
+
+
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayoutRepeatPassword"
+        android:id="@+id/passwordTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textViewRepeatPassword"
+        app:layout_constraintTop_toBottomOf="@+id/passwordTextView"
         app:endIconMode="password_toggle"  >
 
 
     <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/textInputEditTextRepeatPassword"
-            style="@style/KanitLightSmall"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/fragment_login_input_height"
-            android:layout_marginHorizontal="@dimen/fragment_register_textinput_margin_horizontal"
-            android:backgroundTint="@color/dark_grey"
-            android:hint="@string/register_fragment_input_repeat_password"
-            android:inputType="textPassword"
-            android:textAlignment="viewStart"
-            android:textColor="@color/white"
-            android:textColorHighlight="@color/grey"
-            android:textColorHint="@color/grey"
-            android:textColorLink="@color/grey" />
+        android:id="@+id/passwordInputEditText"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/fragment_login_input_height"
+        style="@style/KanitLightSmall"
+        android:layout_marginHorizontal="16dp"
+        android:backgroundTint="@color/dark_grey"
+        android:hint="Hasło:"
+        android:inputType="textPassword"
+        android:textAlignment="viewStart"
+        android:textColor="@color/white"
+        android:textColorHighlight="@color/grey"
+        android:textColorHint="@color/grey"
+        android:textColorLink="@color/grey" />
     </com.google.android.material.textfield.TextInputLayout>
 
+
+
     <TextView
-        android:id="@+id/textViewUsername"
+        android:id="@+id/newEmailTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="4dp"
-        android:text="@string/register_fragment_input_username"
+        android:text="Nowy adres e-mail:"
         android:textColor="@color/white"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayoutRepeatPassword"
-        style="@style/KanitLightSmall" />
+        app:layout_constraintTop_toBottomOf="@+id/passwordTextInputLayout"
+        style="@style/KanitLightSmall"/>
+
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/textInputLayoutUsername"
+        android:id="@+id/newEmailTextInputLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/textViewUsername">
+        app:layout_constraintTop_toBottomOf="@+id/newEmailTextView">
 
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/textInputEditTextUsername"
+            android:id="@+id/newEmailTextInputEditText"
             android:layout_width="match_parent"
             android:layout_height="@dimen/fragment_login_input_height"
-            android:layout_marginHorizontal="@dimen/fragment_register_textinput_margin_horizontal"
-            android:backgroundTint="@color/dark_grey"
-
-            android:hint="@string/register_fragment_input_username"
-            android:inputType="textPersonName"
             style="@style/KanitLightSmall"
-
-
+            android:layout_marginHorizontal="16dp"
+            android:backgroundTint="@color/dark_grey"
+            android:hint="Nowy adres e-mail:"
+            android:inputType="textEmailAddress"
             android:textAlignment="viewStart"
             android:textColor="@color/white"
             android:textColorHighlight="@color/grey"
             android:textColorHint="@color/grey"
-            android:textColorLink="@color/grey"/>
+            android:textColorLink="@color/grey" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintTop_toBottomOf="@+id/registerButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        style="?android:attr/progressBarStyleLarge" />
+
     <Button
-        android:id="@+id/registerButton"
+        android:id="@+id/changeEmailButton"
         style="@style/KanitRegularMedium"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/fragment_start_button_height"
-        android:layout_marginHorizontal="@dimen/fragment_start_button_margin_horizontal"
-        android:layout_marginBottom="@dimen/fragment_start_button_margin_bottom"
-        android:background="@drawable/background_style_mildblue_rectangle"
-        android:text="@string/register_fragment_button_register"
+        android:layout_height="@dimen/fragment_login_button_height"
+        android:layout_marginHorizontal="@dimen/fragment_login_button_margin_horizontal"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/background_style_darkgrey_rectangle"
+        android:text="Zmień e-mail"
         android:textAllCaps="false"
-        app:backgroundTint="@color/mild_blue"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
 
