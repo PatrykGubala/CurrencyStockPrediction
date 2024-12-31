@@ -31,7 +31,10 @@ SECRET_KEY = 'django-insecure-qz6f^jonv8b30zzdag8yuw(=&il)_9mru=82_yj$#c66-at8fp
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['cf54-37-31-48-145.ngrok-free.app', 'localhost', '*']
+BACKEND_URL = config('BACKEND_URL')
+
+
+ALLOWED_HOSTS = ['cf54-37-31-48-145.ngrok-free.app', 'localhost', '*', BACKEND_URL]
 
 
 INSTALLED_APPS = [
@@ -173,4 +176,3 @@ EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = 'Currency Stock Prediction <no-reply@localtest.com>'
 
 
-FRONTEND_URL = config('FRONTEND_URL')

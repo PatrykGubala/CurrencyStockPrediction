@@ -25,3 +25,7 @@ class UsersRepository:
     def update_user_profile_image(self, user: User, image_url: str):
         user.profile_image_url = image_url
         user.save()
+
+    def update_username(self, user: User, new_username: str):
+        user.username = new_username
+        user.save()

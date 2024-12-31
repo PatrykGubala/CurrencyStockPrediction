@@ -46,7 +46,7 @@ class CurrencyDataFragment : Fragment() {
 
     private lateinit var currencyCode: String
     private val hourlyDateFormat = SimpleDateFormat("dd.MM HH:00", Locale.getDefault())
-    private val dailyDateFormat = SimpleDateFormat("dd MMM", Locale.getDefault())
+    private val dailyDateFormat = SimpleDateFormat("yyyy MM dd", Locale.getDefault())
     private val logDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
 
     private var currentMode: String = "last_month"
@@ -107,7 +107,7 @@ class CurrencyDataFragment : Fragment() {
             description.text = "$currencyCode CandleStick Chart"
             axisRight.isEnabled = false
             xAxis.position = XAxis.XAxisPosition.BOTTOM
-            xAxis.granularity = 3f
+            xAxis.granularity = 4f
             xAxis.labelRotationAngle = 0f
             setBackgroundColor(Color.BLACK)
             setDrawGridBackground(false)
@@ -230,7 +230,7 @@ class CurrencyDataFragment : Fragment() {
             increasingPaintStyle = Paint.Style.FILL
             decreasingPaintStyle = Paint.Style.FILL
             shadowColor = Color.WHITE
-            shadowWidth = 0.1f
+            shadowWidth = 0.3f
             setDrawValues(false)
         }
         binding.candleStickChart.data = CandleData(dataSet)

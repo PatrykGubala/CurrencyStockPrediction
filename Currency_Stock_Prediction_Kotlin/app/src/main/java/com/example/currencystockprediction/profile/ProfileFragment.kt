@@ -20,6 +20,7 @@ import com.example.currencystockprediction.databinding.FragmentProfileBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.CacheManager
 import com.example.currencystockprediction.utils.FirebaseAuthManager
+import com.example.currencystockprediction.utils.SecurityUtils
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 
@@ -161,7 +162,7 @@ class ProfileFragment : BaseFragment() {
         }
     }
     private fun logoutUser() {
-        FirebaseAuthManager.firebaseAuth.signOut()
+        SecurityUtils.saveReAuthNeeded(requireContext(), true)
         CacheManager.clearCache(requireContext())
         finishMainActivity()
 

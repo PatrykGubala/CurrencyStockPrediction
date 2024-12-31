@@ -1,11 +1,16 @@
 import base64
 import os
 import uuid
+from datetime import datetime, timedelta
 
+import jwt
 from django.conf import settings
+from django.core.mail import send_mail
 from django.db import transaction
 from firebase_admin import auth
 import firebase_admin
+
+from myapp.models import User
 from myapp.repositories.users_repository import UsersRepository
 from myapp.services.accounts_service import AccountsService
 import logging
@@ -97,3 +102,83 @@ class UsersService:
         except Exception as e:
             logger.error(f"Error uploading profile image for user {user.id}: {e}")
             raise e
+
+
+
+    def change_username(self, user: User, new_username: str):
+        if self.users_repo.get_user_by_username(new_username):
+            raise ValueError("Username already in use")
+        self.users_repo.update_username(user, new_username)
+        logger.info(f"User {user.id} changed username to {new_username}")
+
+    def initiate_change_email(self, user: User, new_email: str):
+        if self.users_repo.get_user_by_email(new_email):
+            raise ValueError("Email already in use")
+
+        try:
+            token = jwt.encode({
+                'user_id': user.id,
+                'new_email': new_email,
+                'exp': datetime.utcnow() + timedelta(hours=24)
+            }, settings.SECRET_KEY, algorithm='HS256')
+
+            verification_link = f"{settings.BACKEND_URL}/myapp/users/verify_change_email?token={token}"
+            logger.info(f"Verification link generated: {verification_link}")
+            self.send_verification_email(new_email, verification_link)
+
+        except Exception as e:
+            logger.error(f"Error initiating email change: {e}")
+            raise ValueError("Failed to initiate email change")
+
+    def verify_change_email(self, token: str):
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            new_email = payload.get('new_email')
+
+            if not user_id or not new_email:
+                raise ValueError("Invalid token payload")
+
+            user = self.users_repo.get_user_by_id(user_id)
+            if not user:
+                raise ValueError("User not found")
+
+            if self.users_repo.get_user_by_email(new_email):
+                raise ValueError("Email already in use")
+
+            with transaction.atomic():
+                auth.update_user(
+                    user.firebase_uid,
+                    email=new_email,
+                    email_verified=False
+                )
+
+                user.email = new_email
+                user.save()
+
+            return new_email
+        except jwt.ExpiredSignatureError:
+            logger.error("Token has expired")
+            raise ValueError("Token has expired")
+        except jwt.InvalidTokenError:
+            logger.error("Invalid token")
+            raise ValueError("Invalid token")
+        except Exception as e:
+            logger.error(f"Error verifying email change: {e}")
+            raise ValueError("Failed to verify email change")
+
+    def send_verification_email(self, email: str, link: str):
+        subject = "Verify Your New Email Address"
+        message = f"Please verify your new email address by clicking on the following link:\n\n{link}\n\nIf you did not request this change, please contact support immediately."
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient_list = [email]
+
+        try:
+            send_mail(subject, message, from_email, recipient_list)
+            logger.info(f"Verification email sent to {email}")
+        except Exception as e:
+            logger.error(f"Failed to send verification email to {email}: {e}")
+            raise
+
+
+
