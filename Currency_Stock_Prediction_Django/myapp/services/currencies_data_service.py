@@ -2,7 +2,8 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 import pandas as pd
 import yfinance as yf
-from django.db.models import Min, Max
+from django.db.models import Min, Max, Sum
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 from myapp.models import Currency, CurrenciesData
 from myapp.repositories.currencies_data_repository import CurrenciesDataRepository
@@ -158,24 +159,44 @@ class CurrenciesDataService:
         if range_param == "last_month":
             start_date = end_date - timedelta(days=31)
         elif range_param == "all_data":
-            start_date = datetime(2013, 1, 1, tzinfo=timezone.get_current_timezone())
+            start_date = None
         else:
             start_date = end_date - timedelta(days=31)
-        data = self.repository.get_data(currency, frequency, start_date, end_date)
-        if not data:
-            return None
-        return [
-            {
-                "timestamp": int(record.timestamp.timestamp() * 1000),
-                "open": float(record.open_price),
-                "high": float(record.high_price),
-                "low": float(record.low_price),
-                "close": float(record.close_price),
-                "volume": float(record.volume)
-            }
-            for record in data
-        ]
-
+        data_queryset = self.repository.get_data_raw(currency, frequency, start_date, end_date)
+        if frequency == "daily":
+            aggregated_data = data_queryset.annotate(
+                date=TruncDate('timestamp')
+            ).values('date').annotate(
+                open_price=Min('open_price'),
+                high_price=Max('high_price'),
+                low_price=Min('low_price'),
+                close_price=Max('close_price'),
+                volume=Sum('volume')
+            ).order_by('date')
+            formatted_data = []
+            for record in aggregated_data:
+                formatted_data.append({
+                    'timestamp': datetime.combine(record['date'], datetime.min.time()).timestamp() * 1000,
+                    'open': str(record['open_price']),
+                    'high': str(record['high_price']),
+                    'low': str(record['low_price']),
+                    'close': str(record['close_price']),
+                    'volume': str(record['volume']),
+                })
+            return formatted_data
+        elif frequency == "hourly":
+            data = []
+            for entry in data_queryset:
+                data.append({
+                    'timestamp': entry.timestamp.timestamp() * 1000,
+                    'open': str(entry.open_price),
+                    'high': str(entry.high_price),
+                    'low': str(entry.low_price),
+                    'close': str(entry.close_price),
+                    'volume': str(entry.volume),
+                })
+            return data
+        return None
 
 
     def get_weekly_monthly_yearly_change(self, currency_code: str):

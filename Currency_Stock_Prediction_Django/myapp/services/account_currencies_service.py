@@ -1,5 +1,6 @@
 from decimal import Decimal
 from typing import List, Optional
+import re
 
 from django.db import transaction
 from django.utils import timezone
@@ -193,3 +194,63 @@ class AccountCurrenciesService:
             )
 
         return True
+
+
+    def send_currency(self, sender_account_id: int, receiver_public_account_id: str, amount: float) -> Optional[dict]:
+
+            if amount <= 0:
+                raise ValueError("Amount must be greater than zero.")
+
+            usd_currency = self.currencies_repo.get_currency_by_code("USD")
+            if not usd_currency:
+                raise ValueError("USD currency not found.")
+
+            sender_usd_account = self.account_currency_repo.get_by_account_and_currency(sender_account_id, usd_currency.id)
+            if not sender_usd_account:
+                raise ValueError("Sender does not have a USD account.")
+
+            if sender_usd_account.balance < Decimal(amount):
+                raise ValueError("Insufficient USD balance.")
+
+            if not self.validate_public_account_id(receiver_public_account_id):
+                raise ValueError("Invalid Public Account ID format.")
+
+            receiver_account = self.accounts_repo.get_account_by_public_id(receiver_public_account_id)
+            if not receiver_account:
+                raise ValueError("Receiver account not found.")
+
+            receiver_usd_account = self.account_currency_repo.get_by_account_and_currency(receiver_account.id, usd_currency.id)
+            if not receiver_usd_account:
+                receiver_usd_account = self.account_currency_repo.add_account_currency(receiver_account.id, usd_currency.id, 0.0)
+
+            with transaction.atomic():
+                new_sender_balance = sender_usd_account.balance - Decimal(amount)
+                self.account_currency_repo.update_balance(sender_account_id, usd_currency.id, float(new_sender_balance))
+
+                new_receiver_balance = receiver_usd_account.balance + Decimal(amount)
+                self.account_currency_repo.update_balance(receiver_account.id, usd_currency.id, float(new_receiver_balance))
+
+                self.account_currency_tx_repo.create_transaction(
+                    sender_account=sender_usd_account.account,
+                    receiver_account=receiver_usd_account.account,
+                    #TODO: CHANGE WITHDRAW TO SEND
+                    transaction_type='withdraw',
+                    amount=Decimal(amount),
+                    currency=usd_currency,
+                    exchange_currency=None,
+                    exchange_rate=None,
+                    transaction_fee=Decimal('0.00')
+                )
+
+            return {
+                "message": "Send successful.",
+                "sender_new_balance": float(new_sender_balance),
+                "receiver_new_balance": float(new_receiver_balance)
+            }
+
+
+
+    @staticmethod
+    def validate_public_account_id(public_account_id: str) -> bool:
+        pattern = re.compile(r'^[a-fA-F0-9]{13}[A-Z]{3}$')
+        return bool(pattern.match(public_account_id))

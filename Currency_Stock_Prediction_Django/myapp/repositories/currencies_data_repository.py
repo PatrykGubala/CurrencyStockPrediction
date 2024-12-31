@@ -3,6 +3,7 @@ from typing import Optional, List
 
 import logging
 from django.db.models import Max
+from django.db.models.functions import TruncDate
 
 from myapp.models import Currency, CurrenciesData
 
@@ -66,6 +67,16 @@ class CurrenciesDataRepository:
                 timestamp__range=(start_date, end_date)
             ).order_by('timestamp')
         )
+
+    def get_data_raw(self, currency: Currency, frequency: str, start_date: Optional[datetime], end_date: datetime):
+        queryset = CurrenciesData.objects.filter(currency=currency)
+        if start_date:
+            queryset = queryset.filter(timestamp__gte=start_date, timestamp__lte=end_date)
+        else:
+            queryset = queryset.filter(timestamp__lte=end_date)
+        if frequency == "daily":
+            queryset = queryset.annotate(date=TruncDate('timestamp'))
+        return queryset
 
     def get_latest_timestamp_for_currency_code(self, currency_code: str) -> Optional[datetime]:
         currency = Currency.objects.filter(code=currency_code).first()

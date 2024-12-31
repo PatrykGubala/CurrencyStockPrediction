@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/goBackToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/login_fragment_title_back_button"
+            android:onClick="onBackPressed"
+            android:src="@drawable/chevron_left"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:text="Przewalutowanie"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toEndOf="@id/back_button"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            style="@style/KanitRegularLarge" />
+    </com.google.android.material.appbar.MaterialToolbar>
+
+    <TextView
+        android:id="@+id/fromTextView"
+        style="@style/KanitLightMedium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Przewalutuj z:"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toStartOf="@+id/calculateSubmitButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/goBackToolbar">
+
+
+    </TextView>
+
+    <Spinner
+        android:id="@+id/fromCurrencySpinner"
+        android:layout_width="140dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        style="@style/KanitLightMedium"
+
+        app:layout_constraintEnd_toStartOf="@+id/calculateSubmitButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fromTextView" />
+
+    <ImageButton
+        android:id="@+id/calculateSubmitButton"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/background_style_darkgrey_rectangle_stroke"
+        android:gravity="center_horizontal"
+        android:padding="12dp"
+        android:scaleType="fitCenter"
+        app:layout_constraintBottom_toBottomOf="@+id/fromCurrencySpinner"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/fromTextView"
+        app:srcCompat="@drawable/repeat" />
+
+    <TextView
+        android:id="@+id/toTextView"
+        style="@style/KanitLightMedium"
+        android:layout_width="wrap_content"
+
+        android:layout_height="wrap_content"
+        android:text="Przewalutuj na:"
+
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/calculateSubmitButton"
+        app:layout_constraintTop_toTopOf="@+id/fromTextView">
+
+    </TextView>
+
+        <Spinner
+            android:id="@+id/toCurrencySpinner"
+            android:layout_width="140dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            style="@style/KanitLightMedium"
+
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/calculateSubmitButton"
+            app:layout_constraintTop_toBottomOf="@+id/toTextView" />
+
+
+    <TextView
+        android:id="@+id/calculateAmountTextView"
+        style="@style/KanitLightSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="24dp"
+        android:text="Kwota do przewalutowania:"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/fromCurrencySpinner" />
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/calculateAmountTextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/calculateAmountTextView">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/calculateAmountTextInputEditText"
+            style="@style/KanitLightSmall"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/fragment_login_input_height"
+            android:layout_marginHorizontal="@dimen/fragment_login_textinput_margin_horizontal"
+            android:backgroundTint="@color/dark_grey"
+            android:hint="Kwota do przewalutowania:"
+            android:inputType="numberDecimal"
+            android:textAlignment="viewStart"
+            android:textColor="@color/white"
+            android:textColorHighlight="@color/grey"
+            android:textColorHint="@color/grey"
+            android:textColorLink="@color/grey"
+
+
+            />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <TextView
+        android:id="@+id/resultAmountTextView"
+        style="@style/KanitLightSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+
+        android:text="Wynik przewalutowania:"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/calculateAmountTextInputLayout" />
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/resultAmountTextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/resultAmountTextView"
+        android:clickable="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/resultAmountTextInputEditText"
+            style="@style/KanitLightSmall"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/fragment_login_input_height"
+            android:layout_marginHorizontal="@dimen/fragment_login_textinput_margin_horizontal"
+            android:backgroundTint="@color/dark_grey"
+            android:hint="Wynik przewalutowania:"
+            android:inputType="numberDecimal"
+            android:textAlignment="viewStart"
+            android:textColor="@color/white"
+            android:textColorHighlight="@color/grey"
+            android:textColorHint="@color/grey"
+            android:textColorLink="@color/grey"
+            android:clickable="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+
+            />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+
+    <TextView
+        android:id="@+id/resultExchangeRateTextView"
+        style="@style/KanitLightSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+
+        android:text="Kurs wymiany:"
+        android:textColor="@color/white"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/resultAmountTextInputLayout" />
+
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/resultExchangeRateTextInputLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/resultExchangeRateTextView"
+        android:clickable="false"
+        android:focusable="false"
+        android:focusableInTouchMode="false">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/resultExchangeRateTextInputEditText"
+            style="@style/KanitLightSmall"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/fragment_login_input_height"
+            android:layout_marginHorizontal="@dimen/fragment_login_textinput_margin_horizontal"
+            android:backgroundTint="@color/dark_grey"
+            android:hint="Kurs wymiany:"
+            android:inputType="numberDecimal"
+            android:textAlignment="viewStart"
+            android:textColor="@color/white"
+            android:textColorHighlight="@color/grey"
+            android:textColorHint="@color/grey"
+            android:textColorLink="@color/grey"
+            android:clickable="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+
+            />
+
+    </com.google.android.material.textfield.TextInputLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

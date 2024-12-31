@@ -63,7 +63,7 @@ def get_percentage_change_for_currency(request, currency_id):
         return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
-def fetch_currency_data(request, currency_code):
+def get_currency_data(request, currency_code):
     try:
         service = CurrenciesDataService()
         frequency = request.GET.get('frequency')

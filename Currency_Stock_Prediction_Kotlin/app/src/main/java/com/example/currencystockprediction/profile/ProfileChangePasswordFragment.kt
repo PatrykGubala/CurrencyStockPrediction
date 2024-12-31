@@ -18,6 +18,7 @@ import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentProfileChangeEmailBinding
 import com.example.currencystockprediction.databinding.FragmentProfileChangePasswordBinding
+import com.example.currencystockprediction.databinding.FragmentProfileChangeUsernameBinding
 import com.example.currencystockprediction.databinding.FragmentProfileSettingsBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
@@ -32,14 +33,15 @@ class ProfileChangePasswordFragment : Fragment() {
     private var originalBottomNavVisibility: Int = View.VISIBLE
 
 
-    private lateinit var binding: FragmentProfileChangePasswordBinding
+    private var _binding: FragmentProfileChangePasswordBinding? = null
+    private val binding get() = _binding!!
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentProfileChangePasswordBinding.inflate(inflater, container, false)
+        _binding = FragmentProfileChangePasswordBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -195,6 +197,7 @@ class ProfileChangePasswordFragment : Fragment() {
         super.onDestroyView()
         bottomNavView.visibility = originalBottomNavVisibility
         insetsController = null
+        _binding = null
     }
 
 }

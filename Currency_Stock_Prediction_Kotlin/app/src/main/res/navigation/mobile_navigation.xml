@@ -25,6 +25,41 @@
             android:id="@+id/action_homeFragment_to_profileFragment"
             app:destination="@id/profileFragment">
         </action>
+
+        <action
+            android:id="@+id/action_homeFragment_to_homeDepositFragment"
+            app:destination="@id/homeDepositFragment">
+        </action>
+        <action
+            android:id="@+id/action_homeFragment_to_homeSendFragment"
+            app:destination="@id/homeSendFragment">
+        </action>
+        <action
+            android:id="@+id/action_homeFragment_to_homeConvertFragment"
+            app:destination="@id/homeConvertFragment">
+        </action>
+
+    </fragment>
+
+    <fragment
+        tools:layout="@layout/fragment_home_deposit"
+        android:id="@+id/homeDepositFragment"
+        android:name="com.example.currencystockprediction.home.deposit.HomeDepositFragment"
+        android:label="HomeDepositFragment" >
+    </fragment>
+
+    <fragment
+        tools:layout="@layout/fragment_home_convert"
+        android:id="@+id/homeConvertFragment"
+        android:name="com.example.currencystockprediction.home.convert.HomeConvertFragment"
+        android:label="HomeConvertFragment" >
+    </fragment>
+
+    <fragment
+        tools:layout="@layout/fragment_home_send"
+        android:id="@+id/homeSendFragment"
+        android:name="com.example.currencystockprediction.home.send.HomeSendFragment"
+        android:label="HomeSendFragment" >
     </fragment>
 
     <fragment

@@ -17,6 +17,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentProfileChangeEmailBinding
+import com.example.currencystockprediction.databinding.FragmentProfileChangePasswordBinding
 import com.example.currencystockprediction.databinding.FragmentProfileSettingsBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
@@ -33,14 +34,16 @@ class ProfileChangeEmailFragment : Fragment() {
     private var originalBottomNavVisibility: Int = View.VISIBLE
 
 
-    private lateinit var binding: FragmentProfileChangeEmailBinding
+    private var _binding: FragmentProfileChangeEmailBinding? = null
+    private val binding get() = _binding!!
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentProfileChangeEmailBinding.inflate(inflater, container, false)
+        _binding = FragmentProfileChangeEmailBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -195,6 +198,7 @@ class ProfileChangeEmailFragment : Fragment() {
         super.onDestroyView()
         bottomNavView.visibility = originalBottomNavVisibility
         insetsController = null
+        _binding = null
     }
 
 }

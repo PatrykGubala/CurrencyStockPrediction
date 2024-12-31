@@ -6,12 +6,12 @@ from myapp.controllers.accounts_controller import create_account, recount_curren
     get_account_transactions
 from myapp.controllers.account_currencies_controller import add_currency_to_account, get_account_currencies, \
     update_account_currency_balance, remove_currency_from_account, deposit_currency, buy_currency, \
-    get_account_currency_balance
+    get_account_currency_balance, send_currency
 from myapp.controllers.countries_controller import load_only_countries, load_countries_with_details, get_all_countries, get_country
 from myapp.controllers.regions_controller import get_all_regions, get_region, load_regions, create_region, update_region, delete_region
 from myapp.controllers.currencies_controller import get_all_currencies, get_european_currencies, get_asian_currencies, get_american_currencies, get_oceanian_currencies, convert_currency
 from myapp.controllers.currencies_data_controller import get_all_currencies_data, load_currency_data, \
-    get_latest_currency_data, get_percentage_change_for_currency, fetch_currency_data, get_currency_percentage_changes
+    get_latest_currency_data, get_percentage_change_for_currency, get_currency_data, get_currency_percentage_changes
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -40,7 +40,7 @@ urlpatterns = [
     path('currencies/data/load_currency_data', load_currency_data, name='load_currency_data'),
     path('currencies/data/<int:currency_id>/latest', get_latest_currency_data, name='get_latest_currency_data'),
     path('currencies/data/<int:currency_id>/change', get_percentage_change_for_currency, name='get_percentage_change_for_currency'),
-    path('currencies/data/<str:currency_code>/fetch', fetch_currency_data, name='fetch_currency_data'),
+    path('currencies/data/<str:currency_code>/get', get_currency_data, name='get_currency_data'),
 
     path('accounts/create', create_account, name='create_account'),
     path('accounts/currencies', get_account_currencies, name='get_account_currencies'),
@@ -52,6 +52,7 @@ urlpatterns = [
     path('accounts/currencies/<str:currency_code>/balance', get_account_currency_balance, name='get_account_currency_balance'),
     path('accounts/transactions', get_account_transactions, name='get_account_transactions'),
     path('accounts/usd_value', get_account_usd_value, name='get_account_usd_value'),
+    path('accounts/currencies/send', send_currency, name='send_currency'),
 
     path('accounts/currencies/recount-test', recount_currency_values_test, name='recount_currency_values_test'),
 

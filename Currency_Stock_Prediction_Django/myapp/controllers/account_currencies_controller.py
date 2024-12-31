@@ -143,3 +143,42 @@ def buy_currency(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
         return Response({"error": "Error buying currency", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+@api_view(['POST'])
+@token_required
+def send_currency(request):
+    try:
+        data = request.data
+        public_account_id = data.get('public_account_id')
+        amount = data.get('amount')
+
+        if not public_account_id or amount is None:
+            return Response(
+                {"error": "public_account_id and amount are required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            amount = float(amount)
+        except (ValueError, TypeError):
+            return Response(
+                {"error": "Invalid amount. Must be a number."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        service = AccountCurrenciesService()
+        sender_account_id = request.current_user.account.id
+        send_result = service.send_currency(sender_account_id, public_account_id, amount)
+
+        return Response(send_result, status=status.HTTP_200_OK)
+
+    except ValueError as ve:
+        return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response(
+            {"error": "Error processing send currency.", "details": str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

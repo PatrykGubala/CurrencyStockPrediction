@@ -133,6 +133,8 @@ class CurrencyDataFragment : Fragment() {
     }
 
     private fun setupButtons() {
+        updateButtonStyles("last_month")
+
         binding.lastMonthButton.setOnClickListener {
             if (currentMode != "last_month") {
                 currentMode = "last_month"
@@ -169,7 +171,7 @@ class CurrencyDataFragment : Fragment() {
 
     private suspend fun fetchAndDisplayCurrencyData(mode: String) {
         withContext(Dispatchers.IO) {
-            val endpoint = "/myapp/currencies/data/$currencyCode/fetch"
+            val endpoint = "/myapp/currencies/data/$currencyCode/get"
             val frequency = if (mode == "last_month") "hourly" else "daily"
             val range = if (mode == "last_month") "last_month" else "all_data"
             ApiClient.getRequest("$endpoint?frequency=$frequency&range=$range") { success, responseBody ->

@@ -15,7 +15,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.currencystockprediction.BaseFragment
+import com.example.currencystockprediction.R
+import com.example.currencystockprediction.databinding.FragmentHomeSendBinding
 import com.example.currencystockprediction.databinding.FragmentProfileBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.CacheManager
@@ -25,15 +28,16 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 
 class ProfileFragment : BaseFragment() {
+    private var _binding: FragmentProfileBinding? = null
+    private val binding get() = _binding!!
 
-    private lateinit var binding: FragmentProfileBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View{
-        binding = FragmentProfileBinding.inflate(inflater, container, false)
+        _binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -97,6 +101,9 @@ class ProfileFragment : BaseFragment() {
                         if (!profileImageUrl.isNullOrEmpty()) {
                             Glide.with(requireContext())
                                 .load(profileImageUrl)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .placeholder(R.drawable.ic_launcher_background)
+                                .error(R.drawable.ic_launcher_background)
                                 .into(binding.profileAvatarImageView)
                         }
                     }
@@ -144,6 +151,9 @@ class ProfileFragment : BaseFragment() {
                             CacheManager.saveProfileImageUrl(requireContext(), newImageUrl)
                             Glide.with(requireContext())
                                 .load(newImageUrl)
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .placeholder(R.drawable.ic_launcher_background)
+                                .error(R.drawable.ic_launcher_background)
                                 .into(binding.profileAvatarImageView)
                             Toast.makeText(context, "Profile image updated successfully", Toast.LENGTH_SHORT).show()
                         } else {
@@ -167,5 +177,11 @@ class ProfileFragment : BaseFragment() {
         finishMainActivity()
 
         Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
+    }
+
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }

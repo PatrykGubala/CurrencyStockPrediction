@@ -12,6 +12,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
+import com.example.currencystockprediction.databinding.FragmentProfileBinding
 import com.example.currencystockprediction.databinding.FragmentProfileChangeUsernameBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
@@ -26,14 +27,16 @@ class ProfileChangeUsernameFragment : Fragment() {
     private var originalBottomNavVisibility: Int = View.VISIBLE
 
 
-    private lateinit var binding: FragmentProfileChangeUsernameBinding
+    private var _binding: FragmentProfileChangeUsernameBinding? = null
+    private val binding get() = _binding!!
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        binding = FragmentProfileChangeUsernameBinding.inflate(inflater, container, false)
+        _binding = FragmentProfileChangeUsernameBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -192,6 +195,7 @@ class ProfileChangeUsernameFragment : Fragment() {
         super.onDestroyView()
         bottomNavView.visibility = originalBottomNavVisibility
         insetsController = null
+        _binding = null
     }
 
 }
