@@ -110,7 +110,9 @@ class PinInputFragment : BaseFragment() {
         val inputPin = pinInput.toString()
         if (inputPin == storedPin) {
             Log.d(TAG, "PIN validation successful.")
-            authenticateWithStoredCredentials()
+            SecurityUtils.saveReAuthNeeded(requireContext(), false)
+            navigateToMainActivity()
+
         } else {
             Log.e(TAG, "PIN validation failed.")
             Toast.makeText(requireContext(), "Niepoprawny PIN. Spróbuj ponownie.", Toast.LENGTH_SHORT).show()
@@ -120,26 +122,7 @@ class PinInputFragment : BaseFragment() {
     }
 
 
-    private fun authenticateWithStoredCredentials() {
-        val credentials = SecurityUtils.getCredentials(requireContext())
-        if (credentials != null) {
-            val (email, password) = credentials
-            Log.d(TAG, "Authenticating with stored credentials for email: $email")
-            FirebaseAuthManager.signIn(email, password) { success, exception ->
-                if (success) {
-                    Log.d(TAG, "Re-authentication successful.")
-                    navigateToMainActivity()
-                } else {
-                    Log.e(TAG, "Re-authentication failed: ${exception?.message}")
-                    Toast.makeText(requireContext(), "Re-authentication failed: ${exception?.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } else {
-            Log.e(TAG, "No stored credentials found.")
-            Toast.makeText(requireContext(), "Nie znaleziono konta na urządzeniu. Proszę się zalogować ponownie.", Toast.LENGTH_SHORT).show()
-            findNavController().navigate(R.id.action_pinInputFragment_to_startFragment)
-        }
-    }
+
 
 
     private fun handleBiometricAuthentication() {
@@ -156,7 +139,8 @@ class PinInputFragment : BaseFragment() {
 
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     super.onAuthenticationSucceeded(result)
-                    authenticateWithStoredCredentials()
+                    SecurityUtils.saveReAuthNeeded(requireContext(), false)
+                    navigateToMainActivity()
                 }
 
                 override fun onAuthenticationFailed() {

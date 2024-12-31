@@ -85,33 +85,18 @@ class SetPinFragment : BaseFragment() {
         val pin = pinInput.toString()
         if (pin.length == 4) {
             val success = SecurityUtils.savePin(requireContext(), pin)
-            Log.d(TAG, "PIN saved successfully: $success")
-
             if (success) {
                 val firebaseUser = FirebaseAuthManager.firebaseAuth.currentUser
-                val firebaseUid = firebaseUser?.uid
-                val email = firebaseUser?.email
-                Log.d(TAG, "Firebase UID: $firebaseUid, Email: $email")
-
-                if (firebaseUid != null && email != null) {
-                    SecurityUtils.saveAccount(requireContext(), firebaseUid)
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Błąd: Nie udało się uzyskać informacji o użytkowniku.",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                if (firebaseUser == null) {
+                    Toast.makeText(requireContext(), "Błąd: Użytkownik niezalogowany.", Toast.LENGTH_SHORT).show()
                     return
                 }
-
-                Toast.makeText(requireContext(), "PIN został ustawiony.", Toast.LENGTH_SHORT).show()
+                SecurityUtils.saveReAuthNeeded(requireContext(), false)
                 navigateToMainActivity()
             } else {
-                Log.e(TAG, "Failed to save PIN.")
                 Toast.makeText(requireContext(), "Błąd podczas zapisywania PIN.", Toast.LENGTH_SHORT).show()
             }
         } else {
-            Log.e(TAG, "Invalid PIN length: ${pin.length}")
             Toast.makeText(requireContext(), "PIN musi mieć 4 cyfry.", Toast.LENGTH_SHORT).show()
         }
     }

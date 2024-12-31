@@ -2,6 +2,7 @@ package com.example.currencystockprediction.activities
 
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -10,8 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.currencystockprediction.R
-import com.example.currencystockprediction.utils.ApiClient
-import com.example.currencystockprediction.utils.FirebaseAuthManager
+
 import com.example.currencystockprediction.utils.SecurityUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -19,26 +19,33 @@ import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var authListener: FirebaseAuth.AuthStateListener
+    private lateinit var sharedPreferences: SharedPreferences
+    private val reAuthNeededKey = "re_auth_needed"
+
+    private val preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPrefs, key ->
+        if (key == reAuthNeededKey) {
+            val isReAuthNeeded = sharedPrefs.getBoolean(key, false)
+            if (isReAuthNeeded) {
+                Log.d(TAG, "Re-authentication needed. Navigating to AuthenticationActivity.")
+                navigateToAuthentication()
+            }
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d(TAG, "MainActivity onCreate")
         setContentView(R.layout.activity_main)
-        if (!FirebaseAuthManager.isUserLoggedIn()) {
-            Log.e(TAG, "User not logged in. Navigating to AuthenticationActivity.")
+
+        sharedPreferences = SecurityUtils.getSharedPreferences(this)
+        sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
+
+        if (SecurityUtils.isReAuthNeeded(this)) {
             navigateToAuthentication()
         }
 
-        authListener = FirebaseAuth.AuthStateListener { firebaseAuth ->
-            val user = firebaseAuth.currentUser
-            if (user == null) {
-                Log.e(TAG, "User logged out. Navigating to AuthenticationActivity.")
-                navigateToAuthentication()
-            } else {
-                Log.d(TAG, "User is logged in: ${user.uid}")
-            }
-        }
+
 
 
 
@@ -62,14 +69,19 @@ class MainActivity : AppCompatActivity() {
 
 
 
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
+
     override fun onStart() {
         super.onStart()
-        FirebaseAuthManager.addAuthStateListener(authListener)
     }
 
     override fun onStop() {
         super.onStop()
-        FirebaseAuthManager.removeAuthStateListener(authListener)
 
     }
 
@@ -85,5 +97,10 @@ class MainActivity : AppCompatActivity() {
         }
         startActivity(intent)
         finish()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
     }
 }

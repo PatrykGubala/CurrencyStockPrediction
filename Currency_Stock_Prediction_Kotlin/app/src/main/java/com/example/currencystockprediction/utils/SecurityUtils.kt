@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.biometric.BiometricManager
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
@@ -16,39 +17,31 @@ object SecurityUtils {
     private const val PIN_KEY = "user_pin"
     private const val BIOMETRIC_ENABLED_KEY = "biometric_enabled"
     private const val PREFS_FILENAME = "secure_prefs"
-    private const val SAVED_ACCOUNT_KEY = "saved_account"
-    private const val SAVED_EMAIL_KEY = "saved_email"
-    private const val SAVED_PASSWORD_KEY = "saved_password"
+
+
+
+
+
+    private const val RE_AUTH_NEEDED_KEY = "re_auth_needed"
+
 
     const val BIOMETRIC_REQUEST_CODE = 1001
     const val ENROLLMENT_REQUEST_CODE = 1002
 
-    fun saveAccount(context: Context, account: String) {
-        try {
-            val sharedPreferences = getEncryptedSharedPreferences(context)
-            sharedPreferences.edit().putString(SAVED_ACCOUNT_KEY, account).apply()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
+
+    fun saveReAuthNeeded(context: Context, isNeeded: Boolean) {
+        val prefs = getEncryptedSharedPreferences(context)
+        prefs.edit().putBoolean(RE_AUTH_NEEDED_KEY, isNeeded).apply()
     }
 
-    fun getSavedAccount(context: Context): String? {
-        return try {
-            val sharedPreferences = getEncryptedSharedPreferences(context)
-            sharedPreferences.getString(SAVED_ACCOUNT_KEY, null)
-        } catch (e: Exception) {
-            null
-        }
+    fun isReAuthNeeded(context: Context): Boolean {
+        val prefs = getEncryptedSharedPreferences(context)
+        return prefs.getBoolean(RE_AUTH_NEEDED_KEY, false)
     }
 
-    fun clearSavedAccount(context: Context) {
-        try {
-            val sharedPreferences = getEncryptedSharedPreferences(context)
-            sharedPreferences.edit().remove(SAVED_ACCOUNT_KEY).apply()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+
+
+
 
     fun savePin(context: Context, pin: String): Boolean {
         return try {
@@ -144,6 +137,9 @@ object SecurityUtils {
             }
         }
     }
+    fun getSharedPreferences(context: Context): SharedPreferences {
+        return getEncryptedSharedPreferences(context)
+    }
 
     private fun getEncryptedSharedPreferences(context: Context) =
         EncryptedSharedPreferences.create(
@@ -156,71 +152,4 @@ object SecurityUtils {
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
 
-    fun saveCredentials(context: Context, email: String, password: String): Boolean {
-        return try {
-            Log.d(TAG, "Saving user credentials.")
-            val sharedPreferences = getEncryptedSharedPreferences(context)
-            sharedPreferences.edit()
-                .putString(SAVED_EMAIL_KEY, email)
-                .putString(SAVED_PASSWORD_KEY, password)
-                .apply()
-            Log.d(TAG, "User credentials saved successfully.")
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "Error saving user credentials: ${e.message}")
-            e.printStackTrace()
-            false
-        }
-    }
-
-    fun getCredentials(context: Context): Pair<String, String>? {
-        return try {
-            val sharedPreferences = getEncryptedSharedPreferences(context)
-            val email = sharedPreferences.getString(SAVED_EMAIL_KEY, null)
-            val password = sharedPreferences.getString(SAVED_PASSWORD_KEY, null)
-            if (email != null && password != null) {
-                Log.d(TAG, "Retrieved user credentials.")
-                Pair(email, password)
-            } else {
-                Log.e(TAG, "User credentials not found.")
-                null
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error retrieving user credentials: ${e.message}")
-            e.printStackTrace()
-            null
-        }
-    }
-
-    fun clearCredentials(context: Context) {
-        try {
-            Log.d(TAG, "Clearing user credentials.")
-            val sharedPreferences = getEncryptedSharedPreferences(context)
-            sharedPreferences.edit()
-                .remove(SAVED_EMAIL_KEY)
-                .remove(SAVED_PASSWORD_KEY)
-                .apply()
-            Log.d(TAG, "User credentials cleared successfully.")
-        } catch (e: Exception) {
-            Log.e(TAG, "Error clearing user credentials: ${e.message}")
-            e.printStackTrace()
-        }
-    }
-
-
-
-    fun updateEmail(context: Context, newEmail: String): Boolean {
-        return try {
-            val credentials = getCredentials(context)
-            if (credentials != null) {
-                saveCredentials(context, newEmail, credentials.second)
-            } else {
-                false
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating email: ${e.message}")
-            e.printStackTrace()
-            false
-        }
-    }
 }

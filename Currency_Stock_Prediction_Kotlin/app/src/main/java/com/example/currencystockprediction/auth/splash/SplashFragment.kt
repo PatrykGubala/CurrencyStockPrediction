@@ -1,9 +1,11 @@
 package com.example.currencystockprediction.auth.splash
 
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -27,30 +29,24 @@ class SplashFragment : Fragment(R.layout.fragment_splash) {
     }
 
     private fun checkAuthenticationStatus() {
-        if (isUserOnDevice()) {
-            if (FirebaseAuthManager.isUserLoggedIn()) {
-                navigateToMain()
-            }else {
-                checkTwoFactorAuth()
-            }
-
-        } else {
+        val isLoggedIn = FirebaseAuthManager.isUserLoggedIn()
+        if (!isLoggedIn) {
             navigateToLogin()
+            Log.d(TAG, "User not logged in. Navigating to LoginFragment.")
+            return
         }
-    }
 
-    private fun isUserOnDevice(): Boolean {
-        return SecurityUtils.getSavedAccount(requireContext()) != null
-    }
-
-    private fun checkTwoFactorAuth() {
-        if (SecurityUtils.hasPin(requireContext()) || SecurityUtils.isBiometricEnabled(requireContext())) {
-            navigateToPinInput()
+        val reAuthNeeded = SecurityUtils.isReAuthNeeded(requireContext())
+        if (reAuthNeeded) {
+            if (SecurityUtils.hasPin(requireContext()) || SecurityUtils.isBiometricEnabled(requireContext())) {
+                navigateToPinInput()
+            } else {
+                navigateToMain()
+            }
         } else {
             navigateToMain()
         }
     }
-
     private fun navigateToMain() {
         activity?.let {
             val intent = Intent(it, MainActivity::class.java).apply {

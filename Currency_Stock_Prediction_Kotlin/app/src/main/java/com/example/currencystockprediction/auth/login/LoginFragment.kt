@@ -85,13 +85,13 @@ class LoginFragment : BaseFragment() {
             fbAuth.signInWithEmailAndPassword(email, pass)
                 .addOnSuccessListener { authRes ->
                     binding.progressBar.visibility = View.GONE
-                    val credentialsSaved = SecurityUtils.saveCredentials(requireContext(), email, pass)
-                    if (credentialsSaved) {
-                        Log.d(LOG_DEBUG, "Credentials saved successfully.")
+                    val firebaseUser = fbAuth.currentUser
+                    if (firebaseUser != null) {
+                        SecurityUtils.saveReAuthNeeded(requireContext(), false)
+                        startMainActivity()
                     } else {
-                        Log.e(LOG_DEBUG, "Failed to save credentials.")
+                        Toast.makeText(requireContext(), "Błąd logowania", Toast.LENGTH_SHORT).show()
                     }
-                    startMainActivity()
                 }
                 .addOnFailureListener { exc ->
                     binding.progressBar.visibility = View.GONE
@@ -146,19 +146,12 @@ class LoginFragment : BaseFragment() {
             .addOnCompleteListener(requireActivity()) { task ->
                 binding.progressBar.visibility = View.GONE
                 if (task.isSuccessful) {
-                    Log.d(LOG_DEBUG, "signInWithCredential:success")
-                    val email = fbAuth.currentUser?.email
-                    if (email != null) {
-                        val credentialsSaved = SecurityUtils.saveCredentials(requireContext(), email, "")
-                        if (credentialsSaved) {
-                            Log.d(LOG_DEBUG, "Credentials saved successfully (Google).")
-                        } else {
-                            Log.e(LOG_DEBUG, "Failed to save credentials (Google).")
-                        }
+                    val firebaseUser = fbAuth.currentUser
+                    if (firebaseUser != null) {
+                        SecurityUtils.saveReAuthNeeded(requireContext(), false)
+                        startMainActivity()
                     }
-                    startMainActivity()
                 } else {
-                    Log.w(LOG_DEBUG, "signInWithCredential:failure", task.exception)
                     Toast.makeText(requireContext(), "Authentication Failed.", Toast.LENGTH_SHORT).show()
                 }
             }

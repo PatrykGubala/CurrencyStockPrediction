@@ -94,12 +94,6 @@ class RegisterFragment : BaseFragment() {
         FirebaseAuthManager.firebaseAuth.createUserWithEmailAndPassword(email, password)
             .addOnCompleteListener(requireActivity()) { task ->
                 if (task.isSuccessful) {
-                    val credentialsSaved = SecurityUtils.saveCredentials(requireContext(), email, password)
-                    if (credentialsSaved) {
-                        Log.d(TAG, "User credentials saved successfully.")
-                    } else {
-                        Log.e(TAG, "Failed to save user credentials.")
-                    }
                     val firebaseUser = FirebaseAuthManager.firebaseAuth.currentUser
                     firebaseUser?.let {
                         val firebaseUid = it.uid
@@ -122,18 +116,14 @@ class RegisterFragment : BaseFragment() {
         json.put("username", username)
 
         ApiClient.postRequest("/myapp/users/register", json) { success, message ->
+            binding.progressBar.visibility = View.GONE
             if (success) {
-                requireActivity().runOnUiThread {
-                    binding.progressBar.visibility = View.GONE
-                    Toast.makeText(context, "User registered successfully", Toast.LENGTH_LONG).show()
-                    findNavController().navigate(RegisterFragmentDirections.actionRegisterFragmentToSetPinFragment())
-                }
+                SecurityUtils.saveReAuthNeeded(requireContext(), true)
+                Toast.makeText(context, "User registered successfully", Toast.LENGTH_LONG).show()
+                findNavController().navigate(RegisterFragmentDirections.actionRegisterFragmentToSetPinFragment())
             } else {
                 deleteUserFromFirebase(firebaseUid)
-                requireActivity().runOnUiThread {
-                    binding.progressBar.visibility = View.GONE
-                    Toast.makeText(context, "Registration failed: $message", Toast.LENGTH_LONG).show()
-                }
+                Toast.makeText(context, "Registration failed: $message", Toast.LENGTH_LONG).show()
             }
         }
     }

@@ -11,6 +11,7 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import com.example.currencystockprediction.activities.AuthenticationActivity
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.example.currencystockprediction.utils.LocaleHelper
+import com.example.currencystockprediction.utils.SecurityUtils
 import com.example.currencystockprediction.utils.SessionManager
 import com.google.firebase.FirebaseApp
 
@@ -51,7 +52,6 @@ class App : Application(), DefaultLifecycleObserver {
     }
 
     private fun promptReauthentication() {
-        FirebaseAuthManager.signOut()
 
         val intent = Intent(this, AuthenticationActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
