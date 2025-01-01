@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
@@ -15,6 +16,7 @@ import com.example.currencystockprediction.databinding.FragmentRegisterBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.example.currencystockprediction.utils.SecurityUtils
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 class RegisterFragment : BaseFragment() {
@@ -103,8 +105,10 @@ class RegisterFragment : BaseFragment() {
                         Toast.makeText(context, "Firebase registration failed: User is null", Toast.LENGTH_LONG).show()
                     }
                 } else {
-                    binding.progressBar.visibility = View.GONE
-                    Toast.makeText(context, "Firebase registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    requireActivity().runOnUiThread {
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(context, "Firebase registration failed: ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
     }
@@ -115,7 +119,9 @@ class RegisterFragment : BaseFragment() {
         json.put("email", email)
         json.put("username", username)
 
-        ApiClient.postRequest("/myapp/users/register", json) { success, message ->
+        lifecycleScope.launch {
+            binding.progressBar.visibility = View.VISIBLE
+            val (success, message) = ApiClient.postRequest("/myapp/users/register", json)
             binding.progressBar.visibility = View.GONE
             if (success) {
                 SecurityUtils.saveReAuthNeeded(requireContext(), true)

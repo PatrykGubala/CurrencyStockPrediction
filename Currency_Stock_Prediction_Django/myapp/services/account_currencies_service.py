@@ -123,6 +123,7 @@ class AccountCurrenciesService:
                     sender_account=None,
                     receiver_account=account_currency.account,
                     transaction_type='deposit',
+                    title='Wpływ USD',
                     amount=Decimal(amount),
                     currency=currency,
                     exchange_currency=None,
@@ -186,6 +187,7 @@ class AccountCurrenciesService:
                 sender_account=account_currency_usd.account,
                 receiver_account=account_currency_usd.account,
                 transaction_type='exchange',
+                title='Wymiana Walut',
                 amount=Decimal(amount),
                 currency=currency,
                 exchange_currency=usd_currency,
@@ -233,8 +235,8 @@ class AccountCurrenciesService:
                 self.account_currency_tx_repo.create_transaction(
                     sender_account=sender_usd_account.account,
                     receiver_account=receiver_usd_account.account,
-                    #TODO: CHANGE WITHDRAW TO SEND
-                    transaction_type='withdraw',
+                    transaction_type='send',
+                    title='Przesłanie USD',
                     amount=Decimal(amount),
                     currency=usd_currency,
                     exchange_currency=None,

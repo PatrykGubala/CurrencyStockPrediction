@@ -24,6 +24,7 @@ class App : Application(), DefaultLifecycleObserver {
         super<Application>.onCreate()
         FirebaseApp.initializeApp(this)
         SessionManager.initialize(this)
+        SecurityUtils.saveReAuthNeeded(this, true)
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
     }
     override fun attachBaseContext(base: Context) {

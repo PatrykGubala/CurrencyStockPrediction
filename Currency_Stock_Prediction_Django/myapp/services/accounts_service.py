@@ -110,6 +110,7 @@ class AccountsService:
                 "id": tx.id,
                 "transaction_type": tx.transaction_type,
                 "amount": str(tx.amount),
+                "title": tx.title,
                 "currency": tx.currency.code,
                 "exchange_currency": tx.exchange_currency.code if tx.exchange_currency else None,
                 "exchange_rate": str(tx.exchange_rate) if tx.exchange_rate else None,

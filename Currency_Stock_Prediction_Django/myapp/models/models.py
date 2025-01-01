@@ -217,6 +217,7 @@ class AccountCurrencyTransaction(models.Model):
     sender_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='sent_currency_transactions')
     receiver_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='received_currency_transactions')
     transaction_type = models.CharField(max_length=10, choices=[('deposit','deposit'),('withdraw','withdraw'),('transfer','transfer'),('exchange','exchange'), ('send', 'send')])
+    title = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='currency_transactions')
     exchange_currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, null=True, related_name='exchange_currency_transactions')
@@ -231,6 +232,7 @@ class AccountCurrencyTransaction(models.Model):
 class AccountStockTransaction(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='stock_transactions')
     transaction_type = models.CharField(max_length=4, choices=[('buy','buy'),('sell','sell')])
+    title = models.CharField(max_length=255)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='stock_transactions')
     shares = models.DecimalField(max_digits=20, decimal_places=8)
     price_per_share = models.DecimalField(max_digits=20, decimal_places=8)

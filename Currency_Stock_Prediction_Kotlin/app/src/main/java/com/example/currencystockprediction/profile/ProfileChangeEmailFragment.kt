@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentProfileChangeEmailBinding
@@ -25,6 +26,8 @@ import com.example.currencystockprediction.utils.SecurityUtils
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuthException
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 
 
@@ -74,32 +77,24 @@ class ProfileChangeEmailFragment : Fragment() {
             return
         }
 
-        reAuthenticateUser(email, password) { success, message ->
-            if (success) {
+        lifecycleScope.launch {
+            val (reauthSuccess, reauthMessage) = reAuthenticateUser(email, password)
+            if (reauthSuccess) {
                 initiateEmailChange(newEmail)
             } else {
-                requireActivity().runOnUiThread {
-                    Toast.makeText(
-                        requireContext(),
-                        "Reauthentication failed: ${message ?: "Unknown error"}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                Toast.makeText(requireContext(), "Reauthentication failed: ${reauthMessage ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun reAuthenticateUser(email: String, password: String, callback: (Boolean, String?) -> Unit) {
-        val credential = EmailAuthProvider.getCredential(email, password)
-        FirebaseAuthManager.firebaseAuth.currentUser?.reauthenticate(credential)
-            ?.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    callback(true, null)
-                } else {
-                    val exception = task.exception
-                    callback(false, exception?.localizedMessage)
-                }
-            }
+    private suspend fun reAuthenticateUser(email: String, password: String): Pair<Boolean, String?> {
+        return try {
+            val credential = EmailAuthProvider.getCredential(email, password)
+            FirebaseAuthManager.firebaseAuth.currentUser?.reauthenticate(credential)?.await()
+            Pair(true, null)
+        } catch (e: Exception) {
+            Pair(false, e.localizedMessage)
+        }
     }
 
 
@@ -140,25 +135,24 @@ class ProfileChangeEmailFragment : Fragment() {
     }
 
     private fun initiateEmailChange(newEmail: String) {
-        val json = JSONObject()
-        json.put("new_email", newEmail)
-
-        ApiClient.postRequest("/myapp/users/initiate_change_email", json) { success, response ->
-            requireActivity().runOnUiThread {
-                if (success) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Verification email sent to your new email address. Please check your inbox to verify the change.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    findNavController().popBackStack(R.id.profileFragment, false)
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Failed to initiate email change: ${response ?: "Unknown error"}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+        lifecycleScope.launch {
+            val json = JSONObject().apply {
+                put("new_email", newEmail)
+            }
+            val (success, response) = ApiClient.postRequest("/myapp/users/initiate_change_email", json)
+            if (success) {
+                Toast.makeText(
+                    requireContext(),
+                    "Verification email sent to your new email address. Please check your inbox to verify the change.",
+                    Toast.LENGTH_LONG
+                ).show()
+                findNavController().popBackStack(R.id.profileFragment, false)
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to initiate email change: ${response ?: "Unknown error"}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

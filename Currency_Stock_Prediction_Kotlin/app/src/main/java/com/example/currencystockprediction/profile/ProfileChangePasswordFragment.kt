@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentProfileChangeEmailBinding
@@ -24,6 +25,8 @@ import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.EmailAuthProvider
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
 
 
@@ -76,56 +79,44 @@ class ProfileChangePasswordFragment : Fragment() {
         }
 
 
-        reAuthenticateUser(email, oldPassword) { success, message ->
-            if (success) {
+        lifecycleScope.launch {
+            val (reauthSuccess, reauthMessage) = reAuthenticateUser(email, oldPassword)
+            if (reauthSuccess) {
                 changePassword(newPassword)
             } else {
-                requireActivity().runOnUiThread {
-                    Toast.makeText(
-                        requireContext(),
-                        "Reauthentication failed: ${message ?: "Unknown error"}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                Toast.makeText(
+                    requireContext(),
+                    "Reauthentication failed: ${reauthMessage ?: "Unknown error"}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }
 
+    private suspend fun reAuthenticateUser(email: String, password: String): Pair<Boolean, String?> {
+        return try {
+            val credential = EmailAuthProvider.getCredential(email, password)
+            FirebaseAuthManager.firebaseAuth.currentUser?.reauthenticate(credential)?.await()
+            Pair(true, null)
+        } catch (e: Exception) {
+            Pair(false, e.localizedMessage)
+        }
+    }
+
     private fun changePassword(newPassword: String) {
-        FirebaseAuthManager.firebaseAuth.currentUser?.updatePassword(newPassword)
-            ?.addOnCompleteListener { task ->
-                requireActivity().runOnUiThread {
-                    if (task.isSuccessful) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Password changed successfully.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                        findNavController().popBackStack(R.id.profileFragment, false)
-                    } else {
-                        Toast.makeText(
-                            requireContext(),
-                            "Failed to change password: ${task.exception?.localizedMessage ?: "Unknown error"}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
+        lifecycleScope.launch {
+            try {
+                FirebaseAuthManager.firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
+                Toast.makeText(requireContext(), "Password changed successfully.", Toast.LENGTH_LONG).show()
+                findNavController().popBackStack(R.id.profileFragment, false)
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Failed to change password: ${e.localizedMessage ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
             }
+        }
     }
 
 
-    private fun reAuthenticateUser(email: String, password: String, callback: (Boolean, String?) -> Unit) {
-        val credential = EmailAuthProvider.getCredential(email, password)
-        FirebaseAuthManager.firebaseAuth.currentUser?.reauthenticate(credential)
-            ?.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    callback(true, null)
-                } else {
-                    val exception = task.exception
-                    callback(false, exception?.localizedMessage)
-                }
-            }
-    }
+
 
 
     private fun validateInputs(email: String, oldPassword: String, newPassword: String, ): Boolean {

@@ -10,16 +10,17 @@ import android.widget.Toast
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
-import com.example.currencystockprediction.databinding.FragmentProfileBinding
 import com.example.currencystockprediction.databinding.FragmentProfileChangeUsernameBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.EmailAuthProvider
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.json.JSONObject
-
 
 class ProfileChangeUsernameFragment : Fragment() {
     private var insetsController: WindowInsetsControllerCompat? = null
@@ -53,15 +54,10 @@ class ProfileChangeUsernameFragment : Fragment() {
 
         setupToolbar()
 
-
         binding.changeUsernameButton.setOnClickListener {
             initiateChangeUsername()
         }
-
-
     }
-
-
 
     private fun initiateChangeUsername() {
         val email = binding.emailTextInputEditText.text.toString().trim()
@@ -71,60 +67,28 @@ class ProfileChangeUsernameFragment : Fragment() {
         if (!validateInputs(email, password, newUsername)) {
             return
         }
-        reAuthenticateUser(email, password) { success, message ->
-            if (success) {
+
+        lifecycleScope.launch {
+            val (reauthSuccess, reauthMessage) = reAuthenticateUser(email, password)
+            if (reauthSuccess) {
                 changeUsername(newUsername)
             } else {
-                requireActivity().runOnUiThread {
-                    Toast.makeText(
-                        requireContext(),
-                        "Reauthentication failed: ${message ?: "Unknown error"}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
+                Toast.makeText(requireContext(), "Reauthentication failed: ${reauthMessage ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun reAuthenticateUser(email: String, password: String, callback: (Boolean, String?) -> Unit) {
-        val credential = EmailAuthProvider.getCredential(email, password)
-        FirebaseAuthManager.firebaseAuth.currentUser?.reauthenticate(credential)
-            ?.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    callback(true, null)
-                } else {
-                    val exception = task.exception
-                    callback(false, exception?.localizedMessage)
-                }
-            }
-    }
-
-    private fun changeUsername(newUsername: String) {
-            val json = JSONObject()
-        json.put("new_username", newUsername)
-
-        ApiClient.postRequest("/myapp/users/change_username", json) { success, response ->
-            requireActivity().runOnUiThread {
-                if (success) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Username changed successfully.",
-                        Toast.LENGTH_LONG
-                    ).show()
-                    findNavController().popBackStack(R.id.profileFragment, false)
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Failed to change username: ${response ?: "Unknown error"}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
+    private suspend fun reAuthenticateUser(email: String, password: String): Pair<Boolean, String?> {
+        return try {
+            val credential = EmailAuthProvider.getCredential(email, password)
+            FirebaseAuthManager.firebaseAuth.currentUser?.reauthenticate(credential)?.await()
+            Pair(true, null)
+        } catch (e: Exception) {
+            Pair(false, e.localizedMessage)
         }
     }
 
-
-    private fun validateInputs(email: String, password: String, newUsername: String, ): Boolean {
+    private fun validateInputs(email: String, password: String, newUsername: String): Boolean {
         if (TextUtils.isEmpty(email)) {
             binding.emailTextInputLayout.error = "Aktualny adres e-mail jest wymagany"
             return false
@@ -154,11 +118,31 @@ class ProfileChangeUsernameFragment : Fragment() {
             binding.usernameTextInputLayout.error = null
         }
 
-
         return true
     }
 
-
+    private fun changeUsername(newUsername: String) {
+        lifecycleScope.launch {
+            val json = JSONObject().apply {
+                put("new_username", newUsername)
+            }
+            val (success, response) = ApiClient.postRequest("/myapp/users/change_username", json)
+            if (success) {
+                Toast.makeText(
+                    requireContext(),
+                    "Username changed successfully.",
+                    Toast.LENGTH_LONG
+                ).show()
+                findNavController().popBackStack(R.id.profileFragment, false)
+            } else {
+                Toast.makeText(
+                    requireContext(),
+                    "Failed to change username: ${response ?: "Unknown error"}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
 
     private fun setupToolbar() {
         binding.backButton.setOnClickListener {

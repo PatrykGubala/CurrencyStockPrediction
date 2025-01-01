@@ -248,7 +248,8 @@ CREATE TABLE IF NOT EXISTS account_currency_transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_account_id INT,
     receiver_account_id INT,
-    transaction_type ENUM('deposit', 'withdraw', 'transfer', 'exchange') NOT NULL,
+    transaction_type ENUM('deposit', 'withdraw', 'transfer', 'exchange', 'send') NOT NULL,
+    title VARCHAR (255),
     amount DECIMAL(20,8) NOT NULL,
     currency_id INT NOT NULL,
     exchange_currency_id INT,
@@ -274,6 +275,8 @@ CREATE TABLE IF NOT EXISTS account_stock_transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     account_id INT NOT NULL,
     transaction_type ENUM('buy', 'sell') NOT NULL,
+    title VARCHAR (255),
+
     stock_id INT NOT NULL,
     shares DECIMAL(20,8) NOT NULL,
     price_per_share DECIMAL(20,8) NOT NULL,

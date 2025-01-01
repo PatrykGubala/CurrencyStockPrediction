@@ -174,57 +174,57 @@ class CurrencyDataFragment : Fragment() {
             val endpoint = "/myapp/currencies/data/$currencyCode/get"
             val frequency = if (mode == "last_month") "hourly" else "daily"
             val range = if (mode == "last_month") "last_month" else "all_data"
-            ApiClient.getRequest("$endpoint?frequency=$frequency&range=$range") { success, responseBody ->
-                if (success && responseBody != null) {
-                    val jsonData = JSONObject(responseBody).getJSONArray("data")
-                    val currencyDataList = mutableListOf<CurrencyData>()
-                    val entries = mutableListOf<CandleEntry>()
-                    val dates = mutableListOf<Long>()
 
-                    for (i in 0 until jsonData.length()) {
-                        val obj = jsonData.getJSONObject(i)
-                        val currencyData = CurrencyData(
-                            timestamp = obj.getLong("timestamp"),
-                            open = BigDecimal(obj.getString("open")),
-                            high = BigDecimal(obj.getString("high")),
-                            low = BigDecimal(obj.getString("low")),
-                            close = BigDecimal(obj.getString("close")),
-                            volume = BigDecimal(obj.getString("volume"))
-                        )
-                        currencyDataList.add(currencyData)
-                    }
+            val responsePair = ApiClient.getRequest("$endpoint?frequency=$frequency&range=$range")
 
-                    currencyDataList.forEachIndexed { index, data ->
-                        val dateReadable = Date(data.timestamp)
-                        val dateStr = logDateFormat.format(dateReadable)
-                        Log.d(
-                            TAG,
-                            "Fetched data #$index -> [$dateStr] open: ${data.open}, high: ${data.high}, low: ${data.low}, close: ${data.close}, volume: ${data.volume}"
-                        )
-                        entries.add(
-                            CandleEntry(
-                                index.toFloat(),
-                                data.high.toFloat(),
-                                data.low.toFloat(),
-                                data.open.toFloat(),
-                                data.close.toFloat()
-                            )
-                        )
-                        dates.add(data.timestamp)
-                    }
 
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        updateChart(entries, dates, mode)
-                    }
-                } else {
-                    activity?.runOnUiThread {
-                        Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
-                    }
+            if (responsePair.first && responsePair.second != null) {
+                val jsonData = JSONObject(responsePair.second!!).getJSONArray("data")
+                val currencyDataList = mutableListOf<CurrencyData>()
+                val entries = mutableListOf<CandleEntry>()
+                val dates = mutableListOf<Long>()
+
+                for (i in 0 until jsonData.length()) {
+                    val obj = jsonData.getJSONObject(i)
+                    val currencyData = CurrencyData(
+                        timestamp = obj.getLong("timestamp"),
+                        open = BigDecimal(obj.getString("open")),
+                        high = BigDecimal(obj.getString("high")),
+                        low = BigDecimal(obj.getString("low")),
+                        close = BigDecimal(obj.getString("close")),
+                        volume = BigDecimal(obj.getString("volume"))
+                    )
+                    currencyDataList.add(currencyData)
+                }
+
+                currencyDataList.forEachIndexed { index, data ->
+                    val dateReadable = Date(data.timestamp)
+                    val dateStr = logDateFormat.format(dateReadable)
+                    Log.d(
+                        TAG,
+                        "Fetched data #$index -> [$dateStr] open: ${data.open}, high: ${data.high}, low: ${data.low}, close: ${data.close}, volume: ${data.volume}"
+                    )
+                    entries.add(
+                        CandleEntry(
+                            index.toFloat(),
+                            data.high.toFloat(),
+                            data.low.toFloat(),
+                            data.open.toFloat(),
+                            data.close.toFloat()
+                        )
+                    )
+                    dates.add(data.timestamp)
+                }
+
+                updateChart(entries, dates, mode)
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
         }
     }
-
     private fun updateChart(entries: List<CandleEntry>, dates: List<Long>, mode: String) {
         val dataSet = CandleDataSet(entries, "$currencyCode=X").apply {
             increasingColor = Color.GREEN
@@ -313,78 +313,81 @@ class CurrencyDataFragment : Fragment() {
     }
 
     private suspend fun fetchAndDisplayAccountUsdValue() {
-        withContext(Dispatchers.IO) {
-            val endpoint = "/myapp/accounts/usd_value"
-            ApiClient.getRequest(endpoint) { success, responseBody ->
-                if (success && responseBody != null) {
-                    val obj = JSONObject(responseBody)
-                    val usdValue = obj.optDouble("usd_balance", 0.0)
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        binding.accountUsdValueTextView.text = "Account USD Balance: $$usdValue"
-                    }
-                } else {
-                    Log.e(TAG, "Failed to get USD account value")
-                }
+        val endpoint = "/myapp/accounts/usd_value"
+        val responsePair = ApiClient.getRequest(endpoint)
+
+        if (responsePair.first && responsePair.second != null) {
+            val obj = JSONObject(responsePair.second!!)
+            val usdValue = obj.optDouble("usd_balance", 0.0)
+            withContext(Dispatchers.Main) {
+                binding.accountUsdValueTextView.text = "Account USD Balance: $$usdValue"
+            }
+        } else {
+            Log.e(TAG, "Failed to get USD account value")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Failed to load USD balance", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private suspend fun fetchAndDisplayPercentageChanges() {
-        withContext(Dispatchers.IO) {
-            val endpoint = "/myapp/currencies/changes/$currencyCode"
-            ApiClient.getRequest(endpoint) { success, responseBody ->
-                if (success && responseBody != null) {
-                    val obj = JSONObject(responseBody)
-                    val weeklyChange = obj.optString("weekly_change", "0%")
-                    val monthlyChange = obj.optString("monthly_change", "0%")
-                    val yearlyChange = obj.optString("yearly_change", "0%")
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        binding.weeklyChangeTextView.text = "Weekly: $weeklyChange"
-                        binding.monthlyChangeTextView.text = "Monthly: $monthlyChange"
-                        binding.yearlyChangeTextView.text = "Yearly: $yearlyChange"
-                    }
-                }
+        val endpoint = "/myapp/currencies/changes/$currencyCode"
+        val responsePair = ApiClient.getRequest(endpoint)
+
+        if (responsePair.first && responsePair.second != null) {
+            val obj = JSONObject(responsePair.second!!)
+            val weeklyChange = obj.optString("weekly_change", "0%")
+            val monthlyChange = obj.optString("monthly_change", "0%")
+            val yearlyChange = obj.optString("yearly_change", "0%")
+            withContext(Dispatchers.Main) {
+                binding.weeklyChangeTextView.text = "Weekly: $weeklyChange"
+                binding.monthlyChangeTextView.text = "Monthly: $monthlyChange"
+                binding.yearlyChangeTextView.text = "Yearly: $yearlyChange"
+            }
+        } else {
+            Log.e(TAG, "Failed to get percentage changes")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Failed to load percentage changes", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private suspend fun fetchAndDisplayThisCurrencyBalance() {
-        withContext(Dispatchers.IO) {
-            val endpoint = "/myapp/accounts/currencies/$currencyCode/balance"
-            ApiClient.getRequest(endpoint) { success, responseBody ->
-                if (success && responseBody != null) {
-                    val obj = JSONObject(responseBody)
-                    val balance = obj.optString("balance", "0.0")
-                    val code = obj.optString("currency_code", currencyCode)
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        binding.accountOtherCurrencyValueTextView.text = "You have $balance $code"
-                    }
-                } else {
-                    Log.e(TAG, "Failed to get balance for $currencyCode")
-                }
+        val endpoint = "/myapp/accounts/currencies/$currencyCode/balance"
+        val responsePair = ApiClient.getRequest(endpoint)
+
+        if (responsePair.first && responsePair.second != null) {
+            val obj = JSONObject(responsePair.second!!)
+            val balance = obj.optString("balance", "0.0")
+            val code = obj.optString("currency_code", currencyCode)
+            withContext(Dispatchers.Main) {
+                binding.accountOtherCurrencyValueTextView.text = "You have $balance $code"
+            }
+        } else {
+            Log.e(TAG, "Failed to get balance for $currencyCode")
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Failed to load currency balance", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private suspend fun buyCurrency(amount: Double) {
-        withContext(Dispatchers.IO) {
-            val endpoint = "/myapp/accounts/currencies/buy"
-            val json = JSONObject().apply {
-                put("currency_code", currencyCode)
-                put("amount", amount)
+        val endpoint = "/myapp/accounts/currencies/buy"
+        val json = JSONObject().apply {
+            put("currency_code", currencyCode)
+            put("amount", amount)
+        }
+        val responsePair = ApiClient.postRequest(endpoint, json)
+
+        if (responsePair.first) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Currency bought successfully", Toast.LENGTH_SHORT).show()
+                fetchAndDisplayAccountUsdValue()
+                fetchAndDisplayThisCurrencyBalance()
             }
-            ApiClient.postRequest(endpoint, json) { success, responseBody ->
-                if (success) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        Toast.makeText(requireContext(), "Currency bought successfully", Toast.LENGTH_SHORT).show()
-                        fetchAndDisplayAccountUsdValue()
-                        fetchAndDisplayThisCurrencyBalance()
-                    }
-                } else {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        Toast.makeText(requireContext(), "Buy failed: $responseBody", Toast.LENGTH_LONG).show()
-                    }
-                }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Buy failed: ${responsePair.second}", Toast.LENGTH_LONG).show()
             }
         }
     }

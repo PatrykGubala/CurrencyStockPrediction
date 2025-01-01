@@ -9,6 +9,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentHomeDepositBinding
@@ -17,6 +18,9 @@ import com.example.currencystockprediction.home.HomeFragmentDirections
 import com.example.currencystockprediction.home.HomeViewModel
 import com.example.currencystockprediction.utils.ApiClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 
 
@@ -58,7 +62,9 @@ class HomeDepositFragment : Fragment() {
         viewModel.usdBalance.observe(viewLifecycleOwner) { balance ->
             binding.accountAmountTextView.text = "Stan konta: $${String.format("%.2f", balance)}"
         }
-        fetchAccountBalances()
+        lifecycleScope.launch{
+            fetchAccountBalances()
+        }
 
 
         binding.depositSubmitButton.setOnClickListener {
@@ -67,28 +73,31 @@ class HomeDepositFragment : Fragment() {
 
     }
 
-    private fun fetchAccountBalances() {
-        ApiClient.getRequest("/myapp/accounts/currencies") { success, response ->
-            requireActivity().runOnUiThread {
-                if (success && response != null) {
-                    try {
-                        val jsonResponse = JSONObject(response)
-                        val currenciesArray = jsonResponse.getJSONArray("currencies")
-                        for (i in 0 until currenciesArray.length()) {
-                            val currencyObj = currenciesArray.getJSONObject(i)
-                            val code = currencyObj.getString("currency_code")
-                            val balance = currencyObj.getDouble("balance")
-                            if (code.equals("USD", ignoreCase = true)) {
-                                viewModel.setUsdBalance(balance)
-                                break
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error parsing account balances.", Toast.LENGTH_SHORT).show()
+    private suspend fun fetchAccountBalances() {
+        val endpoint = "/myapp/accounts/currencies"
+        val responsePair = ApiClient.getRequest(endpoint)
+
+        if (responsePair.first && responsePair.second != null) {
+            try {
+                val jsonResponse = JSONObject(responsePair.second!!)
+                val currenciesArray = jsonResponse.getJSONArray("currencies")
+                for (i in 0 until currenciesArray.length()) {
+                    val currencyObj = currenciesArray.getJSONObject(i)
+                    val code = currencyObj.getString("currency_code")
+                    val balance = currencyObj.getDouble("balance")
+                    if (code.equals("USD", ignoreCase = true)) {
+                        viewModel.setUsdBalance(balance)
+                        break
                     }
-                } else {
-                    Toast.makeText(requireContext(), "Failed to fetch account balances.", Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error parsing account balances.", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Failed to fetch account balances.", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -105,22 +114,21 @@ class HomeDepositFragment : Fragment() {
                 put("amount", amount)
             }
             binding.depositSubmitButton.isEnabled = false
-            ApiClient.postRequest("/myapp/accounts/deposit", json) { success, response ->
-                requireActivity().runOnUiThread {
-                    binding.depositSubmitButton.isEnabled = true
-                    if (success && response != null) {
-                        try {
-                            val jsonResponse = JSONObject(response)
-                            val newBalance = jsonResponse.getDouble("new_balance")
-                            binding.depositAmountTextInputEditText.text?.clear()
-                            viewModel.setUsdBalance(newBalance)
-                            Toast.makeText(requireContext(), "Deposit successful. New Balance: $${String.format("%.2f", newBalance)}", Toast.LENGTH_SHORT).show()
-                        } catch (e: Exception) {
-                            Toast.makeText(requireContext(), "Error parsing response.", Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        Toast.makeText(requireContext(), "Deposit failed: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+            lifecycleScope.launch {
+                val responsePair = ApiClient.postRequest("/myapp/accounts/deposit", json)
+                binding.depositSubmitButton.isEnabled = true
+                if (responsePair.first && responsePair.second != null) {
+                    try {
+                        val jsonResponse = JSONObject(responsePair.second!!)
+                        val newBalance = jsonResponse.getDouble("new_balance")
+                        binding.depositAmountTextInputEditText.text?.clear()
+                        viewModel.setUsdBalance(newBalance)
+                        Toast.makeText(requireContext(), "Deposit successful. New Balance: $${String.format("%.2f", newBalance)}", Toast.LENGTH_SHORT).show()
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Error parsing response.", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(requireContext(), "Deposit failed: ${responsePair.second ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {

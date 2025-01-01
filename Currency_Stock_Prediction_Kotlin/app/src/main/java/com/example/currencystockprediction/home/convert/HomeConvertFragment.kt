@@ -10,6 +10,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.currency.CurrencySpinnerAdapter
@@ -18,6 +19,7 @@ import com.example.currencystockprediction.databinding.FragmentHomeDepositBindin
 import com.example.currencystockprediction.home.HomeViewModel
 import com.example.currencystockprediction.utils.ApiClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 
@@ -26,12 +28,10 @@ class HomeConvertFragment : Fragment() {
     private lateinit var bottomNavView: BottomNavigationView
     private var originalBottomNavVisibility: Int = View.VISIBLE
 
-
     private var _binding: FragmentHomeConvertBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var currencyAdapter: CurrencySpinnerAdapter
-
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -56,13 +56,14 @@ class HomeConvertFragment : Fragment() {
         setupToolbar()
 
         initializeCurrencySpinners()
-        fetchAvailableCurrencies()
+        lifecycleScope.launch {
+            fetchAvailableCurrencies()
+        }
 
         binding.calculateSubmitButton.setOnClickListener {
             convertCurrency()
         }
     }
-
 
     private fun initializeCurrencySpinners() {
         val mutableCurrencies = mutableListOf<String>()
@@ -71,33 +72,27 @@ class HomeConvertFragment : Fragment() {
         binding.toCurrencySpinner.adapter = currencyAdapter
     }
 
-
-    private fun fetchAvailableCurrencies() {
-        ApiClient.getRequest("/myapp/currencies") { success, response ->
-            requireActivity().runOnUiThread {
-                if (success && response != null) {
-                    try {
-                        val jsonResponse = JSONObject(response)
-                        val currenciesArray = jsonResponse.getJSONArray("currencies")
-                        val currenciesList = mutableListOf<String>()
-                        for (i in 0 until currenciesArray.length()) {
-                            val currencyObj = currenciesArray.getJSONObject(i)
-                            val code = currencyObj.getString("code")
-                            currenciesList.add(code)
-                        }
-                        Log.d("HomeConvertFragment", "Fetched currencies: $currenciesList")
-                        currencyAdapter.clear()
-                        currencyAdapter.addAll(currenciesList)
-                        currencyAdapter.notifyDataSetChanged()
-                    } catch (e: Exception) {
-                        Log.e("HomeConvertFragment", "Error parsing currencies: ${e.message}")
-                        Toast.makeText(requireContext(), "Error parsing currencies.", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Log.e("HomeConvertFragment", "Failed to fetch currencies. Response: $response")
-                    Toast.makeText(requireContext(), "Failed to fetch currencies.", Toast.LENGTH_SHORT).show()
+    private suspend fun fetchAvailableCurrencies() {
+        val endpoint = "/myapp/currencies"
+        val (success, response) = ApiClient.getRequest(endpoint)
+        if (success && response != null) {
+            try {
+                val jsonResponse = JSONObject(response)
+                val currenciesArray = jsonResponse.getJSONArray("currencies")
+                val currenciesList = mutableListOf<String>()
+                for (i in 0 until currenciesArray.length()) {
+                    val currencyObj = currenciesArray.getJSONObject(i)
+                    val code = currencyObj.getString("code")
+                    currenciesList.add(code)
                 }
+                currencyAdapter.clear()
+                currencyAdapter.addAll(currenciesList)
+                currencyAdapter.notifyDataSetChanged()
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Error parsing currencies.", Toast.LENGTH_SHORT).show()
             }
+        } else {
+            Toast.makeText(requireContext(), "Failed to fetch currencies.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -113,45 +108,41 @@ class HomeConvertFragment : Fragment() {
                 return
             }
 
-            val json = JSONObject().apply {
-                put("amount", amount)
-                put("from_currency", fromCurrency)
-                put("to_currency", toCurrency)
-            }
+            lifecycleScope.launch {
+                val json = JSONObject().apply {
+                    put("amount", amount)
+                    put("from_currency", fromCurrency)
+                    put("to_currency", toCurrency)
+                }
 
-            binding.calculateSubmitButton.isEnabled = false
+                binding.calculateSubmitButton.isEnabled = false
+                val (success, response) = ApiClient.postRequest("/myapp/currencies/convert", json)
+                binding.calculateSubmitButton.isEnabled = true
 
-            ApiClient.postRequest("/myapp/currencies/convert", json) { success, response ->
-                requireActivity().runOnUiThread {
-                    binding.calculateSubmitButton.isEnabled = true
-
-                    if (success && response != null) {
-                        try {
-                            val jsonResponse = JSONObject(response)
-                            val convertedAmount = jsonResponse.getDouble("converted_amount")
-                            val conversionRate = jsonResponse.getDouble("conversion_rate")
-                            Toast.makeText(
-                                requireContext(),
-                                "Converted Amount: $convertedAmount $toCurrency\nRate: $conversionRate",
-                                Toast.LENGTH_LONG
-                            ).show()
-                            binding.calculateAmountTextInputEditText.text?.clear()
-                            binding.resultAmountTextInputEditText.setText("$convertedAmount $toCurrency")
-                            binding.resultExchangeRateTextInputEditText.setText("$conversionRate")
-                        } catch (e: Exception) {
-                            Toast.makeText(requireContext(), "Error parsing response.", Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        Toast.makeText(requireContext(), "Conversion failed: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                if (success && response != null) {
+                    try {
+                        val jsonResponse = JSONObject(response)
+                        val convertedAmount = jsonResponse.getDouble("converted_amount")
+                        val conversionRate = jsonResponse.getDouble("conversion_rate")
+                        Toast.makeText(
+                            requireContext(),
+                            "Converted Amount: $convertedAmount $toCurrency\nRate: $conversionRate",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        binding.calculateAmountTextInputEditText.text?.clear()
+                        binding.resultAmountTextInputEditText.setText("$convertedAmount $toCurrency")
+                        binding.resultExchangeRateTextInputEditText.setText("$conversionRate")
+                    } catch (e: Exception) {
+                        Toast.makeText(requireContext(), "Error parsing response.", Toast.LENGTH_SHORT).show()
                     }
+                } else {
+                    Toast.makeText(requireContext(), "Conversion failed: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
             Toast.makeText(requireContext(), "Please enter amount and select currencies", Toast.LENGTH_SHORT).show()
         }
     }
-
-
 
     private fun setupToolbar() {
         binding.backButton.setOnClickListener {
@@ -171,8 +162,8 @@ class HomeConvertFragment : Fragment() {
         super.onPause()
         showSystemUI()
         bottomNavView.visibility = originalBottomNavVisibility
-
     }
+
     private fun hideSystemUI() {
         insetsController?.let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())
@@ -180,6 +171,7 @@ class HomeConvertFragment : Fragment() {
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
+
     private fun showSystemUI() {
         insetsController?.show(WindowInsetsCompat.Type.systemBars())
     }
@@ -189,6 +181,5 @@ class HomeConvertFragment : Fragment() {
         bottomNavView.visibility = originalBottomNavVisibility
         insetsController = null
         _binding = null
-
     }
 }

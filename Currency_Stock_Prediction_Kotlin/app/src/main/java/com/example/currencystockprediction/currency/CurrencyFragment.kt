@@ -1,6 +1,7 @@
 package com.example.currencystockprediction.currency
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +18,7 @@ import com.example.currencystockprediction.utils.CacheManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class CurrencyFragment : BaseFragment() {
 
@@ -81,7 +83,7 @@ class CurrencyFragment : BaseFragment() {
     }
 
     private fun fetchAllCurrencies() {
-        CoroutineScope(Dispatchers.IO).launch {
+        lifecycleScope.launch {
             fetchCurrencies("european", europeanCurrencies, europeanAdapter)
             fetchCurrencies("american", americanCurrencies, americanAdapter)
             fetchCurrencies("asian", asianCurrencies, asianAdapter)
@@ -93,29 +95,32 @@ class CurrencyFragment : BaseFragment() {
         val cachedData = CacheManager.getCurrencies(requireContext(), region)
         if (cachedData != null) {
             val currencies = parseCurrenciesResponse(cachedData)
-            CoroutineScope(Dispatchers.Main).launch {
-                list.clear()
-                list.addAll(currencies)
-                adapter.notifyDataSetChanged()
-            }
+            list.clear()
+            list.addAll(currencies)
+            adapter.notifyDataSetChanged()
         }
 
-        ApiClient.getRequest("/myapp/currencies/${region}/") { success, response ->
-            if (success && response != null) {
-                CacheManager.saveCurrencies(requireContext(), region, response)
-                val currencies = parseCurrenciesResponse(response)
-                CoroutineScope(Dispatchers.Main).launch {
-                    list.clear()
-                    list.addAll(currencies)
-                    adapter.notifyDataSetChanged()
-                }
-            } else {
-                CoroutineScope(Dispatchers.Main).launch {
-                    showError("Failed to load ${region.capitalize()} currencies")
-                }
+
+        val endpoint = "/myapp/currencies/${region}/"
+        val responsePair = ApiClient.getRequest(endpoint)
+
+        if (responsePair.first && responsePair.second != null) {
+            CacheManager.saveCurrencies(requireContext(), region, responsePair.second!!)
+            val currencies = parseCurrenciesResponse(responsePair.second!!)
+            list.clear()
+            list.addAll(currencies)
+            adapter.notifyDataSetChanged()
+        } else {
+            withContext(Dispatchers.Main) {
+                showError("Failed to load $region currencies")
             }
         }
     }
+
+
+
+
+
 
     private fun parseCurrenciesResponse(response: String): List<Currency> {
         val currencies = mutableListOf<Currency>()
@@ -134,21 +139,20 @@ class CurrencyFragment : BaseFragment() {
                 currencies.add(currency)
             }
         } catch (e: Exception) {
+            Log.e("CurrencyFragment", "Error parsing currencies: ${e.message}")
         }
         return currencies
     }
 
     private fun handleCurrencyClick(currency: Currency) {
-        lifecycleScope.launch(Dispatchers.Main) {
+        lifecycleScope.launch {
             val action = CurrencyFragmentDirections.actionCurrencyFragmentToCurrencyDataFragment(currencyCode = currency.code)
             findNavController().navigate(action)
         }
     }
 
-
-
     private fun showError(message: String) {
-        lifecycleScope.launch(Dispatchers.Main) {
+        lifecycleScope.launch {
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
     }

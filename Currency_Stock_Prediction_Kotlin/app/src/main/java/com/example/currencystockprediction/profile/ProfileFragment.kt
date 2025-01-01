@@ -13,6 +13,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
@@ -24,6 +25,7 @@ import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.CacheManager
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.example.currencystockprediction.utils.SecurityUtils
+import kotlinx.coroutines.launch
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 
@@ -45,7 +47,11 @@ class ProfileFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         loadCachedUserData()
-        fetchUserData()
+
+        lifecycleScope.launch {
+            fetchUserData()
+        }
+
         binding.logoutImageButton.setOnClickListener {
             logoutUser()
         }
@@ -81,42 +87,42 @@ class ProfileFragment : BaseFragment() {
     }
 
 
-    private fun fetchUserData() {
-        ApiClient.getRequest("/myapp/users/get_user_info") { success, response ->
-            if (success && response != null) {
-                try {
-                    val json = JSONObject(response)
-                    val username = json.optString("username", "")
-                    val profileImageUrl = json.optString("profile_image_url", "")
+    private suspend fun fetchUserData() {
+        val endpoint = "/myapp/users/get_user_info"
+        val (success, response) = ApiClient.getRequest(endpoint)
+        if (success && response != null) {
+            try {
+                val json = JSONObject(response)
+                val username = json.optString("username", "")
+                val profileImageUrl = json.optString("profile_image_url", "")
 
-                    if (!username.isNullOrEmpty()) {
-                        CacheManager.saveUsername(requireContext(), username)
-                    }
-                    if (!profileImageUrl.isNullOrEmpty()) {
-                        CacheManager.saveProfileImageUrl(requireContext(), profileImageUrl)
-                    }
-
-                    requireActivity().runOnUiThread {
-                        binding.usernameTextView.text = username
-                        if (!profileImageUrl.isNullOrEmpty()) {
-                            Glide.with(requireContext())
-                                .load(profileImageUrl)
-                                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                .placeholder(R.drawable.ic_launcher_background)
-                                .error(R.drawable.ic_launcher_background)
-                                .into(binding.profileAvatarImageView)
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.e("ProfileFragment", "Error parsing user data: ${e.message}")
-                    requireActivity().runOnUiThread {
-                        Toast.makeText(context, "Failed to parse user data", Toast.LENGTH_SHORT).show()
-                    }
+                if (!username.isNullOrEmpty()) {
+                    CacheManager.saveUsername(requireContext(), username)
                 }
-            } else {
+                if (!profileImageUrl.isNullOrEmpty()) {
+                    CacheManager.saveProfileImageUrl(requireContext(), profileImageUrl)
+                }
+
                 requireActivity().runOnUiThread {
-                    Toast.makeText(context, "Failed to fetch user data: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                    binding.usernameTextView.text = username
+                    if (!profileImageUrl.isNullOrEmpty()) {
+                        Glide.with(requireContext())
+                            .load(profileImageUrl)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .placeholder(R.drawable.ic_launcher_background)
+                            .error(R.drawable.ic_launcher_background)
+                            .into(binding.profileAvatarImageView)
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e("ProfileFragment", "Error parsing user data: ${e.message}")
+                requireActivity().runOnUiThread {
+                    Toast.makeText(context, "Failed to parse user data", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            requireActivity().runOnUiThread {
+                Toast.makeText(context, "Failed to fetch user data: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -136,49 +142,50 @@ class ProfileFragment : BaseFragment() {
     }
 
     private fun uploadProfileImage(bitmap: Bitmap) {
-        val baos = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
-        val imageBase64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT)
-        val json = JSONObject()
-        json.put("image_base64", imageBase64)
-        ApiClient.postRequest("/myapp/users/upload_profile_image", json) { success, response ->
-            requireActivity().runOnUiThread {
-                if (success && response != null) {
-                    try {
-                        val responseJson = JSONObject(response)
-                        val newImageUrl = responseJson.optString("profile_image_url", "")
-                        if (!newImageUrl.isNullOrEmpty()) {
-                            CacheManager.saveProfileImageUrl(requireContext(), newImageUrl)
-                            Glide.with(requireContext())
-                                .load(newImageUrl)
-                                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                .placeholder(R.drawable.ic_launcher_background)
-                                .error(R.drawable.ic_launcher_background)
-                                .into(binding.profileAvatarImageView)
-                            Toast.makeText(context, "Profile image updated successfully", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Log.e("ProfileFragment", "profile_image_url not found in response")
-                            Toast.makeText(context, "Failed to retrieve image URL", Toast.LENGTH_SHORT).show()
-                        }
-                    } catch (e: Exception) {
-                        Log.e("ProfileFragment", "Error parsing response: ${e.message}")
-                        Toast.makeText(context, "Failed to parse server response", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val baos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, baos)
+            val imageBase64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT)
+            val json = JSONObject().apply {
+                put("image_base64", imageBase64)
+            }
+            val (success, response) = ApiClient.postRequest("/myapp/users/upload_profile_image", json)
+            if (success && response != null) {
+                try {
+                    val responseJson = JSONObject(response)
+                    val newImageUrl = responseJson.optString("profile_image_url", "")
+                    if (!newImageUrl.isNullOrEmpty()) {
+                        CacheManager.saveProfileImageUrl(requireContext(), newImageUrl)
+                        Glide.with(requireContext())
+                            .load(newImageUrl)
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .placeholder(R.drawable.ic_launcher_background)
+                            .error(R.drawable.ic_launcher_background)
+                            .into(binding.profileAvatarImageView)
+                        Toast.makeText(context, "Profile image updated successfully", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Log.e("ProfileFragment", "profile_image_url not found in response")
+                        Toast.makeText(context, "Failed to retrieve image URL", Toast.LENGTH_SHORT).show()
                     }
-                } else {
-                    Log.e("ProfileFragment", "Upload failed. Response: $response")
-                    Toast.makeText(context, "Failed to upload image: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                } catch (e: Exception) {
+                    Log.e("ProfileFragment", "Error parsing response: ${e.message}")
+                    Toast.makeText(context, "Failed to parse server response", Toast.LENGTH_SHORT).show()
                 }
+            } else {
+                Log.e("ProfileFragment", "Upload failed. Response: $response")
+                Toast.makeText(context, "Failed to upload image: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
+
     private fun logoutUser() {
-        SecurityUtils.saveReAuthNeeded(requireContext(), true)
-        CacheManager.clearCache(requireContext())
-        finishMainActivity()
-
-        Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            SecurityUtils.saveReAuthNeeded(requireContext(), true)
+            CacheManager.clearCache(requireContext())
+            finishMainActivity()
+            Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
+        }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
