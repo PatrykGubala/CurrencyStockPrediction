@@ -28,52 +28,7 @@ object ApiClient {
     private val mediaTypeJson = "application/json; charset=utf-8".toMediaType()
 
 
-    fun postRequest2(endpoint: String, json: JSONObject, callback: (Boolean, String?) -> Unit) {
-        FirebaseAuthManager.firebaseAuth.currentUser?.getIdToken(false)
-            ?.addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val token = task.result?.token
-                    val requestBody = json.toString().toRequestBody(mediaTypeJson)
 
-                    val requestBuilder = Request.Builder()
-                        .url("$BACKEND_URL$endpoint")
-                        .post(requestBody)
-
-                    if (!token.isNullOrEmpty()) {
-                        requestBuilder.addHeader("Authorization", "Bearer $token")
-                    }
-
-                    val request = requestBuilder.build()
-
-                    client.newCall(request).enqueue(object : Callback {
-                        override fun onFailure(call: Call, e: IOException) {
-                            Log.e(TAG, "POST request failed: ${e.message}")
-                            callback(false, "Network error: ${e.message}")
-                        }
-
-                        override fun onResponse(call: Call, response: Response) {
-                            response.use {
-                                if (response.isSuccessful) {
-                                    val responseBody = response.body?.string()
-                                    callback(true, responseBody)
-                                } else {
-                                    val responseBody = response.body?.string()
-                                    val errorMessage = try {
-                                        JSONObject(responseBody ?: "").getString("error")
-                                    } catch (e: Exception) {
-                                        response.message
-                                    }
-                                    callback(false, errorMessage)
-                                }
-                            }
-                        }
-                    })
-                } else {
-                    Log.e(TAG, "Failed to get Firebase token: ${task.exception?.message}")
-                    callback(false, "Authentication error: ${task.exception?.message}")
-                }
-            }
-    }
 
     suspend fun postRequest(endpoint: String, json: JSONObject): Pair<Boolean, String?> {
         return withContext(Dispatchers.IO) {
@@ -147,6 +102,55 @@ object ApiClient {
                 Pair(false, "Network error: ${e.message}")
             }
         }
+    }
+
+
+
+    fun postRequest2(endpoint: String, json: JSONObject, callback: (Boolean, String?) -> Unit) {
+        FirebaseAuthManager.firebaseAuth.currentUser?.getIdToken(false)
+            ?.addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val token = task.result?.token
+                    val requestBody = json.toString().toRequestBody(mediaTypeJson)
+
+                    val requestBuilder = Request.Builder()
+                        .url("$BACKEND_URL$endpoint")
+                        .post(requestBody)
+
+                    if (!token.isNullOrEmpty()) {
+                        requestBuilder.addHeader("Authorization", "Bearer $token")
+                    }
+
+                    val request = requestBuilder.build()
+
+                    client.newCall(request).enqueue(object : Callback {
+                        override fun onFailure(call: Call, e: IOException) {
+                            Log.e(TAG, "POST request failed: ${e.message}")
+                            callback(false, "Network error: ${e.message}")
+                        }
+
+                        override fun onResponse(call: Call, response: Response) {
+                            response.use {
+                                if (response.isSuccessful) {
+                                    val responseBody = response.body?.string()
+                                    callback(true, responseBody)
+                                } else {
+                                    val responseBody = response.body?.string()
+                                    val errorMessage = try {
+                                        JSONObject(responseBody ?: "").getString("error")
+                                    } catch (e: Exception) {
+                                        response.message
+                                    }
+                                    callback(false, errorMessage)
+                                }
+                            }
+                        }
+                    })
+                } else {
+                    Log.e(TAG, "Failed to get Firebase token: ${task.exception?.message}")
+                    callback(false, "Authentication error: ${task.exception?.message}")
+                }
+            }
     }
 
     fun getRequest2(endpoint: String, callback: (Boolean, String?) -> Unit) {

@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/goBackToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/black"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+
+
+        >
+
+        <ImageButton
+            android:id="@+id/back_button"
+            android:layout_width="48dp"
+            android:layout_height="56dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/login_fragment_title_back_button"
+            android:onClick="onBackPressed"
+            android:src="@drawable/chevron_left"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/title_text"
+            android:layout_width="wrap_content"
+            android:layout_height="56dp"
+            android:gravity="center_vertical"
+            android:text="Historia transakcji"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toEndOf="@id/back_button"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            style="@style/KanitRegularLarge" />
+    </com.google.android.material.appbar.MaterialToolbar>
+
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayoutHistory"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/goBackToolbar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            >
+
+            <LinearLayout
+                android:id="@+id/linearLayout2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/goBackToolbar">
+
+                <android.widget.SearchView
+                    android:id="@+id/searchView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+
+                    android:background="@drawable/background_style_black_rectangle_stroke"
+                    android:iconifiedByDefault="false"
+
+                    android:queryHint="Szukaj:"
+                    android:searchHintIcon="@drawable/search"
+                    app:layout_constraintEnd_toStartOf="@+id/filterImageButton"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/goBackToolbar" />
+
+                <ImageButton
+                    android:id="@+id/filterImageButton"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/background_style_black_rectangle_stroke"
+                    android:contentDescription="Email"
+                    android:padding="8dp"
+
+                    android:scaleType="fitCenter"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/goBackToolbar"
+                    app:srcCompat="@drawable/filter" />
+
+            </LinearLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/filterDialogLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="4dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@+id/linearLayout2">
+
+                <TextView
+                    android:id="@+id/rangeAmountTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Zakres kwot:"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <LinearLayout
+                    android:id="@+id/rangeAmountLinearLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/rangeAmountTextView">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/fromAmountTextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingEnd="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/calculateAmountTextView">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/fromAmountTextInputEditText"
+                            style="@style/KanitLightSmall"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/fragment_login_input_height"
+                            android:backgroundTint="@color/dark_grey"
+                            android:hint="od:"
+                            android:inputType="numberDecimal"
+                            android:textAlignment="viewStart"
+                            android:textColor="@color/white"
+                            android:textColorHighlight="@color/grey"
+                            android:textColorHint="@color/grey"
+                            android:textColorLink="@color/grey"
+
+
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/toAmountTextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingStart="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/calculateAmountTextView">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/toAmountTextInputEditText"
+                            style="@style/KanitLightSmall"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/fragment_login_input_height"
+                            android:backgroundTint="@color/dark_grey"
+                            android:hint="do:"
+                            android:inputType="numberDecimal"
+                            android:textAlignment="viewStart"
+                            android:textColor="@color/white"
+                            android:textColorHighlight="@color/grey"
+                            android:textColorHint="@color/grey"
+                            android:textColorLink="@color/grey"
+
+
+                            />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/rangeDateTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Zakres dat:"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/rangeAmountLinearLayout" />
+
+                <LinearLayout
+                    android:id="@+id/rangeDateLinearLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/rangeDateTextView">
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/fromDateTextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingEnd="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/fromDateTextInputEditText"
+                            style="@style/KanitLightSmall"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/fragment_login_input_height"
+                            android:backgroundTint="@color/dark_grey"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:hint="od:"
+                            android:textAlignment="viewStart"
+                            android:textColor="@color/white"
+                            android:textColorHighlight="@color/grey"
+                            android:textColorHint="@color/grey"
+                            android:textColorLink="@color/grey" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/toDateTextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingStart="8dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/calculateAmountTextView">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/toDateTextInputEditText"
+                            style="@style/KanitLightSmall"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/fragment_login_input_height"
+                            android:backgroundTint="@color/dark_grey"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:hint="do:"
+                            android:textAlignment="viewStart"
+                            android:textColor="@color/white"
+                            android:textColorHighlight="@color/grey"
+                            android:textColorHint="@color/grey"
+                            android:textColorLink="@color/grey" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/transactionTypeTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Typ transakcji:"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/rangeDateLinearLayout" />
+
+                <androidx.gridlayout.widget.GridLayout
+                    android:id="@+id/transactionTypesLinearLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:columnCount="3"
+                    app:layout_constraintStart_toStartOf="parent"
+
+                    app:layout_constraintTop_toBottomOf="@+id/transactionTypeTextView">
+
+                    <CheckBox
+                        android:id="@+id/checkbox_deposit"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Deposit"
+                        android:textColor="@color/white"
+                        app:layout_columnWeight="1" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_withdraw"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Withdraw"
+
+                        android:textColor="@color/white"
+                        app:layout_columnWeight="1" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_exchange"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Exchange"
+
+                        android:textColor="@color/white"
+                        app:layout_columnWeight="1" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_send"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Send"
+
+                        android:textColor="@color/white"
+                        app:layout_columnWeight="1" />
+
+                    <CheckBox
+                        android:id="@+id/checkbox_transfer"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Transfer"
+
+                        android:textColor="@color/white"
+                        app:layout_columnWeight="1" />
+                </androidx.gridlayout.widget.GridLayout>
+
+                <TextView
+                    android:id="@+id/incomeOutcomeTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Rodzaj:"
+                    android:textColor="@color/white"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/transactionTypesLinearLayout" />
+
+                <RadioGroup
+                    android:id="@+id/incomeOutcomeRadioGroup"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/incomeOutcomeTextView">
+
+
+                    <RadioButton
+                        android:id="@+id/radio_income"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Income"
+                        android:textColor="@color/white" />
+
+                    <RadioButton
+                        android:id="@+id/radio_outcome"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Outcome"
+                        android:textColor="@color/white" />
+
+                    <RadioButton
+                        android:id="@+id/radio_all"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:checked="true"
+                        android:text="Wszystko"
+                        android:textColor="@color/white" />
+
+
+                </RadioGroup>
+
+                <Button
+                    android:id="@+id/applyFilterButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Filtruj"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@+id/incomeOutcomeRadioGroup" />
+
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/historyRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:scrollbars="vertical"
+           />
+
+
+
+        </LinearLayout>
+
+
+
+
+
+
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

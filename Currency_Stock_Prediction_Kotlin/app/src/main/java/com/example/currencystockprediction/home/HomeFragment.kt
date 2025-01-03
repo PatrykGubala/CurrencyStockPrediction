@@ -141,6 +141,9 @@ class HomeFragment : Fragment() {
         binding.calculateImageButton.setOnClickListener {
             findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToHomeConvertFragment())
         }
+        binding.viewAllTransactionsButton.setOnClickListener {
+            findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToHistoryFragment())
+        }
     }
 
 

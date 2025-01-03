@@ -3,7 +3,7 @@ from django.urls import path
 from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image, \
     initiate_change_email, verify_change_email, change_username
 from myapp.controllers.accounts_controller import create_account, recount_currency_values_test, get_account_usd_value, \
-    get_account_transactions
+    get_account_transactions, get_account_id
 from myapp.controllers.account_currencies_controller import add_currency_to_account, get_account_currencies, \
     update_account_currency_balance, remove_currency_from_account, deposit_currency, buy_currency, \
     get_account_currency_balance, send_currency
@@ -42,6 +42,7 @@ urlpatterns = [
     path('currencies/data/<int:currency_id>/change', get_percentage_change_for_currency, name='get_percentage_change_for_currency'),
     path('currencies/data/<str:currency_code>/get', get_currency_data, name='get_currency_data'),
 
+    path('accounts/get_account_id', get_account_id, name='get_account_id'),
     path('accounts/create', create_account, name='create_account'),
     path('accounts/currencies', get_account_currencies, name='get_account_currencies'),
     path('accounts/currencies/add', add_currency_to_account, name='add_currency_to_account'),

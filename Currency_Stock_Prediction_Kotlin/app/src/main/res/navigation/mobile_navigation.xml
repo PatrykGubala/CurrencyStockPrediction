@@ -38,7 +38,17 @@
             android:id="@+id/action_homeFragment_to_homeConvertFragment"
             app:destination="@id/homeConvertFragment">
         </action>
+        <action
+            android:id="@+id/action_homeFragment_to_historyFragment"
+            app:destination="@id/historyFragment">
+        </action>
 
+    </fragment>
+    <fragment
+        tools:layout="@layout/fragment_home_history"
+        android:id="@+id/historyFragment"
+        android:name="com.example.currencystockprediction.home.history.HistoryFragment"
+        android:label="historyFragment" >
     </fragment>
 
     <fragment

@@ -11,6 +11,25 @@ from myapp.services.accounts_service import AccountsService
 from myapp.utils.auth_utils import token_required
 
 
+@api_view(['GET'])
+@token_required
+def get_account_id(request):
+
+    if request.method != 'GET':
+        return Response({"error": "Only GET method is allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    try:
+        service = AccountsService()
+        account = request.current_user.account
+        if account:
+            return Response({"account_id": account.id}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Account not found for the user."}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Error retrieving account ID: {e}")
+        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 @api_view(['POST'])
 def create_account(request):
     if request.method != 'POST':

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<TextView android:id="@+id/headerTextView"
+    style="@style/KanitLightLarge"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginTop="8dp"
+    android:text="January yyyy"
+    android:textColor="@color/white"
+    app:layout_constraintStart_toEndOf="@id/transactionIcon"
+    app:layout_constraintTop_toTopOf="@+id/transactionIcon"
+
+
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+
+
+
