@@ -20,7 +20,16 @@ class User(models.Model):
     class Meta:
         db_table = 'users'
 
+class Contact(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='contacts')
+    title = models.CharField(max_length=100)
+    public_account_id = models.CharField(max_length=16)
+    account_name = models.CharField(max_length=100)
+    currency_code = models.CharField(max_length=6)
 
+    class Meta:
+        db_table = 'contacts'
+        unique_together = ('user', 'public_account_id')
 
 class Region(models.Model):
     region_name = models.CharField(max_length=50, unique=True)

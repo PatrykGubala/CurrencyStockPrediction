@@ -7,11 +7,11 @@
 
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="8dp"
-    android:paddingHorizontal="8dp"
+    android:paddingVertical="12dp"
+    android:paddingHorizontal="12dp"
     android:layout_marginHorizontal="16dp"
-    android:layout_marginVertical="4dp"
-    android:background="@drawable/background_style_darkgrey_rectangle">
+    android:layout_marginVertical="8dp"
+    android:background="@drawable/background_style_darkgrey_rectangle_stroke">
 
     <ImageView
         android:id="@+id/notificationIcon"
@@ -23,7 +23,7 @@
 
     <TextView
         android:id="@+id/notificationsTitle"
-        style="@style/KanitRegularSmall"
+        style="@style/KanitRegularMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
@@ -34,7 +34,7 @@
 
     <TextView
         android:id="@+id/notificationsDate"
-        style="@style/KanitLightSmall"
+        style="@style/KanitLightMedium"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 
@@ -48,8 +48,8 @@
         style="@style/KanitLightSmall"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:layout_marginStart="4dp"
+        android:layout_marginTop="4dp"
 
         android:text="message"
         android:textColor="@color/white"

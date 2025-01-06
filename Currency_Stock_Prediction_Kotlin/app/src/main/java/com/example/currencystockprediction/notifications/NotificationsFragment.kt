@@ -42,8 +42,8 @@ class NotificationsFragment : Fragment() {
     private fun loadMockNotifications() {
         notificationsList.add(
             NotificationItem(
-                iconRes = R.drawable.help_circle,
-                title = "USD Price Alert",
+                iconRes = R.drawable.dollar_sign,
+                title = "USD Alert",
                 message = "Waluta PLN osiągneła poziom 4.1415231",
                 created_at = "3d",
                 is_read = false
@@ -51,10 +51,10 @@ class NotificationsFragment : Fragment() {
         )
         notificationsList.add(
             NotificationItem(
-                iconRes = R.drawable.check,
+                iconRes = R.drawable.users,
                 title = "Nowy transfer",
                 created_at = "28d",
-                message = "Otrzymałeś transfer $500 USD.",
+                message = "Otrzymałeś transfer 500 USD.",
                 is_read = false
             )
         )
@@ -63,7 +63,7 @@ class NotificationsFragment : Fragment() {
 
     private fun markAllNotificationsAsRead() {
         notificationsAdapter.markAllAsRead()
-        Toast.makeText(requireContext(), "All notifications marked as read.", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), "Wszystkie powiadomienia odczytane.", Toast.LENGTH_SHORT).show()
     }
 
     override fun onDestroyView() {

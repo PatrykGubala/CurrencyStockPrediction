@@ -118,12 +118,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="32dp"
                 android:layout_marginHorizontal="32dp"
-                android:layout_marginTop="4dp"
                 android:background="@drawable/background_style_darkgrey_rectangle_stroke"
                 android:orientation="horizontal"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/chartLayout">
+                app:layout_constraintTop_toTopOf="parent">
 
                 <Button
                     android:id="@+id/lastMonthButton"
@@ -132,8 +131,8 @@
                     android:layout_weight="1"
                     android:background="@android:color/transparent"
                     android:padding="0dp"
-                    android:textAllCaps="false"
-                    android:text="31d" />
+                    android:text="31d"
+                    android:textAllCaps="false" />
 
                 <Button
                     android:id="@+id/allDataButton"
@@ -142,8 +141,8 @@
                     android:layout_weight="1"
                     android:background="@android:color/transparent"
                     android:padding="0dp"
-                    android:textAllCaps="false"
-                    android:text="Wszystko" />
+                    android:text="Wszystko"
+                    android:textAllCaps="false" />
             </LinearLayout>
 
             <TextView
@@ -235,7 +234,7 @@
                 android:id="@+id/buyCurrencyButton"
                 style="@style/KanitRegularMedium"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="56dp"
                 android:layout_marginHorizontal="@dimen/fragment_login_button_margin_horizontal"
                 android:layout_marginTop="8dp"
 
@@ -284,10 +283,10 @@
                 android:id="@+id/setNotificationButton"
                 style="@style/KanitRegularMedium"
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
+                android:layout_height="56dp"
                 android:layout_marginHorizontal="@dimen/fragment_login_button_margin_horizontal"
                 android:layout_marginTop="8dp"
-                android:background="@drawable/background_style_darkgrey_rectangle"
+                android:background="@drawable/background_style_mildblue_rectangle"
                 android:padding="0dp"
                 android:text="Ustaw powiadomienie"
                 android:textAllCaps="false"
@@ -311,7 +310,7 @@
             <androidx.gridlayout.widget.GridLayout
                 android:id="@+id/percentageChangesContainer"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="64dp"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginTop="8dp"
                 app:columnCount="3"

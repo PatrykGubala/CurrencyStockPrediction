@@ -146,6 +146,9 @@ class HomeFragment : Fragment() {
         binding.depositImageButton.setOnClickListener {
             findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToHomeDepositFragment())
         }
+        binding.contactsImageButton.setOnClickListener {
+            findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToHomeContactsFragment())
+        }
 
         binding.sendImageButton.setOnClickListener {
             findNavController().navigate(HomeFragmentDirections.actionHomeFragmentToHomeSendFragment())

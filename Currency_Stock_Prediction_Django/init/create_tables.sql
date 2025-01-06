@@ -236,6 +236,23 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS contacts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    account_name VARCHAR(100) NOT NULL,
+    public_account_id VARCHAR(16) NOT NULL UNIQUE,
+    currency_code VARCHAR(6) NOT NULL UNIQUE,
+
+
+     CONSTRAINT fk_contacts_user_id FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+
+
+);
+
+
 -- 2. Accounts Table
 CREATE TABLE IF NOT EXISTS accounts
 (

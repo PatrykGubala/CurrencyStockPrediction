@@ -22,7 +22,7 @@ class NotificationsAdapter(private val notifications: MutableList<NotificationIt
                 binding.notificationItemLayout.setBackgroundResource(R.drawable.background_style_black_rectangle_stroke)
 
             } else {
-                binding.notificationItemLayout.setBackgroundResource(R.drawable.background_style_darkgrey_rectangle)
+                binding.notificationItemLayout.setBackgroundResource(R.drawable.background_style_darkgrey_rectangle_stroke)
 
             }
         }

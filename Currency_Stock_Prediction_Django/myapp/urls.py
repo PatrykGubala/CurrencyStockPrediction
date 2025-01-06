@@ -3,6 +3,7 @@ from django.urls import path
 
 from myapp.controllers.currencies_trained_models_controller import train_new_currency_model, list_currency_models, \
     list_model_predictions, predict_with_existing_model, train_new_models_for_all_currencies
+from myapp.controllers.users_contacts_controller import create_contact, list_contacts
 from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image, \
     initiate_change_email, verify_change_email, change_username
 from myapp.controllers.accounts_controller import create_account, recount_currency_values_test, get_account_usd_value, \
@@ -30,6 +31,10 @@ urlpatterns = [
     path('users/initiate_change_email', initiate_change_email, name='initiate_change_email'),
     path('users/verify_change_email', verify_change_email, name='verify_change_email'),
     path('users/change_username', change_username, name='change_username'),
+
+    path('users/contacts/create/', create_contact, name='create_contact'),
+    path('users/contacts/', list_contacts, name='list_contacts'),
+
 
     path('currencies/', get_all_currencies, name='get_all_currencies'),
     path('currencies/european/', get_european_currencies, name='get_european_currencies'),

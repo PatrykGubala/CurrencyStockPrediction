@@ -248,4 +248,21 @@
             />
 
     </com.google.android.material.textfield.TextInputLayout>
+
+
+    <Button
+        android:id="@+id/calculateButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        style="@style/KanitRegularMedium"
+        android:textAllCaps="false"
+
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="@drawable/background_style_mildblue_rectangle"
+        android:text="Przewalutuj"
+        app:layout_constraintTop_toBottomOf="@+id/resultExchangeRateTextInputLayout" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

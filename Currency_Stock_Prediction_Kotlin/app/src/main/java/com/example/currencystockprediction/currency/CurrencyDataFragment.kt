@@ -376,7 +376,7 @@ class CurrencyDataFragment : Fragment() {
                     val dateStr = dateFormat.format(date)
                     val content = "Date: $dateStr\nOpen: ${e.open}\nClose: ${e.close}\nHigh: ${e.high}\nLow: ${e.low}"
                     tvContent.text = content
-                    Log.d("CustomMarkerView", "Marker content: $content")
+                    Log.d("CustomMarkerView", "Kurs: $content")
                 }
             }
 
@@ -387,7 +387,7 @@ class CurrencyDataFragment : Fragment() {
                     val dateStr = dateFormat.format(date)
                     val content = "Date: $dateStr\nValue: ${e.y}"
                     tvContent.text = content
-                    Log.d("CustomMarkerView", "Marker content: $content")
+                    Log.d("CustomMarkerView", "Kurs: $content")
                 }
             }
             super.refreshContent(e, highlight)
@@ -411,7 +411,7 @@ class CurrencyDataFragment : Fragment() {
         } else {
             Log.e(TAG, "Failed to get USD account value")
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to load USD balance", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie załadowano USD", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -432,7 +432,7 @@ class CurrencyDataFragment : Fragment() {
         } else {
             Log.e(TAG, "Failed to get percentage changes")
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to load percentage changes", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie udało się załadować zmian procentowych", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -451,7 +451,7 @@ class CurrencyDataFragment : Fragment() {
         } else {
             Log.e(TAG, "Failed to get balance for $currencyCode")
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to load currency balance", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie załadowano stanu konta", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -466,13 +466,13 @@ class CurrencyDataFragment : Fragment() {
 
         if (responsePair.first) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Currency bought successfully", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Kupiłeś walutę", Toast.LENGTH_SHORT).show()
                 fetchAndDisplayAccountUsdValue()
                 fetchAndDisplayThisCurrencyBalance()
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Buy failed: ${responsePair.second}", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Kupno nie powiodło się: ${responsePair.second}", Toast.LENGTH_LONG).show()
             }
         }
     }

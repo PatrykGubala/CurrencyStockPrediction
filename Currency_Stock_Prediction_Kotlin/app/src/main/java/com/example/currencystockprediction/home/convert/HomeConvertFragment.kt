@@ -59,7 +59,9 @@ class HomeConvertFragment : Fragment() {
         lifecycleScope.launch {
             fetchAvailableCurrencies()
         }
-
+        binding.calculateButton.setOnClickListener {
+            convertCurrency()
+        }
         binding.calculateSubmitButton.setOnClickListener {
             convertCurrency()
         }

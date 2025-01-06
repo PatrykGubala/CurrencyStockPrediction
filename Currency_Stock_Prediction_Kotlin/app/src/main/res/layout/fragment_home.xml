@@ -64,14 +64,14 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/sellButtonLayout"
+            android:id="@+id/contactsButtonLayout"
             android:layout_width="96dp"
             android:layout_height="wrap_content"
 
             >
 
             <ImageButton
-                android:id="@+id/sellImageButton"
+                android:id="@+id/contactsImageButton"
                 android:layout_width="56dp"
                 android:layout_height="56dp"
                 android:background="@drawable/background_style_mildblue_round_stroke"
@@ -81,17 +81,17 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
-                app:srcCompat="@drawable/minus" />
+                app:srcCompat="@drawable/users" />
 
             <TextView
                 style="@style/KanitLightSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
-                android:text="Sprzedaj"
+                android:text="Kontakty"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/sellImageButton" />
+                app:layout_constraintTop_toBottomOf="@id/contactsImageButton" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
@@ -166,13 +166,14 @@
         android:layout_height="wrap_content"
         android:text="Ostatnie Transakcje"
         android:textColor="@color/white"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginStart="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/linearLayout" />
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="16dp"
@@ -204,7 +205,71 @@
             app:layout_constraintTop_toBottomOf="@id/recentTransactionsRecyclerView" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/currenciesConstraintLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout">
 
+        <TextView
+            android:id="@+id/currenciesTextView"
+            style="@style/KanitRegularMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Moje waluty"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/europeanCurrenciesRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="102dp"
+            android:background="@drawable/background_style_darkgrey_rectangle_stroke"
+            android:paddingVertical="4dp"
+            app:layout_constraintTop_toBottomOf="@+id/currenciesTextView"
+            tools:listitem="@layout/fragment_home_currency_item" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/stocksConstraintLayout"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/currenciesConstraintLayout">
+
+        <TextView
+            android:id="@+id/stocksTextView"
+            style="@style/KanitRegularMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Moje akcje"
+            android:textColor="@color/white"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/stocksRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="102dp"
+            android:background="@drawable/background_style_darkgrey_rectangle_stroke"
+            android:paddingVertical="4dp"
+            app:layout_constraintTop_toBottomOf="@+id/stocksTextView"
+            tools:listitem="@layout/fragment_home_stock_item" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 

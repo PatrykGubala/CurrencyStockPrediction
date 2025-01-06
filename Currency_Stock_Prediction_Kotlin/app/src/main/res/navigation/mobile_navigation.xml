@@ -42,6 +42,10 @@
             android:id="@+id/action_homeFragment_to_historyFragment"
             app:destination="@id/historyFragment">
         </action>
+        <action
+            android:id="@+id/action_homeFragment_to_homeContactsFragment"
+            app:destination="@id/contactsFragment">
+        </action>
 
     </fragment>
     <fragment
@@ -49,6 +53,12 @@
         android:id="@+id/historyFragment"
         android:name="com.example.currencystockprediction.home.history.HistoryFragment"
         android:label="historyFragment" >
+    </fragment>
+    <fragment
+        tools:layout="@layout/fragment_home_contacts"
+        android:id="@+id/contactsFragment"
+        android:name="com.example.currencystockprediction.home.contacts.ContactsFragment"
+        android:label="contactsFragment" >
     </fragment>
 
     <fragment

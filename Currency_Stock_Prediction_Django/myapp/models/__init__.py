@@ -5,7 +5,6 @@ from .models import (
     Region,
     Currency,
     CurrenciesData,
-    Exchange,
     Company,
     Stock,
     StockData,
@@ -17,12 +16,20 @@ from .models import (
     GDPData,
     User,
     Account,
+    Contact,
     AccountCurrency,
     AccountStock,
     AccountCurrencyTransaction,
     AccountStockTransaction,
     UserNotification,
-    UserPreference
+    UserPreference,
+
+
+
+)
+
+from .serializers import (
+    ContactSerializer
 )
 
 from .dtos import (
@@ -39,7 +46,6 @@ __all__ = [
     'Region',
     'Currency',
     'CurrenciesData',
-    'Exchange',
     'Company',
     'Stock',
     'StockData',
@@ -51,6 +57,7 @@ __all__ = [
     'GDPData',
     'User',
     'Account',
+    'Contact',
     'AccountCurrency',
     'AccountStock',
     'AccountCurrencyTransaction',
@@ -62,6 +69,8 @@ __all__ = [
     'RegionDTO',
     'CurrencyDTO',
     'CurrencyPairDTO',
+
+    'ContactSerializer',
 
 
 ]
