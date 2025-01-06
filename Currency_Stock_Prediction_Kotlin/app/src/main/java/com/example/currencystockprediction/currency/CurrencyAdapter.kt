@@ -1,5 +1,6 @@
 package com.example.currencystockprediction.currency
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,15 +22,6 @@ class CurrencyAdapter(
         val flagImageView: ImageView = itemView.findViewById(R.id.currencyFlagImageView)
         val nameTextView: TextView = itemView.findViewById(R.id.currencyNameTextView)
         val percentageChangeTextView: TextView = itemView.findViewById(R.id.currencyPercentageChangeTextView)
-
-        init {
-            itemView.setOnClickListener {
-                val position = adapterPosition
-                if (position != RecyclerView.NO_POSITION && onItemClick != null) {
-                    onItemClick.invoke(currencies[position])
-                }
-            }
-        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CurrencyViewHolder {
@@ -41,11 +33,6 @@ class CurrencyAdapter(
     override fun onBindViewHolder(holder: CurrencyViewHolder, position: Int) {
         val currency = currencies[position]
         holder.nameTextView.text = currency.code
-        holder.percentageChangeTextView.text = if (currency.dataAvailability) {
-            "0.00%"
-        } else {
-            "N/A"
-        }
 
         val flagUrl = FlagUtils.getFlagUrl(currency.code)
         Glide.with(holder.flagImageView.context)
@@ -54,6 +41,24 @@ class CurrencyAdapter(
             .placeholder(R.drawable.ic_launcher_background)
             .error(R.drawable.ic_launcher_background)
             .into(holder.flagImageView)
+
+        if (currency.dataAvailability && !currency.monthlyPercentageChange.isNullOrEmpty()) {
+            holder.percentageChangeTextView.text = "${currency.monthlyPercentageChange}%"
+            holder.percentageChangeTextView.setTextColor(
+                if (currency.monthlyPercentageChange!!.startsWith("-")) Color.RED else Color.GREEN
+            )
+            holder.itemView.alpha = 1.0f
+            holder.itemView.isEnabled = true
+            holder.itemView.setOnClickListener {
+                onItemClick?.invoke(currency)
+            }
+        } else {
+            holder.percentageChangeTextView.text = "N/A"
+            holder.percentageChangeTextView.setTextColor(Color.GRAY)
+            holder.itemView.alpha = 0.5f
+            holder.itemView.isEnabled = false
+            holder.itemView.setOnClickListener(null)
+        }
     }
 
     override fun getItemCount(): Int = currencies.size
@@ -62,6 +67,4 @@ class CurrencyAdapter(
         currencies = newCurrencies
         notifyDataSetChanged()
     }
-
-
 }

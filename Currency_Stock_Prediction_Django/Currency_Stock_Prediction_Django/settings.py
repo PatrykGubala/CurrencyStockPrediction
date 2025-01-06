@@ -148,19 +148,24 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
-
-CELERY_BEAT_SCHEDULE = {
-    'recount_currency_values_hourly': {
-        'task': 'myapp.tasks.recount_currency_values',
-        'schedule': crontab(minute='*/10'),
-    },
-}
-
-
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
+
+CELERY_BEAT_SCHEDULE = {
+    'load_currency_data': {
+        'task': 'myapp.tasks.load_currency_data_task',
+        'schedule': crontab(minute='*/10'),
+        'args': (),
+    },
+
+
+}
+
+
+
 
 FIREBASE_ADMIN_CREDENTIALS = os.path.join(BASE_DIR, 'firebase-admin-key.json')
 cred = credentials.Certificate(FIREBASE_ADMIN_CREDENTIALS)

@@ -1,3 +1,5 @@
+// File: com/example/currencystockprediction/currency/CurrencyFragment.kt
+
 package com.example.currencystockprediction.currency
 
 import android.os.Bundle
@@ -15,8 +17,11 @@ import org.json.JSONObject
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.utils.CacheManager
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -73,6 +78,7 @@ class CurrencyFragment : BaseFragment() {
             layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
             adapter = americanAdapter
         }
+
         oceanianAdapter = CurrencyAdapter(oceanianCurrencies) { currency ->
             handleCurrencyClick(currency)
         }
@@ -88,6 +94,67 @@ class CurrencyFragment : BaseFragment() {
             fetchCurrencies("american", americanCurrencies, americanAdapter)
             fetchCurrencies("asian", asianCurrencies, asianAdapter)
             fetchCurrencies("oceanian", oceanianCurrencies, oceanianAdapter)
+
+            fetchAllMonthlyPercentageChanges()
+        }
+    }
+
+    private suspend fun fetchAllMonthlyPercentageChanges() {
+        val allCurrencies = listOf(
+            europeanCurrencies,
+            americanCurrencies,
+            asianCurrencies,
+            oceanianCurrencies
+        ).flatten()
+
+        coroutineScope {
+            val deferreds = allCurrencies
+                .filter { it.dataAvailability }
+                .map { currency ->
+                    async {
+                        val position = when (currency) {
+                            in europeanCurrencies -> europeanCurrencies.indexOf(currency)
+                            in americanCurrencies -> americanCurrencies.indexOf(currency)
+                            in asianCurrencies -> asianCurrencies.indexOf(currency)
+                            else -> oceanianCurrencies.indexOf(currency)
+                        }
+                        fetchMonthlyPercentageChange(currency)
+                        notifyItemChanged(currency, position)
+                    }
+                }
+            deferreds.awaitAll()
+        }
+    }
+
+    private suspend fun notifyItemChanged(currency: Currency, position: Int) {
+        withContext(Dispatchers.Main) {
+            when (currency) {
+                in europeanCurrencies -> europeanAdapter.notifyItemChanged(position)
+                in americanCurrencies -> americanAdapter.notifyItemChanged(position)
+                in asianCurrencies -> asianAdapter.notifyItemChanged(position)
+                in oceanianCurrencies -> oceanianAdapter.notifyItemChanged(position)
+            }
+        }
+    }
+
+    private suspend fun fetchMonthlyPercentageChange(currency: Currency) {
+        val endpoint = "/myapp/currencies/${currency.code}/monthly_change/"
+        val responsePair = ApiClient.getRequest(endpoint)
+
+        if (responsePair.first && responsePair.second != null) {
+            try {
+                val jsonObject = JSONObject(responsePair.second!!)
+                val monthlyChange = jsonObject.getDouble("monthly_change")
+                currency.monthlyPercentageChange = String.format("%.2f", monthlyChange)
+            } catch (e: Exception) {
+                Log.e("CurrencyFragment", "Error parsing monthly change for ${currency.code}: ${e.message}")
+                currency.monthlyPercentageChange = null
+                currency.dataAvailability = false
+            }
+        } else {
+            Log.e("CurrencyFragment", "Failed to fetch monthly change for ${currency.code}")
+            currency.monthlyPercentageChange = null
+            currency.dataAvailability = false
         }
     }
 
@@ -99,7 +166,6 @@ class CurrencyFragment : BaseFragment() {
             list.addAll(currencies)
             adapter.notifyDataSetChanged()
         }
-
 
         val endpoint = "/myapp/currencies/${region}/"
         val responsePair = ApiClient.getRequest(endpoint)
@@ -116,11 +182,6 @@ class CurrencyFragment : BaseFragment() {
             }
         }
     }
-
-
-
-
-
 
     private fun parseCurrenciesResponse(response: String): List<Currency> {
         val currencies = mutableListOf<Currency>()

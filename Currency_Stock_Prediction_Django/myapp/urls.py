@@ -1,5 +1,8 @@
 
 from django.urls import path
+
+from myapp.controllers.currencies_trained_models_controller import train_new_currency_model, list_currency_models, \
+    list_model_predictions, predict_with_existing_model, train_new_models_for_all_currencies
 from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image, \
     initiate_change_email, verify_change_email, change_username
 from myapp.controllers.accounts_controller import create_account, recount_currency_values_test, get_account_usd_value, \
@@ -11,7 +14,8 @@ from myapp.controllers.countries_controller import load_only_countries, load_cou
 from myapp.controllers.regions_controller import get_all_regions, get_region, load_regions, create_region, update_region, delete_region
 from myapp.controllers.currencies_controller import get_all_currencies, get_european_currencies, get_asian_currencies, get_american_currencies, get_oceanian_currencies, convert_currency
 from myapp.controllers.currencies_data_controller import get_all_currencies_data, load_currency_data, \
-    get_latest_currency_data, get_percentage_change_for_currency, get_currency_data, get_currency_percentage_changes
+    get_latest_currency_data, get_percentage_change_for_currency, get_currency_data, get_currency_percentage_changes, \
+    get_monthly_percentage_change
 
 from django.conf import settings
 from django.conf.urls.static import static
@@ -33,8 +37,9 @@ urlpatterns = [
     path('currencies/american/', get_american_currencies, name='get_american_currencies'),
     path('currencies/oceanian/', get_oceanian_currencies, name='get_oceanian_currencies'),
     path('currencies/convert', convert_currency, name='convert_currency'),
-    path('currencies/changes/<str:currency_code>', get_currency_percentage_changes,
-         name='get_currency_percentage_changes'),
+    path('currencies/changes/<str:currency_code>', get_currency_percentage_changes, name='get_currency_percentage_changes'),
+
+    path('currencies/<str:currency_code>/monthly_change/', get_monthly_percentage_change, name='get_monthly_percentage_change'),
 
     path('currencies/data', get_all_currencies_data, name='get_all_currencies_data'),
     path('currencies/data/load_currency_data', load_currency_data, name='load_currency_data'),
@@ -70,6 +75,14 @@ urlpatterns = [
     path('regions/create', create_region, name='create_region'),
     path('regions/<int:region_id>/update', update_region, name='update_region'),
     path('regions/<int:region_id>/delete', delete_region, name='delete_region'),
+
+    path('currencies/prediction/train_new_models_for_all_currencies', train_new_models_for_all_currencies, name='train_new_models_for_all_currencies'),
+
+    path('currencies/prediction/train_new_model', train_new_currency_model, name='train_new_currency_model'),
+    path('currencies/prediction/list_models', list_currency_models, name='list_currency_models'),
+    path('currencies/prediction/list_model_predictions', list_model_predictions, name='list_model_predictions'),
+    path('currencies/prediction/predict_with_existing', predict_with_existing_model, name='predict_with_existing_model'),
+
 ]
 
 if settings.DEBUG:

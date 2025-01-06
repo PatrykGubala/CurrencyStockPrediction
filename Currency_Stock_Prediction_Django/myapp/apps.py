@@ -17,7 +17,6 @@ class Config(AppConfig):
                     countries_service = CountriesService()
                     data = countries_service.fetch_countries_data()
                     countries_service.load_countries_with_details(data)
-                    countries_service.create_currency_pairs()
                     logger.info("Initial data loaded successfully.")
                 except Exception as e:
                     logger.error(f"Error loading initial data: {e}")

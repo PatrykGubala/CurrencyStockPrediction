@@ -16,6 +16,7 @@ sealed class HistoryItem {
         val senderAccountId: Int?,
         val receiverAccountId: Int?,
         val date: String,
-        val iconRes: Int
+        val iconRes: Int,
+        val defaultCurrencyCost: BigDecimal
     ) : HistoryItem()
 }

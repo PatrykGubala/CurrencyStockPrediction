@@ -38,6 +38,8 @@ class Currency(models.Model):
     class Meta:
         db_table = 'currencies'
 
+
+
 class CurrenciesData(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='data')
     timestamp = models.DateTimeField()
@@ -53,9 +55,40 @@ class CurrenciesData(models.Model):
         indexes = [
             models.Index(fields=['currency', 'timestamp']),
         ]
+        ordering = ['-timestamp']
+
 
     def __str__(self):
         return f"{self.currency.code} at {self.timestamp}"
+
+class CurrenciesTrainedModels(models.Model):
+    currency = models.ForeignKey('Currency', on_delete=models.CASCADE, related_name='currencies_trained_models')
+    model_name = models.CharField(max_length=100, default='SeasonalRNN')
+    training_date = models.DateTimeField(auto_now_add=True)
+
+    model_file_path = models.CharField(max_length=255, null=True, blank=True)
+    metrics = models.JSONField(null=True, blank=True)
+    param_grid = models.JSONField(null=True, blank=True)
+
+    is_latest = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = 'currencies_trained_models'
+
+
+
+class CurrenciesTrainedModelPrediction(models.Model):
+    trained_model = models.ForeignKey('CurrenciesTrainedModels', on_delete=models.CASCADE, related_name='predictions')
+
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='predictions')
+    predicted_value = models.DecimalField(max_digits=20, decimal_places=8)
+    prediction_date = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'currencies_trained_model_predictions'
+        unique_together = ('trained_model', 'prediction_date')
+        ordering = ['-prediction_date']
 
 
 class Country(models.Model):
@@ -137,26 +170,43 @@ class StockData(models.Model):
 
     class Meta:
         db_table = 'stock_data'
+        ordering = ['-timestamp']
 
 
-class StockPrediction(models.Model):
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='predictions')
-    predicted_value = models.DecimalField(max_digits=20, decimal_places=8)
-    prediction_date = models.DateTimeField()
-    model_name = models.CharField(max_length=50)
-
-    class Meta:
-        db_table = 'stock_predictions'
 
 
-class CurrencyPrediction(models.Model):
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='predictions')
-    predicted_value = models.DecimalField(max_digits=20, decimal_places=8)
-    prediction_date = models.DateTimeField()
-    model_name = models.CharField(max_length=50)
+class StocksTrainedModels(models.Model):
+    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='stocks_trained_models')
+    model_name = models.CharField(max_length=100, default='SeasonalRNN')
+    training_date = models.DateTimeField(auto_now_add=True)
+    model_file_path = models.CharField(max_length=255,null=True,blank=True)
+    metrics = models.JSONField(null=True,blank=True)
+    param_grid = models.JSONField(null=True,blank=True)
+    is_latest = models.BooleanField(default=False)
 
     class Meta:
-        db_table = 'currency_predictions'
+        db_table = 'stocks_trained_models'
+        ordering = ['-training_date']
+
+    def __str__(self):
+        return f"{self.stock.stock_symbol} - {self.model_name} ({self.training_date.strftime('%Y-%m-%d')})"
+
+
+class StocksTrainedModelPrediction(models.Model):
+    trained_model = models.ForeignKey('StocksTrainedModels', on_delete=models.CASCADE, related_name='predictions')
+    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='stock_predictions')
+    predicted_value = models.DecimalField(max_digits=20, decimal_places=8)
+    prediction_date = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'stocks_trained_model_predictions'
+        unique_together = ('trained_model', 'prediction_date')
+        ordering = ['-prediction_date']
+
+    def __str__(self):
+        return f"{self.stock.stock_symbol} - {self.prediction_date.strftime('%Y-%m-%d')} : {self.predicted_value}"
+
 
 
 class CountryTranslation(models.Model):
@@ -223,6 +273,7 @@ class AccountCurrencyTransaction(models.Model):
     exchange_currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, null=True, related_name='exchange_currency_transactions')
     exchange_rate = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
     transaction_fee = models.DecimalField(max_digits=20, decimal_places=8, default=0.0)
+    default_currency_cost = models.DecimalField(max_digits=20, decimal_places=8, default=0.0)
     transaction_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:

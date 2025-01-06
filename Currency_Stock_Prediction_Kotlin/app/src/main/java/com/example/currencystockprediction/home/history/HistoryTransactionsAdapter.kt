@@ -31,12 +31,14 @@ class HistoryTransactionsAdapter(private val userAccountId: Int) :
     inner class TransactionViewHolder(val binding: FragmentHomeHistoryTransactionItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
         fun bind(item: HistoryItem.TransactionItem) {
+            val costToDisplay = item.defaultCurrencyCost ?: item.amount
+
             val isIncome = isIncome(item)
             val sign = if (isIncome) "+" else "-"
 
             binding.transactionIcon.setImageResource(item.iconRes)
             binding.transactionTitle.text = item.title
-            binding.transactionAmount.text = "$sign${String.format("%.2f", item.amount)}"
+            binding.transactionAmount.text = "$sign${String.format("%.2f", costToDisplay)}"
             binding.transactionDate.text = formatDate(item.date)
 
             applyGroupBackground(itemView, layoutPosition)

@@ -199,6 +199,31 @@ class CurrenciesDataService:
         return None
 
 
+    def get_monthly_change(self, currency_code: str) -> Optional[dict]:
+        currency = self.repository.get_currency_by_code(currency_code)
+        if not currency:
+            return None
+
+        latest = self.repository.get_latest_record(currency)
+        if not latest:
+            return None
+
+        monthly_ts = timezone.now() - timedelta(days=30)
+        record = self.repository.get_previous_record(currency, monthly_ts)
+        if not record:
+            return None
+
+        previous_close = float(record.close_price)
+        current_close = float(latest.close_price)
+        if previous_close == 0.0:
+            return None
+
+        percent_change = ((current_close - previous_close) / previous_close) * 100
+        return {
+            "monthly_change": round(percent_change, 2)
+        }
+
+
     def get_weekly_monthly_yearly_change(self, currency_code: str):
         currency = self.repository.get_currency_by_code(currency_code)
         if not currency:

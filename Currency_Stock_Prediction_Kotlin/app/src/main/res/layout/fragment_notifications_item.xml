@@ -3,52 +3,58 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/notificationItemLayout"
+
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingVertical="4dp">
+    android:paddingVertical="8dp"
+    android:paddingHorizontal="8dp"
+    android:layout_marginHorizontal="16dp"
+    android:layout_marginVertical="4dp"
+    android:background="@drawable/background_style_darkgrey_rectangle">
 
     <ImageView
-        android:id="@+id/transactionIcon"
+        android:id="@+id/notificationIcon"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:padding="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="12dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/transactionTitle"
+        android:id="@+id/notificationsTitle"
         style="@style/KanitRegularSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="4dp"
-        android:text="Transaction Title"
+        android:text="Notifications Title"
         android:textColor="@color/white"
-        app:layout_constraintStart_toEndOf="@id/transactionIcon"
-        app:layout_constraintTop_toTopOf="@+id/transactionIcon" />
+        app:layout_constraintStart_toEndOf="@id/notificationIcon"
+        app:layout_constraintTop_toTopOf="@+id/notificationIcon" />
 
     <TextView
-        android:id="@+id/transactionAmount"
+        android:id="@+id/notificationsDate"
+        style="@style/KanitLightSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:text="$0.00"
-        style="@style/KanitLightMedium"
-        android:textColor="@color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
+
+        android:text="21d"
+        android:textColor="@color/grey"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/transactionDate"
+        android:id="@+id/notificationsMessage"
         style="@style/KanitLightSmall"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
         android:layout_marginStart="4dp"
 
-        android:text="dd MMM yyyy, HH:mm"
-        android:textColor="@color/grey"
-        app:layout_constraintStart_toEndOf="@+id/transactionIcon"
-        app:layout_constraintTop_toBottomOf="@+id/transactionTitle" />
+        android:text="message"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/notificationIcon"
+        app:layout_constraintTop_toBottomOf="@+id/notificationsTitle" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

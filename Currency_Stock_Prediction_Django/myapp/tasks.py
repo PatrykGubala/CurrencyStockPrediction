@@ -4,12 +4,16 @@ from decimal import Decimal
 from celery import shared_task
 from django.utils import timezone
 
-
+from myapp.repositories.currencies_repository import CurrenciesRepository
 from myapp.services.accounts_service import AccountsService
-from myapp.services.currencies_data_service import CurrenciesDataService
+from myapp.services.currencies_data_service import CurrenciesDataService, logger
+from myapp.services.currencies_trained_models_service import CurrenciesTrainedModelsService
+
 
 @shared_task
 def load_currency_data_task(*args, **kwargs):
+    logger.info("10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT.")
+
     service = CurrenciesDataService()
     currencies_to_load = ['EUR','GBP' ,'PLN' ,'JPY' ,'CNY' ,'AUD' ,'CHF' ,'NOK' ,'INR' ,'AUD' , 'SEK' ,'NZD' ,'MXN']
     now = timezone.now()
@@ -32,3 +36,18 @@ def load_currency_data_task(*args, **kwargs):
 def recount_currency_values():
     service = AccountsService()
     service.recount_currency_values()
+
+
+
+
+
+@shared_task
+def train_model_async():
+    logger.info("Celery: train_model_async_for_all started")
+    service = CurrenciesTrainedModelsService()
+    result = service.train_models_for_all_currencies()
+    logger.info(f"Celery: train_model_async_for_all finished -> {result}")
+    return result
+
+
+

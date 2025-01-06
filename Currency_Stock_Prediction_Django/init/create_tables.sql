@@ -61,6 +61,38 @@ CREATE TABLE IF NOT EXISTS currencies_data (
 );
 
 
+
+CREATE TABLE IF NOT EXISTS currencies_trained_models (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    currency_id INT NOT NULL,
+    model_name VARCHAR(100) DEFAULT 'SeasonalRNN',
+    training_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    model_file_path VARCHAR(255),
+    metrics JSON,
+    param_grid JSON,
+    is_latest BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (currency_id) REFERENCES currencies(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS currencies_trained_model_predictions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    trained_model_id INT NOT NULL,
+    currency_id INT NOT NULL,
+    predicted_value DECIMAL(20,8) NOT NULL,
+    prediction_date DATETIME NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trained_model_id) REFERENCES currencies_trained_models(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (currency_id) REFERENCES currencies(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
+
+
+
 -- 5. Country_Currencies (Many-to-Many)
 CREATE TABLE IF NOT EXISTS country_currencies (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -132,29 +164,38 @@ CREATE TABLE IF NOT EXISTS stock_data (
 
 
 
--- 12. Stock_Predictions Table
-CREATE TABLE IF NOT EXISTS stock_predictions (
+-- 12. Stocks_Trained_Models Table
+CREATE TABLE IF NOT EXISTS stocks_trained_models (
     id INT AUTO_INCREMENT PRIMARY KEY,
     stock_id INT NOT NULL,
-    predicted_value DECIMAL(20,8) NOT NULL,
-    prediction_date DATETIME NOT NULL,
-    model_name VARCHAR(50) NOT NULL,
+    model_name VARCHAR(100) DEFAULT 'SeasonalRNN',
+    training_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    model_file_path VARCHAR(255),
+    metrics JSON,
+    param_grid JSON,
+    is_latest BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (stock_id) REFERENCES stocks(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 
--- 13. Currency_Predictions Table
-CREATE TABLE IF NOT EXISTS currencies_predictions (
+-- 13. Stocks_Trained_Model_Predictions Table
+CREATE TABLE IF NOT EXISTS stocks_trained_model_predictions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    currency_id INT NOT NULL,
+    trained_model_id INT NOT NULL,
+    stock_id INT NOT NULL,
     predicted_value DECIMAL(20,8) NOT NULL,
     prediction_date DATETIME NOT NULL,
-    model_name VARCHAR(50) NOT NULL,
-    FOREIGN KEY (currency_id) REFERENCES currencies(id)
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (trained_model_id) REFERENCES stocks_trained_models(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+    FOREIGN KEY (stock_id) REFERENCES stocks(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
+
 
 -- 14. Country_Translations Table
 CREATE TABLE IF NOT EXISTS country_translations (
@@ -255,6 +296,8 @@ CREATE TABLE IF NOT EXISTS account_currency_transactions (
     exchange_currency_id INT,
     exchange_rate DECIMAL(20,8),
     transaction_fee DECIMAL(20,8) DEFAULT 0.00000000,
+    default_currency_cost DECIMAL(20,8) DEFAULT 0.00000000,
+
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_account_id) REFERENCES accounts(id)
         ON DELETE SET NULL
@@ -282,6 +325,7 @@ CREATE TABLE IF NOT EXISTS account_stock_transactions (
     price_per_share DECIMAL(20,8) NOT NULL,
     currency_id INT NOT NULL,
     transaction_fee DECIMAL(20,8) DEFAULT 0.00000000,
+    default_currency_cost DECIMAL(20,8) DEFAULT 0.00000000,
     transaction_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (account_id) REFERENCES accounts(id)
         ON DELETE CASCADE

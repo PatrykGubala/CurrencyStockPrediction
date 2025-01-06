@@ -3,6 +3,8 @@ package com.example.currencystockprediction.currency
 import android.graphics.Color
 import android.graphics.Paint
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -18,11 +20,15 @@ import com.example.currencystockprediction.databinding.FragmentCurrencyDataBindi
 import com.example.currencystockprediction.models.CurrencyData
 import com.example.currencystockprediction.utils.ApiClient
 import com.github.mikephil.charting.components.AxisBase
+import com.github.mikephil.charting.components.Legend
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.components.MarkerView
 import com.github.mikephil.charting.data.CandleData
 import com.github.mikephil.charting.data.CandleDataSet
 import com.github.mikephil.charting.data.CandleEntry
+import com.github.mikephil.charting.data.Entry
+import com.github.mikephil.charting.data.LineData
+import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.IAxisValueFormatter
 import com.github.mikephil.charting.highlight.Highlight
 import com.github.mikephil.charting.utils.MPPointF
@@ -48,6 +54,9 @@ class CurrencyDataFragment : Fragment() {
     private val hourlyDateFormat = SimpleDateFormat("dd.MM HH:00", Locale.getDefault())
     private val dailyDateFormat = SimpleDateFormat("yyyy MM dd", Locale.getDefault())
     private val logDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+    private var currentClosePrice = 0.0
+
+
 
     private var currentMode: String = "last_month"
     private val TAG = "CurrencyDataFragment"
@@ -83,9 +92,13 @@ class CurrencyDataFragment : Fragment() {
 
 
         setupToolbar()
-        setupChart()
+        setupCandleStickChart()
+        setupLineChart()
+
         setupButtons()
         setupBuyButton()
+        setupTextWatcher()
+
 
         lifecycleScope.launch {
             fetchAndDisplayCurrencyData("last_month")
@@ -102,33 +115,66 @@ class CurrencyDataFragment : Fragment() {
         binding.titleText.text = "USD$currencyCode=X"
     }
 
-    private fun setupChart() {
+    private fun setupCandleStickChart() {
         binding.candleStickChart.apply {
             description.text = "$currencyCode CandleStick Chart"
-            axisRight.isEnabled = false
+            axisLeft.isEnabled = false
+            axisLeft.setDrawGridLines(true)
+            axisLeft.gridColor = Color.DKGRAY
+
+            axisRight.isEnabled = true
+            axisRight.setDrawGridLines(true)
+            axisRight.gridColor = Color.DKGRAY
+            axisRight.textColor = Color.WHITE
+
             xAxis.position = XAxis.XAxisPosition.BOTTOM
             xAxis.granularity = 4f
             xAxis.labelRotationAngle = 0f
             setBackgroundColor(Color.BLACK)
             setDrawGridBackground(false)
             xAxis.setDrawGridLines(false)
-            axisLeft.setDrawGridLines(true)
-            axisLeft.gridColor = Color.DKGRAY
-            setDrawBorders(true)
+
             setBorderColor(Color.WHITE)
             setTouchEnabled(true)
             isDragEnabled = true
             setScaleEnabled(true)
+            setScaleXEnabled(true)
+            setScaleYEnabled(false)
             isAutoScaleMinMaxEnabled = true
-            axisLeft.apply {
-                textColor = Color.WHITE
-                gridColor = Color.GRAY
-            }
+
             xAxis.apply {
                 textColor = Color.WHITE
                 gridColor = Color.GRAY
             }
             legend.textColor = Color.WHITE
+
+        }
+    }
+
+    private fun setupLineChart() {
+        binding.lineChart.apply {
+            description.text = "$currencyCode Line Chart"
+            setBackgroundColor(Color.BLACK)
+            setTouchEnabled(true)
+            isDragEnabled = true
+            setScaleEnabled(true)
+            setScaleXEnabled(true)
+            setScaleYEnabled(false)
+            axisLeft.isEnabled = false
+            axisLeft.setDrawGridLines(true)
+            axisLeft.gridColor = Color.DKGRAY
+            axisRight.isEnabled = true
+            axisRight.setDrawGridLines(true)
+            axisRight.gridColor = Color.DKGRAY
+            axisRight.textColor = Color.WHITE
+            xAxis.position = XAxis.XAxisPosition.BOTTOM
+            xAxis.granularity = 4f
+            xAxis.labelRotationAngle = 0f
+            xAxis.setDrawGridLines(false)
+            xAxis.textColor = Color.WHITE
+            legend.textColor = Color.WHITE
+            legend.form = Legend.LegendForm.LINE
+
         }
     }
 
@@ -157,7 +203,7 @@ class CurrencyDataFragment : Fragment() {
 
     private fun setupBuyButton() {
         binding.buyCurrencyButton.setOnClickListener {
-            val amountText = binding.buyCurrencyAmountEditText.text.toString()
+            val amountText = binding.amountTextInputEditText.text.toString()
             if (amountText.isEmpty()) {
                 Toast.makeText(requireContext(), "Amount is empty", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
@@ -169,63 +215,76 @@ class CurrencyDataFragment : Fragment() {
         }
     }
 
+    private fun setupTextWatcher() {
+        binding.amountTextInputEditText.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val input = s.toString().toDoubleOrNull() ?: 0.0
+                val feeRate = 0.005
+                val costWithoutFee = input * (1.0 / currentClosePrice)
+                val fee = costWithoutFee * feeRate
+                val total = costWithoutFee + fee
+                binding.amountCalculatedTextInputEditText.setText(String.format("%.2f USD", total) )
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
+        })
+    }
+
     private suspend fun fetchAndDisplayCurrencyData(mode: String) {
-        withContext(Dispatchers.IO) {
-            val endpoint = "/myapp/currencies/data/$currencyCode/get"
-            val frequency = if (mode == "last_month") "hourly" else "daily"
-            val range = if (mode == "last_month") "last_month" else "all_data"
+        val endpoint = "/myapp/currencies/data/$currencyCode/get"
+        val frequency = if (mode == "last_month") "hourly" else "daily"
+        val range = if (mode == "last_month") "last_month" else "all_data"
 
-            val responsePair = ApiClient.getRequest("$endpoint?frequency=$frequency&range=$range")
+        val responsePair = withContext(Dispatchers.IO) {
+            ApiClient.getRequest("$endpoint?frequency=$frequency&range=$range")
+        }
 
-
+        withContext(Dispatchers.Main) {
             if (responsePair.first && responsePair.second != null) {
                 val jsonData = JSONObject(responsePair.second!!).getJSONArray("data")
-                val currencyDataList = mutableListOf<CurrencyData>()
-                val entries = mutableListOf<CandleEntry>()
-                val dates = mutableListOf<Long>()
+                if (frequency == "hourly") {
+                    val entries = mutableListOf<CandleEntry>()
+                    val dates = mutableListOf<Long>()
+                    for (i in jsonData.length() - 1 downTo 0) {
+                        val obj = jsonData.getJSONObject(i)
+                        val timestamp = obj.getLong("timestamp")
+                        val open = obj.getString("open").toFloat()
+                        val high = obj.getString("high").toFloat()
+                        val low = obj.getString("low").toFloat()
+                        val close = obj.getString("close").toFloat()
+                        val newIndex = jsonData.length() - 1 - i
 
-                for (i in 0 until jsonData.length()) {
-                    val obj = jsonData.getJSONObject(i)
-                    val currencyData = CurrencyData(
-                        timestamp = obj.getLong("timestamp"),
-                        open = BigDecimal(obj.getString("open")),
-                        high = BigDecimal(obj.getString("high")),
-                        low = BigDecimal(obj.getString("low")),
-                        close = BigDecimal(obj.getString("close")),
-                        volume = BigDecimal(obj.getString("volume"))
-                    )
-                    currencyDataList.add(currencyData)
+                        entries.add(CandleEntry(newIndex.toFloat(), high, low, open, close))
+                        dates.add(timestamp)
+                        if (i == 0) {
+                            currentClosePrice = close.toDouble()
+                        }
+                    }
+                    updateCandleChart(entries, dates)
+                } else {
+                    val lineEntries = mutableListOf<Entry>()
+                    val dates = mutableListOf<Long>()
+                    for (i in 0 until jsonData.length()) {
+                        val obj = jsonData.getJSONObject(i)
+                        val timestamp = obj.getLong("timestamp")
+                        val close = obj.getString("close").toFloat()
+                        lineEntries.add(Entry(i.toFloat(), close))
+                        dates.add(timestamp)
+                        if (i == jsonData.length() - 1) {
+                            currentClosePrice = close.toDouble()
+                        }
+                    }
+                    updateLineChart(lineEntries, dates)
                 }
-
-                currencyDataList.forEachIndexed { index, data ->
-                    val dateReadable = Date(data.timestamp)
-                    val dateStr = logDateFormat.format(dateReadable)
-                    Log.d(
-                        TAG,
-                        "Fetched data #$index -> [$dateStr] open: ${data.open}, high: ${data.high}, low: ${data.low}, close: ${data.close}, volume: ${data.volume}"
-                    )
-                    entries.add(
-                        CandleEntry(
-                            index.toFloat(),
-                            data.high.toFloat(),
-                            data.low.toFloat(),
-                            data.open.toFloat(),
-                            data.close.toFloat()
-                        )
-                    )
-                    dates.add(data.timestamp)
-                }
-
-                updateChart(entries, dates, mode)
             } else {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT)
-                        .show()
-                }
+                Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
             }
         }
     }
-    private fun updateChart(entries: List<CandleEntry>, dates: List<Long>, mode: String) {
+
+    private fun updateCandleChart(entries: List<CandleEntry>, dates: List<Long>) {
+        binding.candleStickChart.visibility = View.VISIBLE
+        binding.lineChart.visibility = View.GONE
         val dataSet = CandleDataSet(entries, "$currencyCode=X").apply {
             increasingColor = Color.GREEN
             decreasingColor = Color.RED
@@ -236,11 +295,27 @@ class CurrencyDataFragment : Fragment() {
             setDrawValues(false)
         }
         binding.candleStickChart.data = CandleData(dataSet)
-        val isHourly = mode == "last_month"
         val marker = CustomMarkerView(requireContext(), R.layout.marker_view, hourlyDateFormat, dates)
         binding.candleStickChart.marker = marker
-        binding.candleStickChart.xAxis.valueFormatter = DateAxisFormatter(dates, isHourly)
+        binding.candleStickChart.xAxis.valueFormatter = DateAxisFormatter(dates, true)
         binding.candleStickChart.invalidate()
+    }
+
+    private fun updateLineChart(entries: List<Entry>, dates: List<Long>) {
+        binding.candleStickChart.visibility = View.GONE
+        binding.lineChart.visibility = View.VISIBLE
+        val dataSet = LineDataSet(entries, "Daily Close").apply {
+            color = Color.YELLOW
+            setDrawCircles(false)
+            setDrawValues(false)
+            lineWidth = 0.8f
+        }
+        val lineData = LineData(dataSet)
+        binding.lineChart.data = lineData
+        val marker = CustomMarkerView(requireContext(), R.layout.marker_view, dailyDateFormat, dates)
+        binding.lineChart.marker = marker
+        binding.lineChart.xAxis.valueFormatter = DateAxisFormatter(dates, false)
+        binding.lineChart.invalidate()
     }
 
     private fun updateButtonStyles(selectedMode: String) {
@@ -293,13 +368,24 @@ class CurrencyDataFragment : Fragment() {
     ) : MarkerView(context, layoutResource) {
         private val tvContent = findViewById<android.widget.TextView>(R.id.tvContent)
 
-        override fun refreshContent(e: com.github.mikephil.charting.data.Entry?, highlight: Highlight?) {
+        override fun refreshContent(e: Entry?, highlight: Highlight?) {
             if (e is CandleEntry) {
                 val index = e.x.toInt()
                 if (index in dates.indices) {
                     val date = Date(dates[index])
                     val dateStr = dateFormat.format(date)
                     val content = "Date: $dateStr\nOpen: ${e.open}\nClose: ${e.close}\nHigh: ${e.high}\nLow: ${e.low}"
+                    tvContent.text = content
+                    Log.d("CustomMarkerView", "Marker content: $content")
+                }
+            }
+
+            else if (e != null) {
+                val index = e.x.toInt()
+                if (index in dates.indices) {
+                    val date = Date(dates[index])
+                    val dateStr = dateFormat.format(date)
+                    val content = "Date: $dateStr\nValue: ${e.y}"
                     tvContent.text = content
                     Log.d("CustomMarkerView", "Marker content: $content")
                 }
@@ -320,7 +406,7 @@ class CurrencyDataFragment : Fragment() {
             val obj = JSONObject(responsePair.second!!)
             val usdValue = obj.optDouble("usd_balance", 0.0)
             withContext(Dispatchers.Main) {
-                binding.accountUsdValueTextView.text = "Account USD Balance: $$usdValue"
+                binding.accountUsdValueTextView.text = "Stan konta USD: $%.2f".format(usdValue)
             }
         } else {
             Log.e(TAG, "Failed to get USD account value")
@@ -333,16 +419,15 @@ class CurrencyDataFragment : Fragment() {
     private suspend fun fetchAndDisplayPercentageChanges() {
         val endpoint = "/myapp/currencies/changes/$currencyCode"
         val responsePair = ApiClient.getRequest(endpoint)
-
         if (responsePair.first && responsePair.second != null) {
             val obj = JSONObject(responsePair.second!!)
             val weeklyChange = obj.optString("weekly_change", "0%")
             val monthlyChange = obj.optString("monthly_change", "0%")
             val yearlyChange = obj.optString("yearly_change", "0%")
             withContext(Dispatchers.Main) {
-                binding.weeklyChangeTextView.text = "Weekly: $weeklyChange"
-                binding.monthlyChangeTextView.text = "Monthly: $monthlyChange"
-                binding.yearlyChangeTextView.text = "Yearly: $yearlyChange"
+                binding.weeklyChangePercantageTextView.text = weeklyChange
+                binding.monthlyChangePercantageTextView.text = monthlyChange
+                binding.yearlyChangePercantageTextView.text = yearlyChange
             }
         } else {
             Log.e(TAG, "Failed to get percentage changes")
@@ -361,7 +446,7 @@ class CurrencyDataFragment : Fragment() {
             val balance = obj.optString("balance", "0.0")
             val code = obj.optString("currency_code", currencyCode)
             withContext(Dispatchers.Main) {
-                binding.accountOtherCurrencyValueTextView.text = "You have $balance $code"
+                binding.accountOtherCurrencyValueTextView.text = "Stan wybranej waluty: %.2f %s".format(balance.toDouble(), code)
             }
         } else {
             Log.e(TAG, "Failed to get balance for $currencyCode")

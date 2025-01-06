@@ -78,12 +78,19 @@ class HistoryViewModel : ViewModel() {
                         } else {
                             null
                         }
+                        val amountValue = obj.getString("amount").toBigDecimal()
 
+                        val defaultCostString = obj.optString("default_currency_cost", "")
+                        val defaultCost = if (defaultCostString.isNotEmpty() && defaultCostString != "null") {
+                            defaultCostString.toBigDecimal()
+                        } else {
+                            amountValue
+                        }
                         val transactionItem = HistoryItem.TransactionItem(
                             id = obj.getInt("id"),
                             transactionType = obj.getString("transaction_type"),
                             title = obj.getString("title"),
-                            amount = obj.getString("amount").toBigDecimal(),
+                            amount = amountValue,
                             currencyCode = obj.getString("currency"),
                             exchangeCurrencyCode = if (obj.isNull("exchange_currency")) null else obj.getString("exchange_currency"),
                             exchangeRate = exchangeRate,
@@ -91,7 +98,9 @@ class HistoryViewModel : ViewModel() {
                             senderAccountId = if (obj.isNull("sender_account_id")) null else obj.getInt("sender_account_id"),
                             receiverAccountId = if (obj.isNull("receiver_account_id")) null else obj.getInt("receiver_account_id"),
                             date = obj.getString("date"),
-                            iconRes = getIconResource(obj.getString("transaction_type"))
+                            iconRes = getIconResource(obj.getString("transaction_type")),
+                            defaultCurrencyCost = defaultCost
+
                         )
                         transactionsList.add(transactionItem)
                     }
@@ -193,7 +202,7 @@ class HistoryViewModel : ViewModel() {
             filtered = filtered.filter { isOutcome(it) }
         }
         if (fromAmount != null) {
-            filtered = filtered.filter { it.amount >= fromAmount!! }
+            filtered = filtered.filter { it.defaultCurrencyCost >= fromAmount!! }
         }
         if (toAmount != null) {
             filtered = filtered.filter { it.amount <= toAmount!! }
@@ -227,22 +236,25 @@ class HistoryViewModel : ViewModel() {
         _transactions.value = groupedList
     }
 
-    fun isIncome(item: HistoryItem.TransactionItem): Boolean {
+    private fun isIncome(item: HistoryItem.TransactionItem): Boolean {
         return when (item.transactionType) {
             "deposit" -> true
             "withdraw" -> false
-            "send", "transfer", "exchange" -> {
+            "exchange" -> item.currencyCode == "USD"
+
+            "send", "transfer"-> {
                 item.receiverAccountId == userAccountId
             }
             else -> false
         }
     }
 
-    fun isOutcome(item: HistoryItem.TransactionItem): Boolean {
+    private fun isOutcome(item: HistoryItem.TransactionItem): Boolean {
         return when (item.transactionType) {
             "withdraw" -> true
             "deposit" -> false
-            "send", "transfer", "exchange" -> {
+            "exchange" -> item.exchangeCurrencyCode == "USD"
+            "send", "transfer"-> {
                 item.senderAccountId == userAccountId
             }
             else -> false

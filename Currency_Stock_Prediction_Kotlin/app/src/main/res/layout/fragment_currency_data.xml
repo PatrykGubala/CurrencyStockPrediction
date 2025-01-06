@@ -3,7 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@color/black">
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/goBackToolbar"
@@ -52,7 +53,6 @@
                 android:layout_height="56dp"
                 android:layout_marginEnd="16dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/chevron_right"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent" />
@@ -60,140 +60,330 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.appbar.MaterialToolbar>
 
-    <TextView
-        android:id="@+id/subtitle_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:gravity="center_horizontal"
-        android:text="Euro to American Dolar"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goBackToolbar"
-        style="@style/KanitLightMedium" />
-
-    <com.github.mikephil.charting.charts.CandleStickChart
-        android:id="@+id/candleStickChart"
-        android:layout_width="match_parent"
-        android:layout_height="350dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/subtitle_text" />
-
     <LinearLayout
-        android:id="@+id/buttonContainer"
+        android:id="@+id/chartLayout"
+
         android:layout_width="match_parent"
-        android:layout_height="42dp"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/background_style_darkgrey_rectangle_stroke"
-        android:orientation="horizontal"
+        android:layout_height="320dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/candleStickChart">
+        android:padding="0dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@+id/goBackToolbar">
 
-        <Button
-            android:id="@+id/lastMonthButton"
-            android:layout_width="0dp"
+
+        <com.github.mikephil.charting.charts.CandleStickChart
+            android:id="@+id/candleStickChart"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:padding="0dp"
-            android:text="31d" />
+            android:visibility="visible"
 
-        <Button
-            android:id="@+id/allDataButton"
-            android:layout_width="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/goBackToolbar" />
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/lineChart"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:background="@android:color/transparent"
-            android:padding="0dp"
-            android:text="Wszystko" />
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/goBackToolbar" />
+
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/percentageChangesContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="32dp"
-        android:layout_marginTop="8dp"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@+id/buttonContainer"
+
+
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@+id/chartLayout">
 
-        <TextView
-            android:id="@+id/weeklyChangeTextView"
-            android:layout_width="wrap_content"
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/scrollableContent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Weekly: 0%"
-            android:textColor="@color/white" />
+            android:padding="0dp">
 
-        <TextView
-            android:id="@+id/monthlyChangeTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Monthly: 0%"
-            android:textColor="@color/white" />
+            <LinearLayout
+                android:id="@+id/buttonContainer"
+                android:layout_width="match_parent"
+                android:layout_height="32dp"
+                android:layout_marginHorizontal="32dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/background_style_darkgrey_rectangle_stroke"
+                android:orientation="horizontal"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/chartLayout">
 
-        <TextView
-            android:id="@+id/yearlyChangeTextView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Yearly: 0%"
-            android:textColor="@color/white" />
-    </LinearLayout>
+                <Button
+                    android:id="@+id/lastMonthButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:padding="0dp"
+                    android:textAllCaps="false"
+                    android:text="31d" />
 
-    <TextView
-        android:id="@+id/accountUsdValueTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Account USD Balance: $0.00"
-        android:textColor="@color/white"
-        app:layout_constraintTop_toBottomOf="@+id/percentageChangesContainer"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+                <Button
+                    android:id="@+id/allDataButton"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@android:color/transparent"
+                    android:padding="0dp"
+                    android:textAllCaps="false"
+                    android:text="Wszystko" />
+            </LinearLayout>
 
-    <TextView
-        android:id="@+id/accountOtherCurrencyValueTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="You have 0.0 ???"
-        android:textColor="@color/white"
-        app:layout_constraintTop_toBottomOf="@+id/accountUsdValueTextView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            <TextView
+                android:id="@+id/accountOtherCurrencyValueTextView"
+                style="@style/KanitLightMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Aktaulny stan: 0.0 ???"
+                android:textColor="@color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/buttonContainer" />
 
-    <LinearLayout
-        android:id="@+id/buyCurrencyContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintTop_toBottomOf="@+id/accountOtherCurrencyValueTextView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/amountTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/accountOtherCurrencyValueTextView">
 
-        <EditText
-            android:id="@+id/buyCurrencyAmountEditText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
-            android:layout_weight="2"
-            android:background="@drawable/background_style_darkgrey_rectangle_stroke"
-            android:hint="Amount to buy"
-            android:inputType="numberDecimal"
-            android:textColor="@color/white" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/amountTextInputEditText"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginHorizontal="@dimen/fragment_login_textinput_margin_horizontal"
+                    android:backgroundTint="@color/dark_grey"
+                    android:hint="Ilość wybranej waluty:"
+                    android:inputType="numberDecimal"
+                    android:textAlignment="viewStart"
+                    android:textColor="@color/white"
+                    android:textColorHighlight="@color/grey"
+                    android:textColorHint="@color/grey"
+                    android:textColorLink="@color/grey"
 
-        <Button
-            android:id="@+id/buyCurrencyButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Buy" />
-    </LinearLayout>
+
+                    />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/amountCalculatedTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:clickable="false"
+                android:focusable="false"
+
+                android:focusableInTouchMode="false"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/amountTextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/amountCalculatedTextInputEditText"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginHorizontal="@dimen/fragment_login_textinput_margin_horizontal"
+                    android:backgroundTint="@color/dark_grey"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
+                    android:hint="Kwota po przeliczeniu z opłatami:"
+                    android:inputType="numberDecimal"
+                    android:textAlignment="viewStart"
+                    android:textColor="@color/white"
+                    android:textColorHighlight="@color/grey"
+                    android:textColorHint="@color/grey"
+                    android:textColorLink="@color/grey"
+
+                    />
+
+            </com.google.android.material.textfield.TextInputLayout>
+            <TextView
+                android:id="@+id/accountUsdValueTextView"
+                style="@style/KanitLightSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+
+                android:text="Aktualny stan konta USD: $0.00"
+                android:textColor="@color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/amountCalculatedTextInputLayout" />
+
+            <Button
+                android:id="@+id/buyCurrencyButton"
+                style="@style/KanitRegularMedium"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginHorizontal="@dimen/fragment_login_button_margin_horizontal"
+                android:layout_marginTop="8dp"
+
+                android:background="@drawable/background_style_darkgrey_rectangle"
+                android:padding="0dp"
+                android:text="Kup"
+                android:textAllCaps="false"
+                app:layout_constraintTop_toBottomOf="@+id/accountUsdValueTextView" />
+
+
+            <TextView
+                android:id="@+id/notificationsTextView"
+                style="@style/KanitLightMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Powiadomienia"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/buyCurrencyButton" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/targetPriceTextInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                app:layout_constraintTop_toBottomOf="@+id/notificationsTextView">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/targetPriceTextInputEditText"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginHorizontal="@dimen/fragment_login_textinput_margin_horizontal"
+                    android:backgroundTint="@color/dark_grey"
+                    android:hint="Ustaw oczekiwaną kwotę:"
+                    android:inputType="numberDecimal"
+                    android:textAlignment="viewStart"
+                    android:textColor="@color/white"
+                    android:textColorHint="@color/grey" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/setNotificationButton"
+                style="@style/KanitRegularMedium"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginHorizontal="@dimen/fragment_login_button_margin_horizontal"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/background_style_darkgrey_rectangle"
+                android:padding="0dp"
+                android:text="Ustaw powiadomienie"
+                android:textAllCaps="false"
+                app:layout_constraintTop_toBottomOf="@+id/targetPriceTextInputLayout" />
+
+
+            <TextView
+                android:id="@+id/changeTextView"
+                style="@style/KanitLightMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+
+                android:text="Zmiana procentowa"
+                android:textAlignment="center"
+                android:textColor="@color/white"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/setNotificationButton" />
+
+            <androidx.gridlayout.widget.GridLayout
+                android:id="@+id/percentageChangesContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                app:columnCount="3"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/changeTextView">
+
+                <TextView
+                    android:id="@+id/weeklyChangeTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Tygodniowa:"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    app:layout_columnWeight="1" />
+
+                <TextView
+                    android:id="@+id/monthlyChangeTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Miesięczna:"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    app:layout_columnWeight="1" />
+
+                <TextView
+                    android:id="@+id/yearlyChangeTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="Roczna"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    app:layout_columnWeight="1" />
+
+                <TextView
+                    android:id="@+id/weeklyChangePercantageTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="0.0%"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    app:layout_columnWeight="1" />
+
+                <TextView
+                    android:id="@+id/monthlyChangePercantageTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="0.0%"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    app:layout_columnWeight="1" />
+
+                <TextView
+                    android:id="@+id/yearlyChangePercantageTextView"
+                    style="@style/KanitLightSmall"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:text="0.0%"
+                    android:textAlignment="center"
+                    android:textColor="@color/white"
+                    app:layout_columnWeight="1" />
+            </androidx.gridlayout.widget.GridLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
