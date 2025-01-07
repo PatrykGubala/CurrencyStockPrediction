@@ -5,7 +5,7 @@ import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 
 object FirebaseAuthManager {
-    val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+    var firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
     fun isUserLoggedIn(): Boolean {
         return firebaseAuth.currentUser != null

@@ -65,11 +65,16 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
     implementation("androidx.compose.ui:ui-viewbinding:1.7.6")
     implementation("androidx.test.espresso:espresso-core:3.5.1")
+    debugImplementation("androidx.fragment:fragment-testing:1.8.5")
+    testImplementation("org.conscrypt:conscrypt-openjdk-uber:2.5.2")
+
+
     annotationProcessor("com.github.bumptech.glide:compiler:4.14.2")
     implementation("com.google.code.gson:gson:2.10.1")
     implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
     androidTestImplementation("org.mockito:mockito-android:4.0.0")
+    androidTestImplementation("orrobog.mockito:mockito-android:4.0.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 

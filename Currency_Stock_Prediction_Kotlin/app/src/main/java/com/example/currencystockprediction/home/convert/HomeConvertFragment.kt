@@ -50,8 +50,10 @@ class HomeConvertFragment : Fragment() {
         hideSystemUI()
 
         bottomNavView = requireActivity().findViewById(R.id.bottomNavView)
-        originalBottomNavVisibility = bottomNavView.visibility
-        bottomNavView.visibility = View.GONE
+        if (bottomNavView != null) {
+            originalBottomNavVisibility = bottomNavView.visibility
+            bottomNavView.visibility = View.GONE
+        }
 
         setupToolbar()
 
@@ -155,15 +157,17 @@ class HomeConvertFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         hideSystemUI()
-        if (bottomNavView.visibility != View.GONE) {
-            bottomNavView.visibility = View.GONE
+        bottomNavView?.let {
+            if (it.visibility != View.GONE) {
+                it.visibility = View.GONE
+            }
         }
     }
 
     override fun onPause() {
         super.onPause()
         showSystemUI()
-        bottomNavView.visibility = originalBottomNavVisibility
+        bottomNavView?.visibility = originalBottomNavVisibility
     }
 
     private fun hideSystemUI() {

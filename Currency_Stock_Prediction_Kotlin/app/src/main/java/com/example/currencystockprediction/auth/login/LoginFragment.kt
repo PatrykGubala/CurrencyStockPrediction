@@ -141,6 +141,7 @@ class LoginFragment : BaseFragment() {
 
     private fun firebaseAuthWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
+
         binding.progressBar.visibility = View.VISIBLE
         fbAuth.signInWithCredential(credential)
             .addOnCompleteListener(requireActivity()) { task ->
@@ -152,6 +153,7 @@ class LoginFragment : BaseFragment() {
                         startMainActivity()
                     }
                 } else {
+                    Log.e(LOG_DEBUG, "Authentication failed: ${task.exception?.message}")
                     Toast.makeText(requireContext(), "Authentication Failed.", Toast.LENGTH_SHORT).show()
                 }
             }
