@@ -164,7 +164,7 @@
         android:layout_marginBottom="56dp"
         android:clickable="true"
         android:focusable="true"
-        android:text="@string/login_fragment_text_forgot_password"
+        android:text="Nie pamiętam danych logowania"
         android:textColor="@color/grey"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="parent"

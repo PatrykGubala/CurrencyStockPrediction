@@ -41,13 +41,14 @@ def recount_currency_values():
 
 
 
+
 @shared_task
-def train_model_async():
-    logger.info("Celery: train_model_async_for_all started")
+def train_usdpln_model_async():
     service = CurrenciesTrainedModelsService()
-    result = service.train_models_for_all_currencies()
-    logger.info(f"Celery: train_model_async_for_all finished -> {result}")
+    result = service.train_model_for_currency(currency_code="PLN", model_name="SeasonalRNN")
     return result
+
+
 
 
 
