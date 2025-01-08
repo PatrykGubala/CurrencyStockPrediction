@@ -72,6 +72,8 @@ class HistoryViewModel : ViewModel() {
                     for (i in 0 until transactionsArray.length()) {
                         val obj = transactionsArray.getJSONObject(i)
 
+                        Log.d("HistoryViewModel", "Raw transaction JSON: $obj")
+
                         val exchangeRateString = obj.optString("exchange_rate", "")
                         val exchangeRate = if (exchangeRateString.isNotEmpty() && exchangeRateString != "null") {
                             exchangeRateString.toBigDecimal()
@@ -92,7 +94,6 @@ class HistoryViewModel : ViewModel() {
                             title = obj.getString("title"),
                             amount = amountValue,
                             currencyCode = obj.getString("currency"),
-                            exchangeCurrencyCode = if (obj.isNull("exchange_currency")) null else obj.getString("exchange_currency"),
                             exchangeRate = exchangeRate,
                             transactionFee = obj.getString("transaction_fee").toBigDecimal(),
                             senderAccountId = if (obj.isNull("sender_account_id")) null else obj.getInt("sender_account_id"),
@@ -100,8 +101,10 @@ class HistoryViewModel : ViewModel() {
                             date = obj.getString("date"),
                             iconRes = getIconResource(obj.getString("transaction_type")),
                             defaultCurrencyCost = defaultCost
-
                         )
+
+                        Log.d("HistoryViewModel", "Parsed transactionItem: $transactionItem")
+
                         transactionsList.add(transactionItem)
                     }
                     allTransactions = transactionsList
@@ -151,8 +154,8 @@ class HistoryViewModel : ViewModel() {
         return when (transactionType) {
             "deposit" -> R.drawable.plus
             "withdraw" -> R.drawable.minus
-            "transfer" -> R.drawable.arrow_up
-            "exchange" -> R.drawable.arrow_left
+            "buy" -> R.drawable.arrow_left
+            "sell" -> R.drawable.arrow_up
             "send" -> R.drawable.mail
             else -> R.drawable.ic_launcher_background
         }
@@ -240,9 +243,9 @@ class HistoryViewModel : ViewModel() {
         return when (item.transactionType) {
             "deposit" -> true
             "withdraw" -> false
-            "exchange" -> item.currencyCode == "USD"
-
-            "send", "transfer"-> {
+            "buy" -> false
+            "sell" -> true
+            "send"-> {
                 item.receiverAccountId == userAccountId
             }
             else -> false
@@ -252,9 +255,10 @@ class HistoryViewModel : ViewModel() {
     private fun isOutcome(item: HistoryItem.TransactionItem): Boolean {
         return when (item.transactionType) {
             "withdraw" -> true
+            "buy" -> true
+            "sell" -> false
             "deposit" -> false
-            "exchange" -> item.exchangeCurrencyCode == "USD"
-            "send", "transfer"-> {
+            "send", -> {
                 item.senderAccountId == userAccountId
             }
             else -> false

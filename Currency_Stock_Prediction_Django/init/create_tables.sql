@@ -306,7 +306,7 @@ CREATE TABLE IF NOT EXISTS account_currency_transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sender_account_id INT,
     receiver_account_id INT,
-    transaction_type ENUM('deposit', 'withdraw', 'transfer', 'exchange', 'send') NOT NULL,
+    transaction_type ENUM('deposit', 'withdraw', 'buy' ,'sell', 'send') NOT NULL,
     title VARCHAR (255),
     amount DECIMAL(20,8) NOT NULL,
     currency_id INT NOT NULL,

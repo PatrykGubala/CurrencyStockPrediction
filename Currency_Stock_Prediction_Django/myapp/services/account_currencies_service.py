@@ -126,9 +126,9 @@ class AccountCurrenciesService:
                     title='Wpływ USD',
                     amount=Decimal(amount),
                     currency=currency,
-                    exchange_currency=None,
                     exchange_rate=None,
-                    transaction_fee=Decimal('0.00')
+                    transaction_fee=Decimal('0.00'),
+                    default_currency_cost = Decimal(amount)
                 )
 
             return {
@@ -174,7 +174,6 @@ class AccountCurrenciesService:
             new_usd_balance = account_currency_usd.balance - total_cost
             self.account_currency_repo.update_balance(account_id, usd_currency.id, float(new_usd_balance))
 
-
             existing_currency = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
             if not existing_currency:
                 self.account_currency_repo.add_account_currency(account_id, currency.id, float(amount))
@@ -186,16 +185,71 @@ class AccountCurrenciesService:
             self.account_currency_tx_repo.create_transaction(
                 sender_account=account_currency_usd.account,
                 receiver_account=account_currency_usd.account,
-                transaction_type='exchange',
-                title='Wymiana Walut',
+                transaction_type='buy',
+                title='Kupno waluty',
                 amount=Decimal(amount),
                 currency=currency,
-                exchange_currency=usd_currency,
                 exchange_rate=price_per_unit_in_usd,
-                transaction_fee=fee
+                transaction_fee=fee,
+                default_currency_cost = total_cost
+
             )
 
         return True
+
+    def sell_currency(self, account_id: int, currency_code: str, amount: float):
+        if amount <= 0:
+            raise ValueError("Amount must be positive.")
+
+        currency = self.currencies_repo.get_currency_by_code(currency_code)
+        if not currency:
+            raise ValueError(f"Currency {currency_code} does not exist")
+
+        usd_currency = self.currencies_repo.get_currency_by_code("USD")
+        if not usd_currency:
+            raise ValueError("USD currency not found")
+
+        existing_currency = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
+        if not existing_currency or existing_currency.balance < Decimal(amount):
+            raise ValueError(f"Not enough {currency_code} balance to sell")
+
+        latest_data = self.currencies_repo.get_latest_currency_data(currency_code)
+        if not latest_data:
+            raise ValueError("No currency data to determine price")
+
+        close_price_numeric = Decimal(latest_data.close_price)
+        price_per_unit_in_usd = Decimal("1") / close_price_numeric
+        revenue_without_fee = Decimal(amount) * price_per_unit_in_usd
+        fee = revenue_without_fee * Decimal("0.005")
+        total_revenue = revenue_without_fee - fee
+
+        account_currency_usd = self.account_currency_repo.get_by_account_and_currency(account_id, usd_currency.id)
+        if not account_currency_usd:
+            raise ValueError("USD account not found")
+
+        with transaction.atomic():
+            new_currency_balance = existing_currency.balance - Decimal(amount)
+            self.account_currency_repo.update_balance(account_id, currency.id, float(new_currency_balance))
+
+            new_usd_balance = account_currency_usd.balance + total_revenue
+            self.account_currency_repo.update_balance(account_id, usd_currency.id, float(new_usd_balance))
+
+            self.account_currency_tx_repo.create_transaction(
+                sender_account=account_currency_usd.account,
+                receiver_account=account_currency_usd.account,
+                transaction_type='sell',
+                title='Sprzedaż waluty',
+                amount=Decimal(amount),
+                currency=currency,
+                exchange_rate=price_per_unit_in_usd,
+                transaction_fee=fee,
+                default_currency_cost=total_revenue
+
+            )
+
+        return True
+
+
 
 
     def send_currency(self, sender_account_id: int, receiver_public_account_id: str, amount: float) -> Optional[dict]:
@@ -239,9 +293,10 @@ class AccountCurrenciesService:
                     title='Przesłanie USD',
                     amount=Decimal(amount),
                     currency=usd_currency,
-                    exchange_currency=None,
                     exchange_rate=None,
-                    transaction_fee=Decimal('0.00')
+                    transaction_fee=Decimal('0.00'),
+                    default_currency_cost = Decimal(amount)
+
                 )
 
             return {

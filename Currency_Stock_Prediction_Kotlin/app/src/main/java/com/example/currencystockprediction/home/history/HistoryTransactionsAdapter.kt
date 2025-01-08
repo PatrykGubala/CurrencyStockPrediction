@@ -59,8 +59,10 @@ class HistoryTransactionsAdapter(private val userAccountId: Int) :
         private fun isIncome(item: HistoryItem.TransactionItem): Boolean {
             return when (item.transactionType) {
                 "deposit" -> true
+                "sell" -> true
                 "withdraw" -> false
-                "send", "transfer", "exchange" -> item.receiverAccountId == userAccountId
+                "buy" -> false
+                "send" -> item.receiverAccountId == userAccountId
                 else -> false
             }
         }

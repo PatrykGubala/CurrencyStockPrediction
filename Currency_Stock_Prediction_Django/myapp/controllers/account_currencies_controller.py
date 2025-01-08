@@ -144,7 +144,28 @@ def buy_currency(request):
     except Exception as e:
         return Response({"error": "Error buying currency", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+@api_view(['POST'])
+@token_required
+def sell_currency(request):
+    if request.method != 'POST':
+        return Response({"error": "Only POST allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    try:
+        data = request.data
+        currency_code = data.get("currency_code")
+        amount = float(data.get("amount", 0))
+        if not currency_code:
+            return Response({"error": "currency_code is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if amount <= 0:
+            return Response({"error": "Amount must be > 0"}, status=status.HTTP_400_BAD_REQUEST)
 
+        service = AccountCurrenciesService()
+        account = request.current_user.account
+        service.sell_currency(account.id, currency_code, amount)
+        return Response({"message": "Currency sold successfully"}, status=status.HTTP_200_OK)
+    except ValueError as e:
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({"error": "Error selling currency", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

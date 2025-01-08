@@ -275,11 +275,15 @@ class AccountStock(models.Model):
 class AccountCurrencyTransaction(models.Model):
     sender_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='sent_currency_transactions')
     receiver_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='received_currency_transactions')
-    transaction_type = models.CharField(max_length=10, choices=[('deposit','deposit'),('withdraw','withdraw'),('transfer','transfer'),('exchange','exchange'), ('send', 'send')])
+    transaction_type = models.CharField(max_length=10, choices=[
+        ('deposit','deposit'),
+        ('sell','sell'),
+        ('buy','buy'),
+        ('withdraw','withdraw'),
+        ('send', 'send')])
     title = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='currency_transactions')
-    exchange_currency = models.ForeignKey(Currency, on_delete=models.SET_NULL, null=True, related_name='exchange_currency_transactions')
     exchange_rate = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
     transaction_fee = models.DecimalField(max_digits=20, decimal_places=8, default=0.0)
     default_currency_cost = models.DecimalField(max_digits=20, decimal_places=8, default=0.0)

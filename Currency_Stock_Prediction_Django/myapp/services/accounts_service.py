@@ -106,11 +106,6 @@ class AccountsService:
 
         transactions_list = []
         for tx in results:
-            cost = tx.amount
-            if tx.transaction_type == 'exchange' and tx.exchange_rate and tx.sender_account_id == account_id:
-                cost = (tx.amount * tx.exchange_rate) + tx.transaction_fee
-            elif tx.transaction_type in ['deposit', 'withdraw', 'send', 'transfer']:
-                cost = tx.amount
 
             transactions_list.append({
                 "id": tx.id,
@@ -118,13 +113,12 @@ class AccountsService:
                 "amount": str(tx.amount),
                 "title": tx.title,
                 "currency": tx.currency.code,
-                "exchange_currency": tx.exchange_currency.code if tx.exchange_currency else None,
                 "exchange_rate": str(tx.exchange_rate) if tx.exchange_rate else None,
                 "transaction_fee": str(tx.transaction_fee),
                 "sender_account_id": tx.sender_account_id,
                 "receiver_account_id": tx.receiver_account_id,
                 "date": tx.transaction_date.isoformat(),
-                "default_currency_cost": str(cost)
+                "default_currency_cost": str(tx.default_currency_cost)
 
             })
 

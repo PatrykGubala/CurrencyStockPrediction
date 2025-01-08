@@ -17,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentCurrencyDataBinding
-import com.example.currencystockprediction.models.CurrencyData
 import com.example.currencystockprediction.utils.ApiClient
 import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.Legend
@@ -37,7 +36,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -89,14 +87,12 @@ class CurrencyDataFragment : Fragment() {
         bottomNavView.visibility = View.GONE
 
 
-
-
         setupToolbar()
         setupCandleStickChart()
         setupLineChart()
 
         setupButtons()
-        setupBuyButton()
+        setupBuySellButtons()
         setupTextWatcher()
 
 
@@ -199,9 +195,18 @@ class CurrencyDataFragment : Fragment() {
                 updateButtonStyles("all_data")
             }
         }
+        binding.allDataWithPredictionsButton.setOnClickListener {
+            if (currentMode != "all_data_and_predict") {
+                currentMode = "all_data_and_predict"
+                lifecycleScope.launch {
+                    fetchAndDisplayCurrencyData("all_data_and_predict")
+                }
+                updateButtonStyles("all_data_and_predict")
+            }
+        }
     }
 
-    private fun setupBuyButton() {
+    private fun setupBuySellButtons() {
         binding.buyCurrencyButton.setOnClickListener {
             val amountText = binding.amountTextInputEditText.text.toString()
             if (amountText.isEmpty()) {
@@ -213,17 +218,54 @@ class CurrencyDataFragment : Fragment() {
                 buyCurrency(amount)
             }
         }
+
+        binding.sellCurrencyButton.setOnClickListener {
+            val amountText = binding.amountTextInputEditText.text.toString()
+            if (amountText.isEmpty()) {
+                Toast.makeText(requireContext(), "Amount is empty", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val amount = amountText.toDoubleOrNull() ?: 0.0
+            lifecycleScope.launch {
+                sellCurrency(amount)
+            }
+        }
+    }
+
+    private suspend fun sellCurrency(amount: Double) {
+        val endpoint = "/myapp/accounts/currencies/sell"
+        val json = JSONObject().apply {
+            put("currency_code", currencyCode)
+            put("amount", amount)
+        }
+        val responsePair = ApiClient.postRequest(endpoint, json)
+        if (responsePair.first) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Sprzedałeś walutę", Toast.LENGTH_SHORT).show()
+                fetchAndDisplayAccountUsdValue()
+                fetchAndDisplayThisCurrencyBalance()
+            }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Sprzedaż nie powiodła się: ${responsePair.second}", Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     private fun setupTextWatcher() {
         binding.amountTextInputEditText.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
-                val input = s.toString().toDoubleOrNull() ?: 0.0
+                val inputAmount = s.toString().toDoubleOrNull() ?: 0.0
                 val feeRate = 0.005
-                val costWithoutFee = input * (1.0 / currentClosePrice)
-                val fee = costWithoutFee * feeRate
-                val total = costWithoutFee + fee
-                binding.amountCalculatedTextInputEditText.setText(String.format("%.2f USD", total) )
+                val buyCostWithoutFee = inputAmount * (1.0 / currentClosePrice)
+                val fee = buyCostWithoutFee * feeRate
+                val buyTotal = buyCostWithoutFee + fee
+                val revenueWithoutFee = inputAmount * (1.0 / currentClosePrice)
+                val sellTotalAfterFee = revenueWithoutFee - fee
+
+                binding.amountCalculatedTextInputEditText.setText(
+                    String.format("Kup: %.2f USD / Sprzedaj: %.2f USD", buyTotal, sellTotalAfterFee)
+                )
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { }
@@ -274,7 +316,47 @@ class CurrencyDataFragment : Fragment() {
                             currentClosePrice = close.toDouble()
                         }
                     }
-                    updateLineChart(lineEntries, dates)
+                    if(mode == "all_data_and_predict") {
+                        lifecycleScope.launch {
+                            val predEndpoint = "/myapp/currencies/prediction/$currencyCode/data"
+                            val predResponsePair = withContext(Dispatchers.IO) { ApiClient.getRequest(predEndpoint) }
+                            if(predResponsePair.first && predResponsePair.second != null) {
+                                val predJsonArray = JSONObject(predResponsePair.second!!).getJSONArray("predictions")
+                                val predEntries = mutableListOf<Entry>()
+                                for(i in 0 until predJsonArray.length()) {
+                                    val obj = predJsonArray.getJSONObject(i)
+                                    val timestamp = obj.getLong("timestamp")
+                                    val close = obj.getString("predicted_value").toFloat()
+                                    val newIndex = lineEntries.size + i
+                                    predEntries.add(Entry(newIndex.toFloat(), close))
+                                    dates.add(timestamp)
+                                }
+                                val actualDataSet = LineDataSet(lineEntries, "Daily Close").apply {
+                                    color = Color.YELLOW
+                                    setDrawCircles(false)
+                                    setDrawValues(false)
+                                    lineWidth = 0.8f
+                                }
+                                val predictedDataSet = LineDataSet(predEntries, "Predicted").apply {
+                                    color = Color.BLUE
+                                    setDrawCircles(false)
+                                    setDrawValues(false)
+                                    lineWidth = 0.8f
+                                }
+                                val lineData = LineData(actualDataSet, predictedDataSet)
+                                binding.lineChart.data = lineData
+                                val marker = CustomMarkerView(requireContext(), R.layout.marker_view, dailyDateFormat, dates)
+                                binding.lineChart.marker = marker
+                                binding.lineChart.xAxis.valueFormatter = DateAxisFormatter(dates, false)
+                                binding.lineChart.invalidate()
+                            } else {
+                                Toast.makeText(requireContext(), "Failed to load predictions", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        updateLineChart(lineEntries, dates)
+                    }
+
                 }
             } else {
                 Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
@@ -323,6 +405,8 @@ class CurrencyDataFragment : Fragment() {
         binding.lastMonthButton.setTextColor(Color.WHITE)
         binding.allDataButton.setBackgroundColor(Color.TRANSPARENT)
         binding.allDataButton.setTextColor(Color.WHITE)
+        binding.allDataWithPredictionsButton.setBackgroundColor(Color.TRANSPARENT)
+        binding.allDataWithPredictionsButton.setTextColor(Color.WHITE)
         when (selectedMode) {
             "last_month" -> {
                 binding.lastMonthButton.setBackgroundResource(R.drawable.background_style_mildblue_rectangle)
@@ -332,6 +416,11 @@ class CurrencyDataFragment : Fragment() {
                 binding.allDataButton.setBackgroundResource(R.drawable.background_style_mildblue_rectangle)
                 binding.allDataButton.setTextColor(Color.BLACK)
             }
+            "all_data_and_predict" -> {
+                binding.allDataWithPredictionsButton.setBackgroundResource(R.drawable.background_style_mildblue_rectangle)
+                binding.allDataWithPredictionsButton.setTextColor(Color.BLACK)
+            }
+
         }
     }
 

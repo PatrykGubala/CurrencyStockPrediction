@@ -10,7 +10,6 @@ sealed class HistoryItem {
         val title: String,
         val amount: BigDecimal,
         val currencyCode: String,
-        val exchangeCurrencyCode: String?,
         val exchangeRate: BigDecimal?,
         val transactionFee: BigDecimal,
         val senderAccountId: Int?,

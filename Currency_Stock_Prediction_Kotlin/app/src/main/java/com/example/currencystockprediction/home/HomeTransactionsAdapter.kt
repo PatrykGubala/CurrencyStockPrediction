@@ -20,7 +20,7 @@ class HomeTransactionsAdapter(
         private val binding: FragmentHomeTransactionItemBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(item: HistoryItem.TransactionItem) {
-            val costToDisplay = item.defaultCurrencyCost
+            val costToDisplay = item.defaultCurrencyCost ?: item.amount
             val isIncome = isIncome(item)
             val sign = if (isIncome) "+" else "-"
             binding.transactionIcon.setImageResource(item.iconRes)
@@ -32,8 +32,10 @@ class HomeTransactionsAdapter(
         private fun isIncome(item: HistoryItem.TransactionItem): Boolean {
             return when (item.transactionType) {
                 "deposit" -> true
+                "sell" -> true
                 "withdraw" -> false
-                "send", "transfer", "exchange" -> item.receiverAccountId == userAccountId
+                "buy" -> false
+                "send" -> item.receiverAccountId == userAccountId
                 else -> false
             }
         }

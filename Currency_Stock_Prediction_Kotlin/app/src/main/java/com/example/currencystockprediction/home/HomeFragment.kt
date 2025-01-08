@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.currency.CurrencySpinnerAdapter
 import com.example.currencystockprediction.databinding.FragmentHomeBinding
+import com.example.currencystockprediction.models.Currency
 import com.example.currencystockprediction.models.HistoryItem
 import com.example.currencystockprediction.profile.ProfileFragmentDirections
 import com.example.currencystockprediction.utils.ApiClient
@@ -37,6 +38,10 @@ class HomeFragment : Fragment() {
     private lateinit var transactionsAdapter: HomeTransactionsAdapter
     private val recentTransactions = mutableListOf<HistoryItem.TransactionItem>()
 
+    private lateinit var homeCurrenciesAdapter: HomeCurrencyAdapter
+    private val homeCurrencies = mutableListOf<Currency>()
+
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -55,12 +60,23 @@ class HomeFragment : Fragment() {
             binding.accountAmountTextView.text = "Stan konta: $${String.format("%.2f", balance)}"
         }
         setupRecentTransactionsRecycler()
+        setupUserCurrenciesRecyclerView()
 
         setupButtonInteractions()
         lifecycleScope.launch {
             fetchAccountBalances()
             fetchRecentTransactions()
+            fetchAvailableCurrencies()
+
         }
+    }
+
+    private fun setupUserCurrenciesRecyclerView() {
+        homeCurrenciesAdapter = HomeCurrencyAdapter(homeCurrencies) { currency ->
+        }
+        binding.europeanCurrenciesRecyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.europeanCurrenciesRecyclerView.adapter = homeCurrenciesAdapter
     }
 
     private fun setupRecentTransactionsRecycler() {
@@ -69,6 +85,50 @@ class HomeFragment : Fragment() {
         binding.recentTransactionsRecyclerView.adapter = transactionsAdapter
     }
 
+    private suspend fun fetchAvailableCurrencies() {
+        val endpoint = "/myapp/accounts/currencies"
+        val responsePair = ApiClient.getRequest(endpoint)
+        if (responsePair.first && responsePair.second != null) {
+            val currencies = parseAccountCurrenciesResponse(responsePair.second!!)
+            val filteredCurrencies = currencies.filter { !it.code.equals("USD", ignoreCase = true) }
+            homeCurrencies.clear()
+            homeCurrencies.addAll(filteredCurrencies)
+            withContext(Dispatchers.Main) {
+                binding.currenciesConstraintLayout.visibility =
+                    if (homeCurrencies.isNotEmpty()) View.VISIBLE else View.GONE
+                homeCurrenciesAdapter.updateData(homeCurrencies)
+            }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Failed to load available currencies.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun parseAccountCurrenciesResponse(response: String): List<Currency> {
+        val currencies = mutableListOf<Currency>()
+        try {
+            val jsonObject = JSONObject(response)
+            val currenciesArray = jsonObject.getJSONArray("currencies")
+            for (i in 0 until currenciesArray.length()) {
+                val currencyObj = currenciesArray.getJSONObject(i)
+                val code = currencyObj.getString("currency_code")
+                // Tworzymy obiekt Currency z minimalnymi danymi
+                currencies.add(
+                    Currency(
+                        id = 0,
+                        code = code,
+                        name = code,
+                        symbol = "",
+                        dataAvailability = true
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            Log.e("HomeFragment", "Error parsing account currencies: ${e.message}")
+        }
+        return currencies
+    }
 
 
     private suspend fun fetchRecentTransactions() {
@@ -104,8 +164,8 @@ class HomeFragment : Fragment() {
                     val iconRes = when (type) {
                         "deposit" -> R.drawable.plus
                         "withdraw" -> R.drawable.minus
-                        "transfer" -> R.drawable.arrow_up
-                        "exchange" -> R.drawable.arrow_left
+                        "sell" -> R.drawable.arrow_up
+                        "buy" -> R.drawable.arrow_left
                         "send" -> R.drawable.mail
                         else -> R.drawable.ic_launcher_background
                     }
@@ -116,7 +176,6 @@ class HomeFragment : Fragment() {
                             title = obj.getString("title"),
                             amount = amountValue,
                             currencyCode = obj.getString("currency"),
-                            exchangeCurrencyCode = if (obj.isNull("exchange_currency")) null else obj.getString("exchange_currency"),
                             exchangeRate = exchangeRate,
                             transactionFee = feeStr.toBigDecimal(),
                             senderAccountId = senderId,

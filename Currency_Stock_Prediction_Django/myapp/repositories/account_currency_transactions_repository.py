@@ -10,9 +10,9 @@ class AccountCurrencyTransactionsRepository:
         title: str,
         amount,
         currency,
-        exchange_currency,
         exchange_rate,
-        transaction_fee
+        transaction_fee,
+        default_currency_cost
     ) -> AccountCurrencyTransaction:
         account_currency_transaction = AccountCurrencyTransaction.objects.create(
             sender_account=sender_account,
@@ -21,9 +21,9 @@ class AccountCurrencyTransactionsRepository:
             amount=amount,
             title=title,
             currency=currency,
-            exchange_currency=exchange_currency,
             exchange_rate=exchange_rate,
-            transaction_fee=transaction_fee
+            transaction_fee=transaction_fee,
+            default_currency_cost = default_currency_cost
         )
         return account_currency_transaction
 

@@ -1,8 +1,9 @@
 
 from django.urls import path
 
-from myapp.controllers.currencies_trained_models_controller import train_new_currency_model, list_currency_models, \
-    list_model_predictions, predict_with_existing_model, train_new_models_for_all_currencies
+from myapp.controllers.currencies_trained_models_controller import train_new_currency_model, train_usdpln_model, \
+    get_currency_predictions
+
 from myapp.controllers.users_contacts_controller import create_contact, list_contacts
 from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image, \
     initiate_change_email, verify_change_email, change_username
@@ -10,7 +11,7 @@ from myapp.controllers.accounts_controller import create_account, recount_curren
     get_account_transactions, get_account_id
 from myapp.controllers.account_currencies_controller import add_currency_to_account, get_account_currencies, \
     update_account_currency_balance, remove_currency_from_account, deposit_currency, buy_currency, \
-    get_account_currency_balance, send_currency
+    get_account_currency_balance, send_currency, sell_currency
 from myapp.controllers.countries_controller import load_only_countries, load_countries_with_details, get_all_countries, get_country
 from myapp.controllers.regions_controller import get_all_regions, get_region, load_regions, create_region, update_region, delete_region
 from myapp.controllers.currencies_controller import get_all_currencies, get_european_currencies, get_asian_currencies, get_american_currencies, get_oceanian_currencies, convert_currency
@@ -60,6 +61,8 @@ urlpatterns = [
     path('accounts/currencies/<str:currency_code>/delete', remove_currency_from_account, name='remove_currency_from_account'),
     path('accounts/deposit', deposit_currency, name='deposit_currency'),
     path('accounts/currencies/buy', buy_currency, name='buy_currency'),
+    path('accounts/currencies/sell', sell_currency, name='sell_currency'),
+
     path('accounts/currencies/<str:currency_code>/balance', get_account_currency_balance, name='get_account_currency_balance'),
     path('accounts/transactions', get_account_transactions, name='get_account_transactions'),
     path('accounts/usd_value', get_account_usd_value, name='get_account_usd_value'),
@@ -81,12 +84,11 @@ urlpatterns = [
     path('regions/<int:region_id>/update', update_region, name='update_region'),
     path('regions/<int:region_id>/delete', delete_region, name='delete_region'),
 
-    path('currencies/prediction/train_new_models_for_all_currencies', train_new_models_for_all_currencies, name='train_new_models_for_all_currencies'),
 
     path('currencies/prediction/train_new_model', train_new_currency_model, name='train_new_currency_model'),
-    path('currencies/prediction/list_models', list_currency_models, name='list_currency_models'),
-    path('currencies/prediction/list_model_predictions', list_model_predictions, name='list_model_predictions'),
-    path('currencies/prediction/predict_with_existing', predict_with_existing_model, name='predict_with_existing_model'),
+    path('currencies/prediction/train_usdpln_model', train_usdpln_model, name='train_usdpln_model'),
+    path('currencies/prediction/<str:currency_code>/data', get_currency_predictions, name='get_currency_predictions'),
+
 
 ]
 
