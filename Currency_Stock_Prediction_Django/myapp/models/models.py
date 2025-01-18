@@ -25,7 +25,6 @@ class Contact(models.Model):
     title = models.CharField(max_length=100)
     public_account_id = models.CharField(max_length=16)
     account_name = models.CharField(max_length=100)
-    currency_code = models.CharField(max_length=6)
 
     class Meta:
         db_table = 'contacts'
@@ -86,17 +85,14 @@ class CurrenciesTrainedModels(models.Model):
 
 
 
-class CurrenciesTrainedModelPrediction(models.Model):
-    trained_model = models.ForeignKey('CurrenciesTrainedModels', on_delete=models.CASCADE, related_name='predictions')
-
+class CurrenciesPrediction(models.Model):
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='predictions')
     predicted_value = models.DecimalField(max_digits=20, decimal_places=8)
     prediction_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'currencies_trained_model_predictions'
-        unique_together = ('trained_model', 'prediction_date')
+        db_table = 'currencies_predictions'
         ordering = ['-prediction_date']
 
 
@@ -146,11 +142,9 @@ class Exchange(models.Model):
 
 class Company(models.Model):
     company_symbol = models.CharField(max_length=10, unique=True)
-    company_name = models.CharField(max_length=100)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='companies')
-    sector = models.CharField(max_length=50, null=True, blank=True)
-    industry = models.CharField(max_length=50, null=True, blank=True)
-
+    company_name = models.CharField(max_length=255)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE, related_name='companies', null=True, blank=True)
+    logo_url = models.URLField(max_length=255, null=True, blank=True)
     class Meta:
         db_table = 'companies'
 
@@ -161,15 +155,32 @@ class Stock(models.Model):
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='stocks')
     exchange = models.ForeignKey(Exchange, on_delete=models.SET_NULL, null=True, related_name='stocks')
     share_class = models.CharField(max_length=20, null=True, blank=True)
+    data_availability = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'stocks'
 
 
+class StocksRecommendation(models.Model):
+    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='recommendations')
+    date = models.DateField()
+    buy = models.IntegerField(default=0)
+    hold = models.IntegerField(default=0)
+    sell = models.IntegerField(default=0)
+    strong_buy = models.IntegerField(default=0)
+    strong_sell = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'stocks_recommendations'
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"{self.stock.stock_symbol} - {self.date} (Buy={self.buy} Hold={self.hold} Sell={self.sell})"
 
 
-class StockData(models.Model):
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='stock_data')
+class StocksData(models.Model):
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='stocks_data')
     timestamp = models.DateTimeField()
     open_price = models.DecimalField(max_digits=20, decimal_places=8)
     high_price = models.DecimalField(max_digits=20, decimal_places=8)
@@ -178,10 +189,8 @@ class StockData(models.Model):
     volume = models.DecimalField(max_digits=20, decimal_places=4)
 
     class Meta:
-        db_table = 'stock_data'
+        db_table = 'stocks_data'
         ordering = ['-timestamp']
-
-
 
 
 class StocksTrainedModels(models.Model):
@@ -201,16 +210,14 @@ class StocksTrainedModels(models.Model):
         return f"{self.stock.stock_symbol} - {self.model_name} ({self.training_date.strftime('%Y-%m-%d')})"
 
 
-class StocksTrainedModelPrediction(models.Model):
-    trained_model = models.ForeignKey('StocksTrainedModels', on_delete=models.CASCADE, related_name='predictions')
-    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='stock_predictions')
+class StocksPrediction(models.Model):
+    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='stocks_predictions')
     predicted_value = models.DecimalField(max_digits=20, decimal_places=8)
     prediction_date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'stocks_trained_model_predictions'
-        unique_together = ('trained_model', 'prediction_date')
+        db_table = 'stocks_predictions'
         ordering = ['-prediction_date']
 
     def __str__(self):

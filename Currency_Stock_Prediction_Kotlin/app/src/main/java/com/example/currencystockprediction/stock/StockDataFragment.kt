@@ -1,4 +1,4 @@
-package com.example.currencystockprediction.currency
+package com.example.currencystockprediction.stock
 
 import android.graphics.Color
 import android.graphics.Paint
@@ -10,13 +10,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
-import com.example.currencystockprediction.databinding.FragmentCurrencyDataBinding
+import com.example.currencystockprediction.databinding.FragmentStockDataBinding
 import com.example.currencystockprediction.utils.ApiClient
 import com.github.mikephil.charting.components.AxisBase
 import com.github.mikephil.charting.components.Legend
@@ -37,32 +36,29 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
-class CurrencyDataFragment : Fragment() {
+class StockDataFragment : Fragment() {
 
-    private var _binding: FragmentCurrencyDataBinding? = null
+    private var _binding: FragmentStockDataBinding? = null
     private val binding get() = _binding!!
 
     private var insetsController: WindowInsetsControllerCompat? = null
     private lateinit var bottomNavView: BottomNavigationView
     private var originalBottomNavVisibility: Int = View.VISIBLE
 
-    private lateinit var currencyCode: String
+    private lateinit var stockSymbol: String
     private val hourlyDateFormat = SimpleDateFormat("dd.MM HH:00", Locale.getDefault())
     private val dailyDateFormat = SimpleDateFormat("yyyy MM dd", Locale.getDefault())
-    private val logDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
     private var currentClosePrice = 0.0
-
-
-
     private var currentMode: String = "last_month"
-    private val TAG = "CurrencyDataFragment"
+    private val TAG = "StockDataFragment"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            currencyCode = it.getString("currencyCode") ?: "USD"
+            stockSymbol = it.getString("stockSymbol") ?: "AAPL"
         }
     }
 
@@ -71,7 +67,7 @@ class CurrencyDataFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        _binding = FragmentCurrencyDataBinding.inflate(inflater, container, false)
+        _binding = FragmentStockDataBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -80,40 +76,36 @@ class CurrencyDataFragment : Fragment() {
 
         val window = requireActivity().window
         insetsController = WindowInsetsControllerCompat(window, window.decorView)
-        hideSystemUI()
 
         bottomNavView = requireActivity().findViewById(R.id.bottomNavView)
         originalBottomNavVisibility = bottomNavView.visibility
         bottomNavView.visibility = View.GONE
 
-
         setupToolbar()
         setupCandleStickChart()
         setupLineChart()
-
         setupButtons()
         setupBuySellButtons()
         setupTextWatcher()
 
-
         lifecycleScope.launch {
-            fetchAndDisplayCurrencyData("last_month")
+            fetchAndDisplayStockData("last_month")
             fetchAndDisplayAccountUsdValue()
             fetchAndDisplayPercentageChanges()
-            fetchAndDisplayThisCurrencyBalance()
+            fetchAndDisplayThisStockBalance()
         }
     }
 
     private fun setupToolbar() {
         binding.backButton.setOnClickListener {
-            findNavController().popBackStack(R.id.currencyFragment, false)
+            findNavController().popBackStack(R.id.stockFragment, false)
         }
-        binding.titleText.text = "USD$currencyCode=X"
+        binding.titleText.text = stockSymbol
     }
 
     private fun setupCandleStickChart() {
         binding.candleStickChart.apply {
-            description.text = "$currencyCode CandleStick Chart"
+            description.text = "$stockSymbol CandleStick Chart"
             axisLeft.isEnabled = false
             axisLeft.setDrawGridLines(true)
             axisLeft.gridColor = Color.DKGRAY
@@ -143,13 +135,12 @@ class CurrencyDataFragment : Fragment() {
                 gridColor = Color.GRAY
             }
             legend.textColor = Color.WHITE
-
         }
     }
 
     private fun setupLineChart() {
         binding.lineChart.apply {
-            description.text = "$currencyCode Line Chart"
+            description.text = "$stockSymbol Line Chart"
             setBackgroundColor(Color.BLACK)
             setTouchEnabled(true)
             isDragEnabled = true
@@ -170,18 +161,16 @@ class CurrencyDataFragment : Fragment() {
             xAxis.textColor = Color.WHITE
             legend.textColor = Color.WHITE
             legend.form = Legend.LegendForm.LINE
-
         }
     }
 
     private fun setupButtons() {
         updateButtonStyles("last_month")
-
         binding.lastMonthButton.setOnClickListener {
             if (currentMode != "last_month") {
                 currentMode = "last_month"
                 lifecycleScope.launch {
-                    fetchAndDisplayCurrencyData("last_month")
+                    fetchAndDisplayStockData("last_month")
                 }
                 updateButtonStyles("last_month")
             }
@@ -190,7 +179,7 @@ class CurrencyDataFragment : Fragment() {
             if (currentMode != "all_data") {
                 currentMode = "all_data"
                 lifecycleScope.launch {
-                    fetchAndDisplayCurrencyData("all_data")
+                    fetchAndDisplayStockData("all_data")
                 }
                 updateButtonStyles("all_data")
             }
@@ -199,7 +188,7 @@ class CurrencyDataFragment : Fragment() {
             if (currentMode != "all_data_and_predict") {
                 currentMode = "all_data_and_predict"
                 lifecycleScope.launch {
-                    fetchAndDisplayCurrencyData("all_data_and_predict")
+                    fetchAndDisplayStockData("all_data_and_predict")
                 }
                 updateButtonStyles("all_data_and_predict")
             }
@@ -215,7 +204,7 @@ class CurrencyDataFragment : Fragment() {
             }
             val amount = amountText.toDoubleOrNull() ?: 0.0
             lifecycleScope.launch {
-                buyCurrency(amount)
+                buyStock(amount)
             }
         }
 
@@ -227,23 +216,23 @@ class CurrencyDataFragment : Fragment() {
             }
             val amount = amountText.toDoubleOrNull() ?: 0.0
             lifecycleScope.launch {
-                sellCurrency(amount)
+                sellStock(amount)
             }
         }
     }
 
-    private suspend fun sellCurrency(amount: Double) {
-        val endpoint = "/myapp/accounts/currencies/sell"
+    private suspend fun sellStock(amount: Double) {
+        val endpoint = "/myapp/accounts/stocks/sell"
         val json = JSONObject().apply {
-            put("currency_code", currencyCode)
+            put("stock_symbol", stockSymbol)
             put("amount", amount)
         }
         val responsePair = ApiClient.postRequest(endpoint, json)
         if (responsePair.first) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Sprzedałeś walutę", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Sprzedałeś akcje", Toast.LENGTH_SHORT).show()
                 fetchAndDisplayAccountUsdValue()
-                fetchAndDisplayThisCurrencyBalance()
+                fetchAndDisplayThisStockBalance()
             }
         } else {
             withContext(Dispatchers.Main) {
@@ -272,15 +261,13 @@ class CurrencyDataFragment : Fragment() {
         })
     }
 
-    private suspend fun fetchAndDisplayCurrencyData(mode: String) {
-        val endpoint = "/myapp/currencies/data/$currencyCode/get"
+    private suspend fun fetchAndDisplayStockData(mode: String) {
+        val endpoint = "/myapp/stocks/data/$stockSymbol/get"
         val frequency = if (mode == "last_month") "hourly" else "daily"
         val range = if (mode == "last_month") "last_month" else "all_data"
-
         val responsePair = withContext(Dispatchers.IO) {
             ApiClient.getRequest("$endpoint?frequency=$frequency&range=$range")
         }
-
         withContext(Dispatchers.Main) {
             if (responsePair.first && responsePair.second != null) {
                 val jsonData = JSONObject(responsePair.second!!).getJSONArray("data")
@@ -289,15 +276,18 @@ class CurrencyDataFragment : Fragment() {
                     val dates = mutableListOf<Long>()
                     for (i in jsonData.length() - 1 downTo 0) {
                         val obj = jsonData.getJSONObject(i)
-                        val timestamp = obj.getLong("timestamp")
-                        val open = obj.getString("open").toFloat()
-                        val high = obj.getString("high").toFloat()
-                        val low = obj.getString("low").toFloat()
-                        val close = obj.getString("close").toFloat()
-                        val newIndex = jsonData.length() - 1 - i
+                        val timestampString = obj.getString("timestamp")
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+                        val parsedDate = dateFormat.parse(timestampString)
+                        val timestampLong = parsedDate?.time ?: 0L
+                        val open = obj.getString("open_price").toFloat()
+                        val high = obj.getString("high_price").toFloat()
+                        val low = obj.getString("low_price").toFloat()
+                        val close = obj.getString("close_price").toFloat()
 
+                        val newIndex = jsonData.length() - 1 - i
                         entries.add(CandleEntry(newIndex.toFloat(), high, low, open, close))
-                        dates.add(timestamp)
+                        dates.add(timestampLong)
                         if (i == 0) {
                             currentClosePrice = close.toDouble()
                         }
@@ -308,27 +298,37 @@ class CurrencyDataFragment : Fragment() {
                     val dates = mutableListOf<Long>()
                     for (i in 0 until jsonData.length()) {
                         val obj = jsonData.getJSONObject(i)
-                        val timestamp = obj.getLong("timestamp")
-                        val close = obj.getString("close").toFloat()
+                        val timestampString = obj.getString("timestamp")
+                        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+                        val parsedDate = dateFormat.parse(timestampString)
+                        val timestamp = parsedDate?.time ?: 0L
+                        val close = obj.getString("close_price").toFloat()
                         lineEntries.add(Entry(i.toFloat(), close))
                         dates.add(timestamp)
                         if (i == jsonData.length() - 1) {
                             currentClosePrice = close.toDouble()
                         }
                     }
-                    if(mode == "all_data_and_predict") {
+                    if (mode == "all_data_and_predict") {
                         lifecycleScope.launch {
-                            val predEndpoint = "/myapp/currencies/prediction/$currencyCode/data"
-                            val predResponsePair = withContext(Dispatchers.IO) { ApiClient.getRequest(predEndpoint) }
-                            if(predResponsePair.first && predResponsePair.second != null) {
-                                val predJsonArray = JSONObject(predResponsePair.second!!).getJSONArray("predictions")
+                            val predEndpoint = "/myapp/stocks/prediction/$stockSymbol/data"
+                            val predResponsePair = withContext(Dispatchers.IO) {
+                                ApiClient.getRequest(predEndpoint)
+                            }
+                            if (predResponsePair.first && predResponsePair.second != null) {
+                                val predJsonArray = JSONObject(predResponsePair.second!!)
+                                    .getJSONArray("predictions")
                                 val predEntries = mutableListOf<Entry>()
-                                for(i in 0 until predJsonArray.length()) {
+
+                                for (i in 0 until predJsonArray.length()) {
                                     val obj = predJsonArray.getJSONObject(i)
-                                    val timestamp = obj.getLong("timestamp")
-                                    val close = obj.getString("predicted_value").toFloat()
+                                    val timestampString = obj.getString("timestamp")
+                                    val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+                                    val parsedDate = dateFormat.parse(timestampString)
+                                    val timestamp = parsedDate?.time ?: 0L
+                                    val predicted = obj.getString("predicted_value").toFloat()
                                     val newIndex = lineEntries.size + i
-                                    predEntries.add(Entry(newIndex.toFloat(), close))
+                                    predEntries.add(Entry(newIndex.toFloat(), predicted))
                                     dates.add(timestamp)
                                 }
                                 val actualDataSet = LineDataSet(lineEntries, "Daily Close").apply {
@@ -356,7 +356,6 @@ class CurrencyDataFragment : Fragment() {
                     } else {
                         updateLineChart(lineEntries, dates)
                     }
-
                 }
             } else {
                 Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
@@ -367,7 +366,7 @@ class CurrencyDataFragment : Fragment() {
     private fun updateCandleChart(entries: List<CandleEntry>, dates: List<Long>) {
         binding.candleStickChart.visibility = View.VISIBLE
         binding.lineChart.visibility = View.GONE
-        val dataSet = CandleDataSet(entries, "$currencyCode=X").apply {
+        val dataSet = CandleDataSet(entries, "$stockSymbol=X").apply {
             increasingColor = Color.GREEN
             decreasingColor = Color.RED
             increasingPaintStyle = Paint.Style.FILL
@@ -407,6 +406,7 @@ class CurrencyDataFragment : Fragment() {
         binding.allDataButton.setTextColor(Color.WHITE)
         binding.allDataWithPredictionsButton.setBackgroundColor(Color.TRANSPARENT)
         binding.allDataWithPredictionsButton.setTextColor(Color.WHITE)
+
         when (selectedMode) {
             "last_month" -> {
                 binding.lastMonthButton.setBackgroundResource(R.drawable.background_style_mildblue_rectangle)
@@ -420,28 +420,21 @@ class CurrencyDataFragment : Fragment() {
                 binding.allDataWithPredictionsButton.setBackgroundResource(R.drawable.background_style_mildblue_rectangle)
                 binding.allDataWithPredictionsButton.setTextColor(Color.BLACK)
             }
-
         }
     }
 
-    inner class DateAxisFormatter(private val dates: List<Long>, private val isHourly: Boolean) : IAxisValueFormatter {
-        private val sdfHourly = hourlyDateFormat.apply {
-            timeZone = TimeZone.getDefault()
-
-        }
-
-        private val sdfDaily = dailyDateFormat.apply {
-            timeZone = TimeZone.getDefault()
-        }
-
+    inner class DateAxisFormatter(
+        private val dates: List<Long>,
+        private val isHourly: Boolean
+    ) : IAxisValueFormatter {
         override fun getFormattedValue(value: Float, axis: AxisBase?): String {
             val index = value.toInt()
             return if (index in dates.indices) {
                 val date = Date(dates[index])
                 if (isHourly) {
-                    sdfHourly.format(date)
+                    hourlyDateFormat.format(date)
                 } else {
-                    sdfDaily.format(date)
+                    dailyDateFormat.format(date)
                 }
             } else {
                 ""
@@ -455,6 +448,7 @@ class CurrencyDataFragment : Fragment() {
         private val dateFormat: SimpleDateFormat,
         private val dates: List<Long>
     ) : MarkerView(context, layoutResource) {
+
         private val tvContent = findViewById<android.widget.TextView>(R.id.tvContent)
 
         override fun refreshContent(e: Entry?, highlight: Highlight?) {
@@ -465,18 +459,16 @@ class CurrencyDataFragment : Fragment() {
                     val dateStr = dateFormat.format(date)
                     val content = "Date: $dateStr\nOpen: ${e.open}\nClose: ${e.close}\nHigh: ${e.high}\nLow: ${e.low}"
                     tvContent.text = content
-                    Log.d("CustomMarkerView", "Kurs: $content")
+                    Log.d("CustomMarkerView", "Stock: $content")
                 }
-            }
-
-            else if (e != null) {
+            } else if (e != null) {
                 val index = e.x.toInt()
                 if (index in dates.indices) {
                     val date = Date(dates[index])
                     val dateStr = dateFormat.format(date)
                     val content = "Date: $dateStr\nValue: ${e.y}"
                     tvContent.text = content
-                    Log.d("CustomMarkerView", "Kurs: $content")
+                    Log.d("CustomMarkerView", "Stock: $content")
                 }
             }
             super.refreshContent(e, highlight)
@@ -490,7 +482,6 @@ class CurrencyDataFragment : Fragment() {
     private suspend fun fetchAndDisplayAccountUsdValue() {
         val endpoint = "/myapp/accounts/usd_value"
         val responsePair = ApiClient.getRequest(endpoint)
-
         if (responsePair.first && responsePair.second != null) {
             val obj = JSONObject(responsePair.second!!)
             val usdValue = obj.optDouble("usd_balance", 0.0)
@@ -506,13 +497,14 @@ class CurrencyDataFragment : Fragment() {
     }
 
     private suspend fun fetchAndDisplayPercentageChanges() {
-        val endpoint = "/myapp/currencies/changes/$currencyCode"
+        val endpoint = "/myapp/stocks/data/$stockSymbol/change"
         val responsePair = ApiClient.getRequest(endpoint)
         if (responsePair.first && responsePair.second != null) {
             val obj = JSONObject(responsePair.second!!)
             val weeklyChange = obj.optString("weekly_change", "0%")
             val monthlyChange = obj.optString("monthly_change", "0%")
             val yearlyChange = obj.optString("yearly_change", "0%")
+
             withContext(Dispatchers.Main) {
                 binding.weeklyChangePercantageTextView.text = weeklyChange
                 binding.monthlyChangePercantageTextView.text = monthlyChange
@@ -526,38 +518,39 @@ class CurrencyDataFragment : Fragment() {
         }
     }
 
-    private suspend fun fetchAndDisplayThisCurrencyBalance() {
-        val endpoint = "/myapp/accounts/currencies/$currencyCode/balance"
+    private suspend fun fetchAndDisplayThisStockBalance() {
+        val endpoint = "/myapp/accounts/stocks/$stockSymbol/balance"
         val responsePair = ApiClient.getRequest(endpoint)
 
         if (responsePair.first && responsePair.second != null) {
             val obj = JSONObject(responsePair.second!!)
             val balance = obj.optString("balance", "0.0")
-            val code = obj.optString("currency_code", currencyCode)
+            val symbol = obj.optString("stock_symbol", stockSymbol)
             withContext(Dispatchers.Main) {
-                binding.accountOtherCurrencyValueTextView.text = "Stan wybranej waluty: %.2f %s".format(balance.toDouble(), code)
+                binding.accountOtherCurrencyValueTextView.text =
+                    "Stan wybranej akcji: %.2f %s".format(balance.toDouble(), symbol)
             }
         } else {
-            Log.e(TAG, "Failed to get balance for $currencyCode")
+            Log.e(TAG, "Failed to get balance for $stockSymbol")
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Nie załadowano stanu konta", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private suspend fun buyCurrency(amount: Double) {
-        val endpoint = "/myapp/accounts/currencies/buy"
+    private suspend fun buyStock(amount: Double) {
+        val endpoint = "/myapp/accounts/stocks/buy"
         val json = JSONObject().apply {
-            put("currency_code", currencyCode)
+            put("stock_symbol", stockSymbol)
             put("amount", amount)
         }
         val responsePair = ApiClient.postRequest(endpoint, json)
 
         if (responsePair.first) {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Kupiłeś walutę", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Kupiłeś akcje", Toast.LENGTH_SHORT).show()
                 fetchAndDisplayAccountUsdValue()
-                fetchAndDisplayThisCurrencyBalance()
+                fetchAndDisplayThisStockBalance()
             }
         } else {
             withContext(Dispatchers.Main) {
@@ -565,21 +558,10 @@ class CurrencyDataFragment : Fragment() {
             }
         }
     }
+
     override fun onPause() {
         super.onPause()
-        showSystemUI()
         bottomNavView.visibility = originalBottomNavVisibility
-
-    }
-    private fun hideSystemUI() {
-        insetsController?.let { controller ->
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            controller.systemBarsBehavior =
-                WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-    }
-    private fun showSystemUI() {
-        insetsController?.show(WindowInsetsCompat.Type.systemBars())
     }
 
     override fun onDestroyView() {
@@ -587,8 +569,5 @@ class CurrencyDataFragment : Fragment() {
         bottomNavView.visibility = originalBottomNavVisibility
         insetsController = null
         _binding = null
-
     }
-
-
 }

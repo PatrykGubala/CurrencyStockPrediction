@@ -6,21 +6,37 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Config(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
     name = 'myapp'
 
     def ready(self):
+        from myapp.models import Stock, Country
         from myapp.services.countries_service import CountriesService
+        from myapp.services.polygon_stocks_loader_service import PolygonStocksLoaderService
 
-        def load_initial_data(sender, **kwargs):
-            def load_data():
-                try:
-                    countries_service = CountriesService()
-                    data = countries_service.fetch_countries_data()
-                    countries_service.load_countries_with_details(data)
-                    logger.info("Initial data loaded successfully.")
-                except Exception as e:
-                    logger.error(f"Error loading initial data: {e}")
+        import sys
+        if 'runserver' not in sys.argv:
+            return
 
-            threading.Thread(target=load_data).start()
+        try:
+            stocks_count = Stock.objects.count()
+            if stocks_count == 0:
+                logger.info("No stocks found in database. Loading initial stocks data...")
+                loader = PolygonStocksLoaderService()
+                created_stocks = loader.load_stocks_for_selected_countries()
+                logger.info(f"Successfully loaded {created_stocks} stocks")
+            else:
+                logger.info(f"Found {stocks_count} stocks in database. Skipping initial load.")
 
-        post_migrate.connect(load_initial_data, sender=self)
+            countries_count = Country.objects.count()
+            if countries_count == 0:
+                logger.info("No countries found in database. Loading initial countries data...")
+                countries_service = CountriesService()
+                countries_data = countries_service.fetch_countries_data()
+                countries_service.load_countries_with_details(countries_data)
+                logger.info(f"Successfully loaded countries data")
+            else:
+                logger.info(f"Found {countries_count} countries in database. Skipping initial load.")
+
+        except Exception as e:
+            logger.error(f"Error during initial data load: {str(e)}")

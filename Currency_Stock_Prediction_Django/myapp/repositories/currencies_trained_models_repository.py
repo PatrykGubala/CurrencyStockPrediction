@@ -1,6 +1,6 @@
 from typing import Optional, List
 from django.db import transaction
-from myapp.models import Currency, CurrenciesTrainedModels, CurrenciesTrainedModelPrediction
+from myapp.models import Currency, CurrenciesTrainedModels, CurrenciesPrediction
 from decimal import Decimal, ROUND_HALF_UP, DecimalException
 
 class CurrenciesTrainedModelsRepository:
@@ -24,8 +24,12 @@ class CurrenciesTrainedModelsRepository:
     def get_latest_model_for_currency(self, currency: Currency) -> Optional[CurrenciesTrainedModels]:
         return CurrenciesTrainedModels.objects.filter(currency=currency, is_latest=True).first()
 
-    def add_predictions_bulk(self, trained_model: CurrenciesTrainedModels, currency: Currency, predictions: List[dict]) -> None:
-        existing_dates = set(CurrenciesTrainedModelPrediction.objects.filter(trained_model=trained_model, currency=currency).values_list('prediction_date', flat=True))
+    def add_predictions_bulk(self, currency: Currency, predictions: List[dict]) -> None:
+        existing_dates = set(
+            CurrenciesPrediction.objects.filter(
+                currency=currency
+            ).values_list('prediction_date', flat=True)
+        )
         objects_to_create = []
         for item in predictions:
             if item['prediction_date'] in existing_dates:
@@ -38,8 +42,7 @@ class CurrenciesTrainedModelsRepository:
                     val = max_value
                 elif val < min_value:
                     val = min_value
-                obj = CurrenciesTrainedModelPrediction(
-                    trained_model=trained_model,
+                obj = CurrenciesPrediction(
                     currency=currency,
                     predicted_value=val,
                     prediction_date=item['prediction_date']
@@ -48,7 +51,7 @@ class CurrenciesTrainedModelsRepository:
             except (ValueError, DecimalException):
                 continue
         if objects_to_create:
-            CurrenciesTrainedModelPrediction.objects.bulk_create(objects_to_create)
+            CurrenciesPrediction.objects.bulk_create(objects_to_create)
 
     def get_trained_model_by_id(self, model_id: int) -> Optional[CurrenciesTrainedModels]:
         return CurrenciesTrainedModels.objects.filter(id=model_id).first()
@@ -56,5 +59,5 @@ class CurrenciesTrainedModelsRepository:
     def list_models_for_currency(self, currency: Currency) -> List[CurrenciesTrainedModels]:
         return list(CurrenciesTrainedModels.objects.filter(currency=currency).order_by('-training_date'))
 
-    def list_predictions_for_model(self, trained_model: CurrenciesTrainedModels) -> List[CurrenciesTrainedModelPrediction]:
-        return list(CurrenciesTrainedModelPrediction.objects.filter(trained_model=trained_model).order_by('prediction_date'))
+    def list_predictions(self) -> List[CurrenciesPrediction]:
+        return list(CurrenciesPrediction.objects.filter().order_by('prediction_date'))

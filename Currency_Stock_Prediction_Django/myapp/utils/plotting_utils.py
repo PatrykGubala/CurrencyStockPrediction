@@ -37,7 +37,7 @@ def plot_heatmap(data, title, x_tick_labels, y_tick_labels, output_path, figure_
     print(f"Heatmap saved to {output_path}")
 
 def visualize_data(data, currency, output_dir):
-    close_col = 'close'
+    close_col = f'Close_{currency}'
     plot_path = os.path.join(output_dir, f'{currency}_closing_prices.png')
     plot_line_graph(
         x_data_list=[data.index],
@@ -50,19 +50,19 @@ def visualize_data(data, currency, output_dir):
         output_path=plot_path,
         figure_size=(14, 7)
     )
-
     numeric_data = data.select_dtypes(include=[np.number])
     correlation = numeric_data.corr()
     heatmap_path = os.path.join(output_dir, f'{currency}_correlation_heatmap.png')
     plot_heatmap(
-        data=correlation.values,
+        data=correlation,
         title='Correlation Heatmap',
         x_tick_labels=correlation.columns,
         y_tick_labels=correlation.columns,
         output_path=heatmap_path,
-        figure_size=(12, 10)
-    )
+        figure_size=(12, 10),
+        annotate=True
 
+    )
 def decompose_time_series(data, currency, output_dir):
     close_col = 'close'
     if close_col not in data.columns:
@@ -91,27 +91,33 @@ def decompose_time_series(data, currency, output_dir):
     plt.close()
     return result
 
-def plot_results(currency, y_train_seq, y_test_plot, predictions, y_train_dates, y_test_dates, scaler_y,
-                currency_output_dir, dataset_time):
+def plot_results(currency, y_train_seq, y_test_plot, predictions, y_train_dates, y_test_dates, scaler_y, currency_output_dir, dataset_time):
     y_train_plot = scaler_y.inverse_transform(y_train_seq.reshape(-1, 1)).flatten()
-    y_test_plot = scaler_y.inverse_transform(y_test_plot.reshape(-1, 1)).flatten()
-    predictions_plot = predictions
-
-    all_dates = list(y_train_dates) + list(y_test_dates) + [y_test_dates[-1] + timedelta(days=i+1) for i in range(len(predictions_plot))]
-    all_values = list(y_train_plot) + list(y_test_plot) + predictions_plot
-
     forecast_plot_path = os.path.join(currency_output_dir, f'{currency}_forecast.png')
     plot_line_graph(
-        x_data_list=[all_dates],
-        y_data_list=[all_values],
-        labels=['Actual and Predicted Prices'],
+        x_data_list=[y_train_dates, y_test_dates, y_test_dates],
+        y_data_list=[y_train_plot, y_test_plot, predictions],
+        labels=['Training Data', 'Actual Prices', 'Predicted Prices'],
         title=f'{currency} Closing Price Prediction (Last {dataset_time} Years)',
         x_label='Date',
         y_label='Price',
-        legend_labels=['Actual and Predicted Prices'],
+        legend_labels=['Training Data', 'Actual Prices', 'Predicted Prices'],
         output_path=forecast_plot_path,
         figure_size=(20, 10)
     )
+    comparison_plot_path = os.path.join(currency_output_dir, f'{currency}_actual_vs_predicted.png')
+    plot_line_graph(
+        x_data_list=[y_test_dates, y_test_dates],
+        y_data_list=[y_test_plot, predictions],
+        labels=['Actual Prices', 'Predicted Prices'],
+        title=f'{currency} Actual vs Predicted Prices (Test Set)',
+        x_label='Date',
+        y_label='Price',
+        legend_labels=['Actual Prices', 'Predicted Prices'],
+        output_path=comparison_plot_path,
+        figure_size=(20, 10)
+    )
+
 
 def plot_training_history(history, output_dir, currency):
     loss = history.history.get('loss', [])

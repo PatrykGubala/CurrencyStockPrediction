@@ -37,6 +37,15 @@ object CacheManager {
     }
 
 
+    fun saveStocks(context: Context, exchange: String, data: String) {
+        getPreferences(context).edit().putString("${exchange}_stocks", data).apply()
+    }
+
+    fun getStocks(context: Context, exchange: String): String? {
+        return getPreferences(context).getString("${exchange}_stocks", null)
+    }
+
+
     fun clearCache(context: Context) {
         getPreferences(context).edit().clear().apply()
     }

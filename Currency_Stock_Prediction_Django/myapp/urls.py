@@ -1,8 +1,16 @@
 
 from django.urls import path
 
+from myapp.controllers.companies_controller import get_all_companies, create_company, delete_company
 from myapp.controllers.currencies_trained_models_controller import train_new_currency_model, train_usdpln_model, \
     get_currency_predictions
+from myapp.controllers.exchanges_controller import get_all_exchanges, create_exchange, delete_exchange
+from myapp.controllers.stocks_controller import get_all_stocks, add_stock, update_stock, delete_stock, \
+    load_stocks_companies_exchanges_recommendations
+from myapp.controllers.stocks_data_controller import load_daily_stock_data, load_hourly_stock_data, get_all_stocks_data, \
+    get_latest_stock_data, get_stock_data, get_stocks_monthly_percentage_change
+from myapp.controllers.stocks_recomendations_controller import create_stock_recommendations, get_stock_recommendations, \
+    load_stocks_recommendations
 
 from myapp.controllers.users_contacts_controller import create_contact, list_contacts
 from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image, \
@@ -22,7 +30,8 @@ from myapp.controllers.currencies_data_controller import get_all_currencies_data
 from django.conf import settings
 from django.conf.urls.static import static
 
-
+from myapp.services.finnhub_stocks_loader_service import load_all_us_stocks_with_recommendations
+from myapp.services.polygon_stocks_loader_service import PolygonStocksLoaderService
 
 urlpatterns = [
     path('users/register', register_user, name='register_user'),
@@ -88,6 +97,48 @@ urlpatterns = [
     path('currencies/prediction/train_new_model', train_new_currency_model, name='train_new_currency_model'),
     path('currencies/prediction/train_usdpln_model', train_usdpln_model, name='train_usdpln_model'),
     path('currencies/prediction/<str:currency_code>/data', get_currency_predictions, name='get_currency_predictions'),
+
+    path('exchanges/', get_all_exchanges, name='get_all_exchanges'),
+    path('exchanges/create', create_exchange, name='create_exchange'),
+    path('exchanges/<int:exchange_id>/delete', delete_exchange, name='delete_exchange'),
+
+    path('companies/', get_all_companies, name='get_all_companies'),
+    path('companies/create', create_company, name='create_company'),
+    path('companies/<int:company_id>/delete', delete_company, name='delete_company'),
+
+    path('stocks/', get_all_stocks, name='get_all_stocks'),
+    path('stocks/add', add_stock, name='add_stock'),
+    path('stocks/<int:stock_id>/update', update_stock, name='update_stock'),
+    path('stocks/<int:stock_id>/delete', delete_stock, name='delete_stock'),
+    path('stocks/data/load_daily', load_daily_stock_data, name='load_daily_stock_data'),
+    path('stocks/data/load_hourly', load_hourly_stock_data, name='load_hourly_stock_data'),
+    path('stocks/data', get_all_stocks_data, name='get_all_stocks_data'),
+    path('stocks/data/<str:stock_symbol>/latest', get_latest_stock_data, name='get_latest_stock_data'),
+    path('stocks/data/<str:stock_symbol>/get', get_stock_data, name='get_stock_data'),
+
+    path('stocks/data/load_all_data', load_hourly_stock_data, name='load_hourly_stock_data'),
+    path('stocks/data/<str:stock_symbol>/monthly_change/', get_stocks_monthly_percentage_change,
+         name='get_stocks_monthly_percentage_change'),
+
+    path('stock_recommendations/create', create_stock_recommendations, name='create_stock_recommendations'),
+    path('stock_recommendations', get_stock_recommendations, name='get_stock_recommendations'),
+
+
+
+    path('stocks/load_stocks_exchanges_companies', PolygonStocksLoaderService.load_stocks_exchanges_companies, name='load_stocks_exchanges_companies'),
+    path('stocks/load_stocks_recommendations', load_stocks_recommendations, name='load_stocks_recommendations'),
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ]

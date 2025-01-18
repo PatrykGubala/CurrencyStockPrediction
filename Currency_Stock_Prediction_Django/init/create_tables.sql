@@ -76,16 +76,12 @@ CREATE TABLE IF NOT EXISTS currencies_trained_models (
         ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS currencies_trained_model_predictions (
+CREATE TABLE IF NOT EXISTS currencies_predictions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    trained_model_id INT NOT NULL,
     currency_id INT NOT NULL,
     predicted_value DECIMAL(20,8) NOT NULL,
     prediction_date DATETIME NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (trained_model_id) REFERENCES currencies_trained_models(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
     FOREIGN KEY (currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -121,12 +117,11 @@ CREATE TABLE IF NOT EXISTS exchanges (
 CREATE TABLE IF NOT EXISTS companies (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_symbol VARCHAR(10) NOT NULL UNIQUE,
-    company_name VARCHAR(100) NOT NULL,
-    country_id INT NOT NULL,
-    sector VARCHAR(50),
-    industry VARCHAR(50),
+    company_name VARCHAR(255) NOT NULL,
+    country_id INT NULL,
+    logo_url VARCHAR(255),
     FOREIGN KEY (country_id) REFERENCES countries(id)
-        ON DELETE RESTRICT
+        ON DELETE CASCADE
         ON UPDATE CASCADE
 );
 
@@ -136,8 +131,10 @@ CREATE TABLE IF NOT EXISTS stocks (
     stock_symbol VARCHAR(10) NOT NULL UNIQUE,
     stock_name VARCHAR(100) NOT NULL,
     company_id INT NOT NULL,
-    exchange_id INT,
+    exchange_id INT NULL,
     share_class VARCHAR(20),
+    data_availability BOOLEAN default false,
+
     FOREIGN KEY (company_id) REFERENCES companies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
@@ -147,7 +144,7 @@ CREATE TABLE IF NOT EXISTS stocks (
 );
 
 -- 10. Stock_Data Table
-CREATE TABLE IF NOT EXISTS stock_data (
+CREATE TABLE IF NOT EXISTS stocks_data (
     id INT AUTO_INCREMENT PRIMARY KEY,
     timestamp DATETIME NOT NULL,
     stock_id INT NOT NULL,
@@ -161,7 +158,20 @@ CREATE TABLE IF NOT EXISTS stock_data (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-
+CREATE TABLE IF NOT EXISTS stocks_recommendations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    stock_id INT NOT NULL,
+    date DATE NOT NULL,
+    buy INT NOT NULL DEFAULT 0,
+    hold INT NOT NULL DEFAULT 0,
+    sell INT NOT NULL DEFAULT 0,
+    strong_buy INT NOT NULL DEFAULT 0,
+    strong_sell INT NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (stock_id) REFERENCES stocks(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE
+);
 
 
 -- 12. Stocks_Trained_Models Table
@@ -179,17 +189,12 @@ CREATE TABLE IF NOT EXISTS stocks_trained_models (
         ON UPDATE CASCADE
 );
 
--- 13. Stocks_Trained_Model_Predictions Table
-CREATE TABLE IF NOT EXISTS stocks_trained_model_predictions (
+CREATE TABLE IF NOT EXISTS stocks_predictions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    trained_model_id INT NOT NULL,
     stock_id INT NOT NULL,
     predicted_value DECIMAL(20,8) NOT NULL,
     prediction_date DATETIME NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (trained_model_id) REFERENCES stocks_trained_models(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
     FOREIGN KEY (stock_id) REFERENCES stocks(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -242,7 +247,6 @@ CREATE TABLE IF NOT EXISTS contacts (
     title VARCHAR(100) NOT NULL,
     account_name VARCHAR(100) NOT NULL,
     public_account_id VARCHAR(16) NOT NULL UNIQUE,
-    currency_code VARCHAR(6) NOT NULL UNIQUE,
 
 
      CONSTRAINT fk_contacts_user_id FOREIGN KEY (user_id) REFERENCES users(id)
@@ -310,7 +314,6 @@ CREATE TABLE IF NOT EXISTS account_currency_transactions (
     title VARCHAR (255),
     amount DECIMAL(20,8) NOT NULL,
     currency_id INT NOT NULL,
-    exchange_currency_id INT,
     exchange_rate DECIMAL(20,8),
     transaction_fee DECIMAL(20,8) DEFAULT 0.00000000,
     default_currency_cost DECIMAL(20,8) DEFAULT 0.00000000,
@@ -324,9 +327,6 @@ CREATE TABLE IF NOT EXISTS account_currency_transactions (
         ON UPDATE CASCADE,
     FOREIGN KEY (currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    FOREIGN KEY (exchange_currency_id) REFERENCES currencies(id)
-        ON DELETE SET NULL
         ON UPDATE CASCADE
 );
 

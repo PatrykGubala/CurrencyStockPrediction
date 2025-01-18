@@ -4,7 +4,7 @@ from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from myapp.services.currencies_trained_models_service import CurrenciesTrainedModelsService
-from myapp.models import Currency, CurrenciesTrainedModelPrediction
+from myapp.models import Currency, CurrenciesPrediction
 from myapp.repositories.currencies_trained_models_repository import CurrenciesTrainedModelsRepository
 from myapp.tasks import train_usdpln_model_async
 
@@ -76,7 +76,7 @@ def get_currency_predictions(request, currency_code):
         currency = Currency.objects.get(code=currency_code)
     except Currency.DoesNotExist:
         return Response({"error": "Currency not found"}, status=status.HTTP_404_NOT_FOUND)
-    predictions = CurrenciesTrainedModelPrediction.objects.filter(currency=currency).order_by('prediction_date')
+    predictions = CurrenciesPrediction.objects.filter(currency=currency).order_by('prediction_date')
     data = [{
         "timestamp": int(p.prediction_date.timestamp() * 1000),
         "predicted_value": str(p.predicted_value)

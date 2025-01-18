@@ -168,8 +168,8 @@ class UsersService:
             raise ValueError("Failed to verify email change")
 
     def send_verification_email(self, email: str, link: str):
-        subject = "Verify Your New Email Address"
-        message = f"Please verify your new email address by clicking on the following link:\n\n{link}\n\nIf you did not request this change, please contact support immediately."
+        subject = "Zweryfikuj adres email"
+        message = f"Zweryfikuj adres email poprzez kliknięcie tego linku:\n\n{link}\n\n"
         from_email = settings.DEFAULT_FROM_EMAIL
         recipient_list = [email]
 

@@ -1,144 +1,193 @@
 import os
 import time
-import numpy as np
-import pandas as pd
 from math import sqrt
 from datetime import timedelta
-from django.utils import timezone
+import numpy as np
+import pandas as pd
 import tensorflow as tf
-from tensorflow.keras.models import Sequential, load_model
+from django.utils import timezone
+from matplotlib import pyplot as plt
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, GRU, SimpleRNN, Dense, Input
 from tensorflow.keras.callbacks import EarlyStopping, Callback
-from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-from itertools import product
-from myapp.models import Currency
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import StandardScaler
+from decimal import Decimal, ROUND_HALF_UP, DecimalException
+from myapp.models import Currency, CurrenciesPrediction, CurrenciesTrainedModels
 from myapp.repositories.currencies_trained_models_repository import CurrenciesTrainedModelsRepository
 from myapp.services.currencies_data_service import CurrenciesDataService, logger
-from myapp.utils.plotting_utils import decompose_time_series, visualize_data, plot_results, plot_heatmap
-from statsmodels.tsa.seasonal import seasonal_decompose
 
+def plot_line_graph(x_data_list, y_data_list, labels, title, x_label, y_label, legend_labels, output_path, figure_size=(14, 7)):
+    plt.figure(figsize=figure_size)
+    for x_data, y_data, lbl in zip(x_data_list, y_data_list, legend_labels):
+        plt.plot(x_data, y_data, label=lbl)
+    plt.title(title)
+    plt.xlabel(x_label)
+    plt.ylabel(y_label)
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    plt.savefig(output_path)
+    plt.close()
 
+def decompose_time_series(data, currency, output_dir):
+    from statsmodels.tsa.seasonal import seasonal_decompose
+    close_col = f'Close_{currency}'
+    result = seasonal_decompose(data[close_col], model='multiplicative', period=252)
+    plt.figure(figsize=(15, 10))
+    plt.subplot(411)
+    plt.title('Original Time Series')
+    plt.plot(data.index, result.observed)
+    plt.subplot(412)
+    plt.title('Trend')
+    plt.plot(data.index, result.trend)
+    plt.subplot(413)
+    plt.title('Seasonal')
+    plt.plot(data.index, result.seasonal)
+    plt.subplot(414)
+    plt.title('Residual')
+    plt.plot(data.index, result.resid)
+    plt.tight_layout()
+    os.makedirs(output_dir, exist_ok=True)
+    plt.savefig(os.path.join(output_dir, f'{currency}_seasonal_decomposition.png'))
+    plt.close()
+    return result
 
+def plot_results(currency, y_train_seq, y_test_plot, predictions, y_train_dates, y_test_dates, scaler_y, currency_output_dir, dataset_time):
+    y_train_plot = scaler_y.inverse_transform(y_train_seq.reshape(-1, 1)).flatten()
+    train_plot_path = os.path.join(currency_output_dir, f'{currency}_train_plot.png')
+    plt.figure(figsize=(12, 6))
+    plt.plot(y_train_dates, y_train_plot, label='Train Actual')
+    plt.title(f'{currency} Training Data (Last {dataset_time} Years)')
+    plt.xlabel('Date')
+    plt.ylabel('Value')
+    plt.legend()
+    os.makedirs(currency_output_dir, exist_ok=True)
+    plt.savefig(train_plot_path)
+    plt.close()
+    test_plot_path = os.path.join(currency_output_dir, f'{currency}_test_plot.png')
+    plt.figure(figsize=(12, 6))
+    plt.plot(y_test_dates, y_test_plot, label='Test Actual')
+    plt.plot(y_test_dates, predictions, label='Test Predicted')
+    plt.title(f'{currency} Test Data (Actual vs. Predicted)')
+    plt.xlabel('Date')
+    plt.ylabel('Value')
+    plt.legend()
+    plt.savefig(test_plot_path)
+    plt.close()
 
+def visualize_data(data, currency, output_dir):
+    close_col = 'close'
+    plot_path = os.path.join(output_dir, f'{currency}_closing_prices.png')
+    plot_line_graph(
+        x_data_list=[data.index],
+        y_data_list=[data[close_col]],
+        labels=[close_col],
+        title=f'{currency} Closing Prices',
+        x_label='Date',
+        y_label='Price',
+        legend_labels=[close_col],
+        output_path=plot_path,
+        figure_size=(14, 7)
+    )
+    numeric_data = data.select_dtypes(include=[np.number])
+    correlation = numeric_data.corr()
+    heatmap_path = os.path.join(output_dir, f'{currency}_correlation_heatmap.png')
 
-def ornstein_uhlenbeck_process(mu, sigma, theta, T, N):
-    dt = T / N
-    process = np.zeros(N)
-    process[0] = mu
-    for t in range(1, N):
-        process[t] = process[t - 1] + theta * (mu - process[t - 1]) * dt + sigma * np.sqrt(dt) * np.random.normal(0, 1)
-    return process
+def seasonal_decompose_local(data, freq=252):
+    from statsmodels.tsa.seasonal import seasonal_decompose
+    return seasonal_decompose(data, model='multiplicative', period=freq)
 
+def add_stochastic_features_local(df):
+    if 'close' not in df.columns or df['close'].empty:
+        return df
+    if df['close'].sum() != 0:
+        probabilities = df['close'] / df['close'].sum()
+        df['Entropy'] = - (probabilities * np.log2(probabilities + 1e-10))
+    else:
+        df['Entropy'] = 0
+    df['Random_Component'] = np.random.normal(0, df['close'].std(), len(df))
+    def ornstein_uhlenbeck_process(mu, sigma, theta, T, N):
+        dt = T / N
+        process = np.zeros(N)
+        process[0] = mu
+        for t in range(1, N):
+            process[t] = process[t - 1] + theta * (mu - process[t - 1]) * dt + sigma * np.sqrt(dt) * np.random.normal(0, 1)
+        return process
+    df['OU_Simulated'] = ornstein_uhlenbeck_process(df['close'].mean(), df['close'].std(), 0.1, 1, len(df))
+    return df
 
+def add_seasonal_features_local(df):
+    df['Month'] = df.index.month
+    df['Day_of_Week'] = df.index.dayofweek
+    df['Quarter'] = df.index.quarter
+    df['Sin_Month'] = np.sin(df['Month'] * (2 * np.pi / 12))
+    df['Cos_Month'] = np.cos(df['Month'] * (2 * np.pi / 12))
+    return df
 
-
+def create_lstm_sequences_local(X, y, seq_len):
+    X_seq = []
+    y_seq = []
+    for i in range(len(X) - seq_len):
+        X_seq.append(X.iloc[i:i + seq_len].values)
+        y_seq.append(y.iloc[i + seq_len])
+    return np.array(X_seq), np.array(y_seq)
 
 class IterationLogger(Callback):
     def __init__(self):
         super().__init__()
         self.batch_count = 0
-
     def on_batch_end(self, batch, logs=None):
         self.batch_count += 1
-
 
 class CurrenciesTrainedModelsService:
     def __init__(self):
         self.data_service = CurrenciesDataService()
         self.trained_models_repo = CurrenciesTrainedModelsRepository()
-
-    def _create_sequences_multistep(self, features_data, target_data, seq_len, forecast_horizon):
-        X, y = [], []
-        for i in range(seq_len, len(features_data) - forecast_horizon + 1):
-            X.append(features_data[i - seq_len:i])
-            y.append(target_data[i:i + forecast_horizon])
-        return np.array(X), np.array(y)
-
-    def _train_simple_model(self, df: pd.DataFrame, params: dict):
-        if len(df) < params['sequence_length'] * 2:
-            return None, None, None, None, None, None, None, None, None
-
-        seq_len = params.get('sequence_length', 14)
-        forecast_horizon = 30
-        feature_cols = [c for c in df.columns if c not in ['close']]
-
-        if 'close' not in df.columns or len(feature_cols) == 0:
-            return None, None, None, None, None, None, None, None, None
-
-        scaler_features = StandardScaler()
-        scaler_target = StandardScaler()
-        features_scaled = scaler_features.fit_transform(df[feature_cols].astype(float).values)
-        close_scaled = scaler_target.fit_transform(df['close'].astype(float).values.reshape(-1, 1))
-
-        train_size = int(len(features_scaled) * 0.8)
-        train_features = features_scaled[:train_size]
-        test_features = features_scaled[train_size:]
-        train_target = close_scaled[:train_size]
-        test_target = close_scaled[train_size:]
-
-        X_train_seq, y_train_seq = self._create_sequences_multistep(
-            train_features, train_target, seq_len, forecast_horizon
-        )
-        X_test_seq, y_test_seq = self._create_sequences_multistep(
-            test_features, test_target, seq_len, forecast_horizon
-        )
-
-        y_train_dates = df.index[seq_len:train_size - forecast_horizon + 1]
-        y_test_dates = df.index[train_size + seq_len:len(df) - forecast_horizon + 1]
-
-        model = Sequential()
-        for layer_idx in range(params['n_layers']):
-            return_sequences = (layer_idx < params['n_layers'] - 1)
-            if layer_idx == 0:
-                model.add(Input(shape=(seq_len, len(feature_cols))))
-            if params['rnn_type'] == 'LSTM':
-                model.add(LSTM(params['units'], activation=params['activation'], return_sequences=return_sequences))
-            elif params['rnn_type'] == 'GRU':
-                model.add(GRU(params['units'], activation=params['activation'], return_sequences=return_sequences))
-            else:
-                model.add(
-                    SimpleRNN(params['units'], activation=params['activation'], return_sequences=return_sequences))
-        model.add(Dense(forecast_horizon))  # Changed to output forecast_horizon values
-        model.compile(loss='mean_squared_error', optimizer=params['optimizer'])
-
-        es = EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
-        iteration_logger = IterationLogger()
-        history = model.fit(
-            X_train_seq, y_train_seq,
-            epochs=params['epochs'],
-            batch_size=params['batch_size'],
-            verbose=1,
-            callbacks=[es, iteration_logger]
-        )
-
-        train_predictions = model.predict(X_train_seq)
-        mse_train = mean_squared_error(y_train_seq.flatten(), train_predictions.flatten())
-        rmse_train = sqrt(mse_train)
-
-        test_predictions = model.predict(X_test_seq)
-        mse_test = mean_squared_error(y_test_seq.flatten(), test_predictions.flatten())
-        rmse_test = sqrt(mse_test)
-
-        metrics = {
-            "mse_train": float(mse_train),
-            "rmse_train": float(rmse_train),
-            "mse_test": float(mse_test),
-            "rmse_test": float(rmse_test),
-            "total_iterations": iteration_logger.batch_count
-        }
-
-        scaler_params = {
-            'features_scaler_mean': scaler_features.mean_.tolist(),
-            'features_scaler_scale': scaler_features.scale_.tolist(),
-            'target_scaler_mean': scaler_target.mean_.tolist(),
-            'target_scaler_scale': scaler_target.scale_.tolist()
-        }
-        params.update(scaler_params)
-
-        return model, metrics, X_train_seq, y_train_seq, X_test_seq, y_test_seq, scaler_target, y_train_dates, y_test_dates
-
-    def train_model_for_currency(self, currency_code: str, model_name: str = "SeasonalRNN", param_grid=None) -> dict:
+    def _load_data(self, currency_code, dataset_time=3):
+        data = self.data_service.get_currency_data(currency_code=currency_code, frequency='daily', range_param='all_data')
+        if not data:
+            logger.error(f"No data for {currency_code}.")
+            return pd.DataFrame()
+        df = pd.DataFrame(data)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms', utc=True)
+        df = df.set_index('timestamp').sort_index()
+        cutoff_date = timezone.now() - timedelta(days=365 * dataset_time)
+        df = df[df.index >= cutoff_date]
+        local_timezone = timezone.get_default_timezone()
+        df = df.tz_convert(local_timezone)
+        df.index = df.index.normalize()
+        df['close'] = pd.to_numeric(df['close'], errors='coerce')
+        df.dropna(subset=['close'], inplace=True)
+        all_dates = pd.date_range(start=df.index.min(), end=df.index.max(), freq='D')
+        missing_dates = all_dates.difference(df.index)
+        if not missing_dates.empty:
+            logger.warning(f"Missing dates for {currency_code}: {missing_dates.tolist()}")
+            df = df.reindex(all_dates)
+            df['close'] = df['close'].ffill()
+        df.dropna(subset=['close'], inplace=True)
+        df['day_of_week'] = df.index.dayofweek
+        return df
+    def _prepare_seasonal_data(self, df, currency_code, output_dir):
+        if len(df) < 252:
+            logger.warning(f"Not enough rows for full seasonal decomposition on {currency_code}. Skipping.")
+            decomposition_result = None
+        else:
+            try:
+                decomposition_result = seasonal_decompose_local(df['close'], freq=252)
+            except ValueError as e:
+                logger.warning(f"Decomposition failed for {currency_code}: {e}")
+                decomposition_result = None
+        df = add_seasonal_features_local(df)
+        df = add_stochastic_features_local(df)
+        if decomposition_result is not None and decomposition_result.seasonal is not None:
+            seasonal_series = decomposition_result.seasonal
+            seasonal_series = seasonal_series.reindex(df.index).ffill().bfill()
+            df['Seasonal_Adjusted_Close'] = df['close'] / seasonal_series
+        else:
+            df['Seasonal_Adjusted_Close'] = df['close']
+        return df
+    def train_model_for_currency(self, currency_code, model_name="SeasonalRNN", param_grid=None, is_latest=True):
         if param_grid is None:
             param_grid = {}
         defaults = {
@@ -148,218 +197,203 @@ class CurrenciesTrainedModelsService:
             'activation': 'relu',
             'optimizer': 'adam',
             'batch_size': 32,
-            'epochs': 5,
-            'sequence_length': 14
+            'epochs': 30,
+            'sequence_length': 14,
+            'dropout': 0.0
         }
-        param_grid = {**defaults, **param_grid}
-
+        for k, v in defaults.items():
+            if k not in param_grid:
+                param_grid[k] = v
         currency = Currency.objects.filter(code=currency_code).first()
         if not currency:
-            return {"error": "Currency not found."}
-
-        df = self._load_and_prepare_data(currency_code=currency_code, dataset_time=3)
-        if df.empty:
-            return {"error": "No data for currency."}
-
-        model, metrics, X_train_seq, y_train_seq, X_test_seq, y_test_seq, scaler_target, y_train_dates, y_test_dates = self._train_simple_model(
-            df, param_grid)
-
-        if model is None:
-            return {"error": "Failed to train model."}
-
-        # Save the model
+            return {"error": f"Currency {currency_code} not found."}
+        df_raw = self._load_data(currency_code, dataset_time=3)
+        if df_raw.empty:
+            return {"error": f"No data for {currency_code}."}
+        output_dir = "forecasting_outputs"
+        currency_output_dir = os.path.join(output_dir, currency_code)
+        os.makedirs(currency_output_dir, exist_ok=True)
+        df = self._prepare_seasonal_data(df_raw.copy(), currency_code, currency_output_dir)
+        visualize_data(df, currency_code, currency_output_dir)
+        df['Close_Lag_7'] = df['close'].shift(7)
+        df['Close_Lag_30'] = df['close'].shift(30)
+        df.dropna(inplace=True)
+        feature_cols = [
+            'close','Close_Lag_7','Close_Lag_30','Month','Day_of_Week','Quarter','Sin_Month',
+            'Cos_Month','Entropy','Random_Component','OU_Simulated','Seasonal_Adjusted_Close'
+        ]
+        feature_cols = [c for c in feature_cols if c in df.columns]
+        X_all = df[feature_cols].copy()
+        y_all = df['close'].copy()
+        train_size = int(len(X_all) * 0.8)
+        X_train_df = X_all.iloc[:train_size]
+        X_test_df = X_all.iloc[train_size:]
+        y_train_series = y_all.iloc[:train_size]
+        y_test_series = y_all.iloc[train_size:]
+        scaler_X = StandardScaler()
+        scaler_y = StandardScaler()
+        X_train_scaled = scaler_X.fit_transform(X_train_df)
+        X_test_scaled = scaler_X.transform(X_test_df)
+        y_train_scaled = scaler_y.fit_transform(y_train_series.values.reshape(-1, 1)).flatten()
+        y_test_scaled = scaler_y.transform(y_test_series.values.reshape(-1, 1)).flatten()
+        seq_len = param_grid['sequence_length']
+        X_train_seq, y_train_seq = create_lstm_sequences_local(
+            pd.DataFrame(X_train_scaled, index=X_train_df.index, columns=feature_cols),
+            pd.Series(y_train_scaled, index=y_train_series.index),
+            seq_len
+        )
+        X_test_seq, y_test_seq = create_lstm_sequences_local(
+            pd.DataFrame(X_test_scaled, index=X_test_df.index, columns=feature_cols),
+            pd.Series(y_test_scaled, index=y_test_series.index),
+            seq_len
+        )
+        y_train_dates = y_train_series.index[seq_len:]
+        y_test_dates = y_test_series.index[seq_len:]
+        if X_train_seq.shape[0] == 0 or X_test_seq.shape[0] == 0:
+            logger.error(f"Insufficient sequence data for {currency_code}.")
+            return {"error": f"Not enough data for {currency_code}."}
+        rnn_type = param_grid['rnn_type']
+        n_layers = param_grid['n_layers']
+        units = param_grid['units']
+        activation = param_grid['activation']
+        optimizer = param_grid['optimizer']
+        dropout = param_grid['dropout']
+        model = Sequential()
+        for i in range(n_layers):
+            return_sequences = True if i < n_layers - 1 else False
+            if i == 0:
+                model.add(Input(shape=(seq_len, X_train_seq.shape[2])))
+            if rnn_type == 'LSTM':
+                model.add(LSTM(units=units, activation=activation, return_sequences=return_sequences, dropout=dropout))
+            elif rnn_type == 'GRU':
+                model.add(GRU(units=units, activation=activation, return_sequences=return_sequences, dropout=dropout))
+            else:
+                model.add(SimpleRNN(units=units, activation=activation, return_sequences=return_sequences, dropout=dropout))
+        model.add(Dense(1))
+        model.compile(loss='mean_squared_error', optimizer=optimizer)
+        iteration_logger = IterationLogger()
+        es = EarlyStopping(monitor='loss', patience=3, restore_best_weights=True)
+        history = model.fit(X_train_seq, y_train_seq, epochs=param_grid['epochs'], batch_size=param_grid['batch_size'], verbose=1, callbacks=[es, iteration_logger])
+        preds_test_scaled = model.predict(X_test_seq).flatten()
+        mse_test = mean_squared_error(y_test_seq, preds_test_scaled)
+        rmse_test = sqrt(mse_test)
+        r2_test = r2_score(y_test_seq, preds_test_scaled)
+        preds_test = scaler_y.inverse_transform(preds_test_scaled.reshape(-1,1)).flatten()
+        actual_test = scaler_y.inverse_transform(y_test_seq.reshape(-1,1)).flatten()
+        preds_train_scaled = model.predict(X_train_seq).flatten()
+        preds_train = scaler_y.inverse_transform(preds_train_scaled.reshape(-1,1)).flatten()
+        actual_train = scaler_y.inverse_transform(y_train_seq.reshape(-1,1)).flatten()
         model_filename = f"{currency_code.lower()}_{model_name}_{int(time.time())}.keras"
         model_path = os.path.join("saved_models", model_filename)
         os.makedirs("saved_models", exist_ok=True)
         model.save(model_path)
-
-        # Create and save the trained model record
-        trained_model = self.trained_models_repo.create_trained_model(
+        param_grid["features_used"] = feature_cols
+        self.trained_models_repo.create_trained_model(
             currency=currency,
             model_name=model_name,
             model_file_path=model_path,
-            metrics=metrics,
+            metrics={"mse_test": float(mse_test), "rmse_test": float(rmse_test), "r2_test": float(r2_test)},
             param_grid=param_grid,
-            is_latest=True  # This will be the latest model since we're only keeping one
+            is_latest=is_latest
         )
-
-        # Generate and save predictions
-        predictions_30 = self._predict_30_days(model, df, param_grid)
-        self.trained_models_repo.add_predictions_bulk(
-            trained_model=trained_model,
-            currency=currency,
-            predictions=predictions_30
-        )
-
+        plot_results(currency_code, y_train_seq, actual_test, preds_test, y_train_dates, y_test_dates, scaler_y, currency_output_dir, 3)
+        future_preds = self._recursive_predict(model, df, feature_cols, scaler_X, scaler_y, param_grid, days_ahead=14)
+        self.trained_models_repo.add_predictions_bulk(currency=currency, predictions=future_preds)
         return {
-            "model_id": trained_model.id,
             "model_path": model_path,
-            "metrics": metrics,
-            "future_predictions_saved": len(predictions_30)
+            "mse_test": mse_test,
+            "rmse_test": rmse_test,
+            "r2_test": r2_test,
+            "train_samples": X_train_seq.shape[0],
+            "test_samples": X_test_seq.shape[0],
+            "future_preds_saved": len(future_preds)
         }
 
-    def _predict_30_days(self, model, df: pd.DataFrame, params: dict):
-        try:
-            seq_len = params.get('sequence_length', 14)
-            feature_cols = [c for c in df.columns if c not in ['close']]
+    def _recursive_predict(self, model, df, feature_cols, scaler_X, scaler_y, param_grid, days_ahead=30):
+        seq_len = param_grid['sequence_length']
+        X_all = scaler_X.transform(df[feature_cols].values)
+        logger.info(f"Data shape for recursion: {X_all.shape}, seq_len={seq_len}")
 
-            scaler_features = StandardScaler()
-            scaler_target = StandardScaler()
-
-            scaler_features.mean_ = np.array(params.get('features_scaler_mean'))
-            scaler_features.scale_ = np.array(params.get('features_scaler_scale'))
-            scaler_target.mean_ = np.array(params.get('target_scaler_mean'))
-            scaler_target.scale_ = np.array(params.get('target_scaler_scale'))
-
-            all_data = df[feature_cols].astype(float).values
-            features_scaled = scaler_features.transform(all_data)
-            last_seq = features_scaled[-seq_len:]
-            current_seq = last_seq.reshape(1, seq_len, len(feature_cols))
-
-            future_predictions_scaled = model.predict(current_seq, verbose=0)[0]
-            future_predictions = scaler_target.inverse_transform(
-                future_predictions_scaled.reshape(-1, 1)
-            ).flatten()
-
-            last_dt = df.index[-1]
-            return [
-                {
-                    "prediction_date": last_dt + timedelta(days=i + 1),
-                    "predicted_value": float(pred_value)
-                }
-                for i, pred_value in enumerate(future_predictions)
-            ]
-        except Exception as e:
-            logger.exception(f"Error during prediction: {e}")
+        if X_all.shape[0] < seq_len:
+            logger.error("Not enough rows for recursion.")
             return []
 
-    def _load_and_prepare_data(self, currency_code: str, dataset_time: int = 3) -> pd.DataFrame:
-        df = self.data_service.get_currency_data(currency_code=currency_code, frequency='daily', range_param='all_data')
-        if not df:
-            logger.error("No data for currency.")
-            return pd.DataFrame()
+        # Take the last seq_len rows and reshape correctly
+        current_seq = X_all[-seq_len:].reshape(1, seq_len, len(feature_cols))
 
-        df = pd.DataFrame(df)
-        df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms', utc=True)
-        df = df.set_index('timestamp').sort_index()
-        cutoff_date = timezone.now() - timedelta(days=365 * dataset_time)
-        df = df[df.index >= cutoff_date]
-        local_timezone = timezone.get_default_timezone()
-        df = df.tz_convert(local_timezone)
-        df.index = df.index.normalize()
-        df['day_of_week'] = df.index.dayofweek
-        df['close'] = pd.to_numeric(df['close'], errors='coerce')
-        df = df.dropna(subset=['close'])
+        last_dt = df.index[-1]
+        if timezone.is_naive(last_dt):
+            last_dt = timezone.make_aware(last_dt, timezone.get_default_timezone())
 
-        all_dates = pd.date_range(start=df.index.min(), end=df.index.max(), freq='D')
-        missing_dates = all_dates.difference(df.index)
-        if not missing_dates.empty:
-            logger.warning(f"Missing dates for currency {currency_code}: {missing_dates.tolist()}")
-            df = df.reindex(all_dates)
-            df['close'].fillna(method='ffill', inplace=True)
-            df['day_of_week'].fillna(method='ffill', inplace=True)
+        col_index = {col: i for i, col in enumerate(feature_cols)}
+        results = []
 
-        df = df.dropna(subset=['close'])
+        # Keep track of the last 30 predictions for lag features
+        recent_predictions = list(df['close'].iloc[-30:])
 
-        logger.debug(f"DataFrame after handling missing dates for {currency_code}:")
-        logger.debug(df.head())
-        logger.debug(df.tail())
+        for i in range(days_ahead):
+            # Predict using current sequence
+            pred_scaled = model.predict(current_seq)[0, 0]
+            pred_value = scaler_y.inverse_transform([[pred_scaled]])[0, 0]
+            pred_dt = last_dt + timedelta(days=i + 1)
+            results.append({"prediction_date": pred_dt, "predicted_value": float(pred_value)})
 
-        df = self._create_additional_features(df, currency_code)
+            # Update recent predictions list
+            recent_predictions.append(pred_value)
+            if len(recent_predictions) > 30:
+                recent_predictions.pop(0)
 
-        logger.debug(f"DataFrame after feature engineering for {currency_code}:")
-        logger.debug(df.head())
-        logger.debug(df.tail())
+            # Prepare next sequence by shifting and updating the last prediction
+            next_seq = current_seq[0, 1:, :].copy()  # Remove first timestep
+            next_row = next_seq[-1:, :].copy()  # Copy last row for modification
 
-        return df
+            # Update feature values for the next prediction
+            for col in feature_cols:
+                if col == 'close':
+                    next_row[0, col_index[col]] = pred_scaled
+                elif col == 'Close_Lag_7' and len(recent_predictions) >= 7:
+                    # Scale the 7-day lag value
+                    lag_7_value = recent_predictions[-7]
+                    lag_7_scaled = scaler_y.transform([[lag_7_value]])[0, 0]
+                    next_row[0, col_index[col]] = lag_7_scaled
+                elif col == 'Close_Lag_30' and len(recent_predictions) >= 30:
+                    # Scale the 30-day lag value
+                    lag_30_value = recent_predictions[-30]
+                    lag_30_scaled = scaler_y.transform([[lag_30_value]])[0, 0]
+                    next_row[0, col_index[col]] = lag_30_scaled
+                elif col == 'Month':
+                    next_row[0, col_index[col]] = pred_dt.month
+                elif col == 'Day_of_Week':
+                    next_row[0, col_index[col]] = pred_dt.weekday()
+                elif col == 'Quarter':
+                    next_row[0, col_index[col]] = (pred_dt.month - 1) // 3 + 1
+                elif col == 'Sin_Month':
+                    next_row[0, col_index[col]] = np.sin(pred_dt.month * (2 * np.pi / 12))
+                elif col == 'Cos_Month':
+                    next_row[0, col_index[col]] = np.cos(pred_dt.month * (2 * np.pi / 12))
+                elif col == 'Entropy':
+                    # Approximate entropy using recent predictions
+                    if recent_predictions:
+                        total = sum(recent_predictions)
+                        if total != 0:
+                            prob = pred_value / total
+                            next_row[0, col_index[col]] = -prob * np.log2(prob + 1e-10)
+                elif col == 'Random_Component':
+                    next_row[0, col_index[col]] = np.random.normal(0, df['close'].std())
+                elif col == 'OU_Simulated':
+                    # Simple OU process update
+                    prev_ou = next_seq[-1, col_index[col]]
+                    theta = 0.1
+                    mu = df['close'].mean()
+                    sigma = df['close'].std()
+                    dt = 1 / 252  # Assuming daily data
+                    next_row[0, col_index[col]] = prev_ou + theta * (mu - prev_ou) * dt + sigma * np.sqrt(
+                        dt) * np.random.normal(0, 1)
+                elif col == 'Seasonal_Adjusted_Close':
+                    # Use the previous seasonal adjustment factor
+                    next_row[0, col_index[col]] = pred_scaled
 
-    def _create_additional_features(self, df: pd.DataFrame, currency_code: str) -> pd.DataFrame:
-        close_col = 'close'
-        feature_cols = []
+            # Stack the sequences and reshape
+            current_seq = np.vstack([next_seq, next_row]).reshape(1, seq_len, len(feature_cols))
 
-        df[f'Close_Lag_7'] = df[close_col].shift(7)
-        df[f'Close_Lag_30'] = df[close_col].shift(30)
-        feature_cols += [f'Close_Lag_7', f'Close_Lag_30']
-
-        df['MA_5'] = df[close_col].rolling(window=5).mean()
-        feature_cols += ['MA_5']
-
-        df['Month'] = df.index.month
-        df['Quarter'] = df.index.quarter
-        df['Sin_Month'] = np.sin(df['Month'] * (2 * np.pi / 12))
-        df['Cos_Month'] = np.cos(df['Month'] * (2 * np.pi / 12))
-        feature_cols += ['Month', 'Quarter', 'Sin_Month', 'Cos_Month']
-
-        if len(df) > 0 and df['close'].sum() != 0:
-            probabilities = df['close'] / df['close'].sum()
-            df['Entropy'] = - (probabilities * np.log2(probabilities + 1e-10))
-            feature_cols += ['Entropy']
-        else:
-            df['Entropy'] = 0
-            feature_cols += ['Entropy']
-
-        df['Random_Component'] = np.random.normal(0, df['close'].std(), len(df))
-        feature_cols += ['Random_Component']
-
-        df['OU_Simulated'] = ornstein_uhlenbeck_process(
-            mu=df['close'].mean(),
-            sigma=df['close'].std(),
-            theta=0.1,
-            T=1,
-            N=len(df)
-        )
-        feature_cols += ['OU_Simulated']
-
-        gdp_features = [col for col in df.columns if col.startswith('GDP_Growth_Percentage')]
-        if gdp_features:
-            feature_cols += gdp_features
-
-        df = df.dropna()
-
-        feature_cols = [col for col in feature_cols if col in df.columns]
-
-        logger.debug(f"DataFrame with additional features for {currency_code}:")
-        logger.debug(df.head())
-        logger.debug(df.tail())
-
-        return df
-
-    def _enhance_data(self, df: pd.DataFrame, param_grid: dict) -> pd.DataFrame:
-        if param_grid.get('use_short_term_lag'):
-            lag = param_grid.get('short_term_lag', 7)
-            df[f'Close_Lag_{lag}'] = df['close'].shift(lag)
-        if param_grid.get('use_long_term_lag'):
-            lag = param_grid.get('long_term_lag', 30)
-            df[f'Close_Lag_{lag}'] = df['close'].shift(lag)
-        df.dropna(inplace=True)
-        return df
-
-    def predict_with_existing_model(self, model_id: int, days_ahead: int = 30) -> dict:
-
-        try:
-            trained_model = self.trained_models_repo.get_trained_model_by_id(model_id)
-            if not trained_model or not trained_model.model_file_path:
-                return {"error": "Model not found or no file path available"}
-
-            if not os.path.exists(trained_model.model_file_path):
-                return {"error": "Model file not found on disk"}
-
-            model = load_model(trained_model.model_file_path)
-
-            currency = trained_model.currency
-            df = self._load_and_prepare_data(currency.code)
-            if df.empty:
-                return {"error": "No data available for currency"}
-
-            params = trained_model.param_grid or {}
-            predictions = self._predict_30_days(model, df, params)
-
-            return {
-                "model_id": trained_model.id,
-                "currency_code": currency.code,
-                "predictions": predictions
-            }
-
-        except Exception as e:
-            logger.exception(f"Error predicting with existing model: {e}")
-            return {"error": f"Prediction failed: {str(e)}"}
+        return results

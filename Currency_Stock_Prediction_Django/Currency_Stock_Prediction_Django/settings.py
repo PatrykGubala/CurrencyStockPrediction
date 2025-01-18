@@ -160,7 +160,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(minute='*/10'),
         'args': (),
     },
-
+    'load-stocks-data-every-10-minutes': {
+        'task': 'myapp.tasks.load_stocks_data_task',
+        'schedule': crontab(minute='*/10'),
+        'args': (),
+    },
 
 }
 
@@ -180,4 +184,6 @@ EMAIL_PORT = 1025
 EMAIL_USE_TLS = False
 DEFAULT_FROM_EMAIL = 'Currency Stock Prediction <no-reply@localtest.com>'
 
+FINNHUB_API_KEY = config('FINNHUB_API_KEY')
+POLYGON_API_KEY = config('POLYGON_API_KEY')
 
