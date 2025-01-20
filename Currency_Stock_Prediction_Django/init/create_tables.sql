@@ -158,20 +158,7 @@ CREATE TABLE IF NOT EXISTS stocks_data (
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
-CREATE TABLE IF NOT EXISTS stocks_recommendations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    stock_id INT NOT NULL,
-    date DATE NOT NULL,
-    buy INT NOT NULL DEFAULT 0,
-    hold INT NOT NULL DEFAULT 0,
-    sell INT NOT NULL DEFAULT 0,
-    strong_buy INT NOT NULL DEFAULT 0,
-    strong_sell INT NOT NULL DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (stock_id) REFERENCES stocks(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE
-);
+
 
 
 -- 12. Stocks_Trained_Models Table
@@ -215,19 +202,8 @@ CREATE TABLE IF NOT EXISTS country_translations (
     UNIQUE KEY unique_translation (country_id, language_code)
 );
 
--- 15. GDP_Data Table
-CREATE TABLE IF NOT EXISTS gdp_data (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    period_date DATE NOT NULL,
-    country_id INT NOT NULL,
-    gdp_current_usd DECIMAL(18,2),
-    gdp_growth_rate DECIMAL(5,2),
-    frequency ENUM('A', 'Q') NOT NULL,
-    FOREIGN KEY (country_id) REFERENCES countries(id)
-        ON DELETE CASCADE
-        ON UPDATE CASCADE,
-    UNIQUE KEY unique_period_country (period_date, country_id)
-);
+
+
 
 -- ############################ USERS TABLES ############################ --
 -- 1. Users Table

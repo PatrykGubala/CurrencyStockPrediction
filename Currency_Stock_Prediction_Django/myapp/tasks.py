@@ -4,16 +4,10 @@ from decimal import Decimal
 from celery import shared_task
 from django.utils import timezone
 
-from myapp.repositories.currencies_repository import CurrenciesRepository
 from myapp.services.accounts_service import AccountsService
-from myapp.services.companies_service import CompaniesService
 from myapp.services.currencies_data_service import CurrenciesDataService, logger
 from myapp.services.currencies_trained_models_service import CurrenciesTrainedModelsService
-from myapp.services.exchanges_service import ExchangesService
 from myapp.services.stocks_data_service import StocksDataService
-from myapp.services.stocks_recommendations_service import StockRecommendationsService
-from myapp.services.stocks_service import StocksService
-from myapp.utils.finnhub_loader_service import FinnhubLoaderService
 
 
 @shared_task
@@ -36,8 +30,6 @@ def load_currency_data_task(*args, **kwargs):
                 service.load_hourly_data_for_range(currency_code, start_date=last_31_days, end_date=now)
             else:
                 service.load_hourly_data_for_range(currency_code, start_date=latest_ts, end_date=now)
-
-
 
 
 
@@ -77,11 +69,20 @@ def recount_currency_values():
 
 
 
-
 @shared_task
-def train_usdpln_model_async():
+def train_currency_model_async(currency_code, param_grid, sequence_length, dataset_time, prediction_time, short_term_lag, long_term_lag, scaling_method, output_directory):
     service = CurrenciesTrainedModelsService()
-    result = service.train_model_for_currency(currency_code="PLN", model_name="SeasonalRNN")
+    result = service.train_and_forecast(
+        currency_code=currency_code,
+        param_grid=param_grid,
+        sequence_length=sequence_length,
+        dataset_time=dataset_time,
+        prediction_time=prediction_time,
+        short_term_lag=short_term_lag,
+        long_term_lag=long_term_lag,
+        scaling_method=scaling_method,
+        output_directory=output_directory
+    )
     return result
 
 

@@ -15,7 +15,7 @@ object ApiClient {
 
     private const val TAG = "ApiClient"
 
-    private const val BACKEND_URL = "https://ea10-37-31-33-59.ngrok-free.app"
+    private const val BACKEND_URL = "https://05a8-37-31-33-59.ngrok-free.app"
 
     private val client: OkHttpClient by lazy {
         OkHttpClient.Builder()
@@ -33,7 +33,7 @@ object ApiClient {
     suspend fun postRequest(endpoint: String, json: JSONObject): Pair<Boolean, String?> {
         return withContext(Dispatchers.IO) {
             try {
-                val tokenResult = FirebaseAuthManager.firebaseAuth.currentUser?.getIdToken(false)?.await()
+                val tokenResult = FirebaseAuthManager.firebaseAuth.currentUser?.getIdToken(true)?.await()
                 val requestBody = json.toString().toRequestBody(mediaTypeJson)
 
                 val token = tokenResult?.token

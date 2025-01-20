@@ -160,3 +160,24 @@ def change_username(request):
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
         return JsonResponse({'error': 'Failed to change username', 'details': str(e)}, status=500)
+
+
+
+@csrf_exempt
+def register_user_google(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST allowed'}, status=405)
+    try:
+        data = json.loads(request.body)
+    except:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    users_service = UsersService()
+
+    try:
+        users_service.register_google_user(data)
+        return JsonResponse({'message': 'User logged in using google'}, status=201)
+    except ValueError as e:
+        return JsonResponse({'error': str(e)}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': 'Failed to log in user using google', 'details': str(e)}, status=500)

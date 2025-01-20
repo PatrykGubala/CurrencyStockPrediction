@@ -4,7 +4,6 @@ from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from myapp.services.stocks_service import StocksService
-from myapp.utils.finnhub_loader_service import FinnhubLoaderService, logger
 
 
 @swagger_auto_schema(
@@ -132,43 +131,3 @@ def delete_stock(request, stock_id: int):
 
 
 
-@swagger_auto_schema(
-    method='POST',
-    operation_description="Load stocks, companies, exchanges, and recommendations for the US market from Finnhub synchronously",
-    responses={
-        200: openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                "message": openapi.Schema(type=openapi.TYPE_STRING),
-                "created_stocks": openapi.Schema(type=openapi.TYPE_INTEGER),
-                "created_recommendations": openapi.Schema(type=openapi.TYPE_INTEGER)
-            }
-        ),
-        500: openapi.Schema(
-            type=openapi.TYPE_OBJECT,
-            properties={
-                "error": openapi.Schema(type=openapi.TYPE_STRING)
-            }
-        )
-    }
-)
-@api_view(['POST'])
-def load_stocks_companies_exchanges_recommendations(request):
-    try:
-        loader = FinnhubLoaderService()
-        created_stocks = loader.load_all_us_stocks()
-        created_recs = loader.load_recommendations_for_all_us_stocks()
-        return Response(
-            {
-                "message": "Data loading completed successfully.",
-                "created_stocks": created_stocks,
-                "created_recommendations": created_recs
-            },
-            status=status.HTTP_200_OK
-        )
-    except Exception as e:
-        logger.error("Error during data loading: %s", str(e))
-        return Response(
-            {"error": "An error occurred during data loading."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )

@@ -12,10 +12,8 @@ from myapp.repositories.countries_repository import CountriesRepository
 from myapp.repositories.exchanges_repository import ExchangeRepository
 from myapp.repositories.companies_repository import CompanyRepository
 from myapp.repositories.stocks_repository import StocksRepository
-from myapp.repositories.stocks_recommendations_repository import StockRecommendationsRepository
 from datetime import datetime
 
-from myapp.services.stocks_recommendations_service import StockRecommendationsService
 
 
 class PolygonStocksLoaderService:
@@ -25,8 +23,6 @@ class PolygonStocksLoaderService:
         self.companies_repo = CompanyRepository()
         self.countries_repo = CountriesRepository()
         self.stocks_repo = StocksRepository()
-        self.stocks_recommendations_repository = StockRecommendationsRepository()
-        self.recommendations_service = StockRecommendationsService()
 
     def fetch_stock_by_ticker(self, ticker: str):
         logger.info(f"Fetching stock details for ticker: {ticker}")
@@ -65,15 +61,11 @@ class PolygonStocksLoaderService:
         tickers_by_exchange = {
             'XNAS': [
                 'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META',
-                'TSLA', 'NVDA', 'PYPL', 'ADBE', 'INTC',
-                'NFLX', 'CMCSA', 'CSCO', 'PEP', 'AVGO',
-                'TXN', 'QCOM', 'AMGN', 'COST', 'TMUS'
+
             ],
             'NYSE': [
                 'JNJ', 'V', 'WMT', 'DIS', 'BAC',
-                'HD', 'XOM', 'PFE', 'CVX', 'T',
-                'VZ', 'UNH', 'KO', 'MRK',
-                'BA', 'IBM', 'NKE', 'MCD'
+
             ]
         }
         total_loaded = 0

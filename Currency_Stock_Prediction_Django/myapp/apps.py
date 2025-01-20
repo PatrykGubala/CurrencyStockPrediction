@@ -12,13 +12,23 @@ class Config(AppConfig):
     def ready(self):
         from myapp.models import Stock, Country
         from myapp.services.countries_service import CountriesService
-        from myapp.services.polygon_stocks_loader_service import PolygonStocksLoaderService
+        from myapp.services.stocks_loader_service import PolygonStocksLoaderService
 
         import sys
         if 'runserver' not in sys.argv:
             return
 
         try:
+
+            countries_count = Country.objects.count()
+            if countries_count <= 1:
+                logger.info("No countries found in database. Loading initial countries data...")
+                countries_service = CountriesService()
+                countries_service.load_all_data()
+                logger.info(f"Successfully loaded countries data")
+            else:
+                logger.info(f"Found {countries_count} countries in database. Skipping initial load.")
+
             stocks_count = Stock.objects.count()
             if stocks_count == 0:
                 logger.info("No stocks found in database. Loading initial stocks data...")
@@ -28,15 +38,7 @@ class Config(AppConfig):
             else:
                 logger.info(f"Found {stocks_count} stocks in database. Skipping initial load.")
 
-            countries_count = Country.objects.count()
-            if countries_count == 0:
-                logger.info("No countries found in database. Loading initial countries data...")
-                countries_service = CountriesService()
-                countries_data = countries_service.fetch_countries_data()
-                countries_service.load_countries_with_details(countries_data)
-                logger.info(f"Successfully loaded countries data")
-            else:
-                logger.info(f"Found {countries_count} countries in database. Skipping initial load.")
+
 
         except Exception as e:
             logger.error(f"Error during initial data load: {str(e)}")

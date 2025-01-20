@@ -166,6 +166,8 @@ class CurrencyDataFragment : Fragment() {
             xAxis.position = XAxis.XAxisPosition.BOTTOM
             xAxis.granularity = 4f
             xAxis.labelRotationAngle = 0f
+            isAutoScaleMinMaxEnabled = true
+
             xAxis.setDrawGridLines(false)
             xAxis.textColor = Color.WHITE
             legend.textColor = Color.WHITE
@@ -350,7 +352,7 @@ class CurrencyDataFragment : Fragment() {
                                 binding.lineChart.xAxis.valueFormatter = DateAxisFormatter(dates, false)
                                 binding.lineChart.invalidate()
                             } else {
-                                Toast.makeText(requireContext(), "Failed to load predictions", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(requireContext(), "Nie udało się załadować prognozy kursu", Toast.LENGTH_SHORT).show()
                             }
                         }
                     } else {
@@ -359,7 +361,7 @@ class CurrencyDataFragment : Fragment() {
 
                 }
             } else {
-                Toast.makeText(requireContext(), "Failed to load data", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie udało się załadować danych", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -463,7 +465,7 @@ class CurrencyDataFragment : Fragment() {
                 if (index in dates.indices) {
                     val date = Date(dates[index])
                     val dateStr = dateFormat.format(date)
-                    val content = "Date: $dateStr\nOpen: ${e.open}\nClose: ${e.close}\nHigh: ${e.high}\nLow: ${e.low}"
+                    val content = "Data: $dateStr\nOpen: ${e.open}\nClose: ${e.close}\nHigh: ${e.high}\nLow: ${e.low}"
                     tvContent.text = content
                     Log.d("CustomMarkerView", "Kurs: $content")
                 }
@@ -474,7 +476,7 @@ class CurrencyDataFragment : Fragment() {
                 if (index in dates.indices) {
                     val date = Date(dates[index])
                     val dateStr = dateFormat.format(date)
-                    val content = "Date: $dateStr\nValue: ${e.y}"
+                    val content = "Data: $dateStr\nKurs: ${e.y}"
                     tvContent.text = content
                     Log.d("CustomMarkerView", "Kurs: $content")
                 }

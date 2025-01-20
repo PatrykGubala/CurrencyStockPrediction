@@ -451,27 +451,27 @@ class StockDataFragment : Fragment() {
 
         private val tvContent = findViewById<android.widget.TextView>(R.id.tvContent)
 
-        override fun refreshContent(e: Entry?, highlight: Highlight?) {
-            if (e is CandleEntry) {
-                val index = e.x.toInt()
+        override fun refreshContent(entry: Entry?, highlight: Highlight?) {
+            if (entry is CandleEntry) {
+                val index = entry.x.toInt()
                 if (index in dates.indices) {
                     val date = Date(dates[index])
                     val dateStr = dateFormat.format(date)
-                    val content = "Date: $dateStr\nOpen: ${e.open}\nClose: ${e.close}\nHigh: ${e.high}\nLow: ${e.low}"
+                    val content = "Date: $dateStr\nOpen: ${entry.open}\nClose: ${entry.close}\nHigh: ${entry.high}\nLow: ${entry.low}"
                     tvContent.text = content
                     Log.d("CustomMarkerView", "Stock: $content")
                 }
-            } else if (e != null) {
-                val index = e.x.toInt()
+            } else if (entry != null) {
+                val index = entry.x.toInt()
                 if (index in dates.indices) {
                     val date = Date(dates[index])
                     val dateStr = dateFormat.format(date)
-                    val content = "Date: $dateStr\nValue: ${e.y}"
+                    val content = "Date: $dateStr\nValue: ${entry.y}"
                     tvContent.text = content
                     Log.d("CustomMarkerView", "Stock: $content")
                 }
             }
-            super.refreshContent(e, highlight)
+            super.refreshContent(entry, highlight)
         }
 
         override fun getOffset(): MPPointF {

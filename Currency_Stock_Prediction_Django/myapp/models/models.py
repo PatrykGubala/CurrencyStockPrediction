@@ -161,23 +161,6 @@ class Stock(models.Model):
         db_table = 'stocks'
 
 
-class StocksRecommendation(models.Model):
-    stock = models.ForeignKey('Stock', on_delete=models.CASCADE, related_name='recommendations')
-    date = models.DateField()
-    buy = models.IntegerField(default=0)
-    hold = models.IntegerField(default=0)
-    sell = models.IntegerField(default=0)
-    strong_buy = models.IntegerField(default=0)
-    strong_sell = models.IntegerField(default=0)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'stocks_recommendations'
-        ordering = ['-date']
-
-    def __str__(self):
-        return f"{self.stock.stock_symbol} - {self.date} (Buy={self.buy} Hold={self.hold} Sell={self.sell})"
-
 
 class StocksData(models.Model):
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='stocks_data')
@@ -235,17 +218,6 @@ class CountryTranslation(models.Model):
         unique_together = ('country', 'language_code')
         db_table = 'country_translations'
 
-
-class GDPData(models.Model):
-    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='gdp_data')
-    period_date = models.DateField()
-    gdp_current_usd = models.DecimalField(max_digits=18, decimal_places=2, null=True, blank=True)
-    gdp_growth_rate = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    frequency = models.CharField(max_length=1, choices=[('A','A'),('Q','Q')])
-
-    class Meta:
-        unique_together = ('period_date', 'country')
-        db_table = 'gdp_data'
 
 
 class Account(models.Model):

@@ -180,5 +180,18 @@ class UsersService:
             logger.error(f"Failed to send verification email to {email}: {e}")
             raise
 
+    def register_google_user(self, data: dict):
+        firebase_uid = data.get('firebase_uid')
+        email = data.get('email', '').strip().lower()
+        username = data.get('username', '').strip()
+
+        existing_user = self.users_repo.get_user_by_firebase_uid(firebase_uid)
+        if existing_user:
+            return existing_user
+
+        with transaction.atomic():
+            user = self.users_repo.add_user(firebase_uid, email, username)
+            self.accounts_service.create_default_account(user.id)
+        return user
 
 
