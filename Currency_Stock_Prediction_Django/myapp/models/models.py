@@ -57,7 +57,6 @@ class CurrenciesData(models.Model):
     low_price = models.DecimalField(max_digits=20, decimal_places=8)
     close_price = models.DecimalField(max_digits=20, decimal_places=8)
     volume = models.DecimalField(max_digits=20, decimal_places=8)
-    day_of_week = models.CharField(max_length=10, editable=False)
 
     class Meta:
         db_table = 'currencies_data'
@@ -177,7 +176,6 @@ class StocksData(models.Model):
     low_price = models.DecimalField(max_digits=20, decimal_places=8)
     close_price = models.DecimalField(max_digits=20, decimal_places=8)
     volume = models.DecimalField(max_digits=20, decimal_places=8)
-    day_of_week = models.CharField(max_length=10, editable=False)
 
     class Meta:
         db_table = 'stocks_data'
@@ -278,8 +276,8 @@ class CurrenciesTransactionType(models.TextChoices):
 
 
 class AccountCurrencyTransaction(models.Model):
-    sender_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='sent_currency_transactions')
-    receiver_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='received_currency_transactions')
+    sender_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True,blank=True,  related_name='sent_currency_transactions')
+    receiver_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True,blank=True,  related_name='received_currency_transactions')
     transaction_type = models.CharField(
         max_length=10,
         choices=CurrenciesTransactionType.choices
@@ -298,12 +296,7 @@ class AccountCurrencyTransaction(models.Model):
     def clean(self):
         if self.amount <= 0:
             raise ValidationError("Amount must be positive")
-        if self.transaction_type == CurrenciesTransactionType.SELL:
-            current_balance = self.sender_account.account_currencies.filter(
-                currency=self.currency
-            ).first()
-            if not current_balance or current_balance.balance < self.amount:
-                raise ValidationError("Insufficient currency balance for sale")
+
 
 class StocksTransactionType(models.TextChoices):
     BUY = 'buy', 'Buy'
@@ -330,12 +323,6 @@ class AccountStockTransaction(models.Model):
     def clean(self):
         if self.shares <= 0:
             raise ValidationError("Shares must be positive")
-        if self.transaction_type == 'sell':
-            current_shares = self.account.account_stocks.filter(
-                stock=self.stock
-            ).first()
-            if not current_shares or current_shares.shares < self.shares:
-                raise ValidationError("Insufficient shares for sale")
 
 
 class UserNotification(models.Model):

@@ -1,5 +1,6 @@
-from decimal import Decimal
-from typing import List, Optional
+import logging
+from decimal import Decimal, ROUND_DOWN
+from typing import List, Optional, Union
 import re
 
 from django.db import transaction
@@ -10,33 +11,21 @@ from myapp.repositories.account_currencies_repository import AccountCurrenciesRe
 from myapp.repositories.account_currency_transactions_repository import AccountCurrencyTransactionsRepository
 from myapp.repositories.accounts_repository import AccountsRepository
 from myapp.repositories.currencies_repository import CurrenciesRepository
+from myapp.utils.util_functions import normalize_decimal
+
 
 class AccountCurrenciesService:
-    def __init__(self):
-        self.account_currency_repo = AccountCurrenciesRepository()
-        self.accounts_repo = AccountsRepository()
-        self.currencies_repo = CurrenciesRepository()
-        self.account_currency_tx_repo = AccountCurrencyTransactionsRepository()
+    FEE_RATE = Decimal('0.005')
 
-    def add_currency_to_account(self, account_id: int, currency_code: str, balance: float = 0.0):
-        account = self.accounts_repo.get_account_by_id(account_id)
-        if not account:
-            raise ValueError(f"Account with ID {account_id} does not exist")
-        currency = self.currencies_repo.get_currency_by_code(currency_code)
-        if not currency:
-            raise ValueError(f"Currency with code {currency_code} does not exist")
-        existing_account_currency = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
-        if existing_account_currency:
-            raise ValueError(f"Currency {currency_code} already added to account")
-        ac = self.account_currency_repo.add_account_currency(account_id, currency.id, balance)
-        return {
-            'account_id': ac.account_id,
-            'currency_code': currency.code,
-            'balance': float(ac.balance)
-        }
+    def __init__(self):
+        self.account_currency_repository = AccountCurrenciesRepository()
+        self.accounts_repository = AccountsRepository()
+        self.currencies_repository = CurrenciesRepository()
+        self.account_currency_transactions_repository = AccountCurrencyTransactionsRepository()
+
 
     def get_account_currencies(self, account_id: int) -> List[dict]:
-        account_currencies = self.account_currency_repo.get_account_currencies(account_id)
+        account_currencies = self.account_currency_repository.get_all_account_currencies(account_id)
         result = []
         for ac in account_currencies:
             result.append({
@@ -46,75 +35,81 @@ class AccountCurrenciesService:
         return result
 
     def get_single_account_currency_balance(self, account_id: int, currency_code: str) -> dict:
-        currency = self.currencies_repo.get_currency_by_code(currency_code)
+        currency = self.currencies_repository.get_currency_by_code(currency_code)
         if not currency:
             raise ValueError(f"Currency with code {currency_code} not found")
-        ac = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
-        balance = ac.balance if ac else Decimal(0)
+        account = self.account_currency_repository.get_account_currency_balance_by_id(account_id, currency.id)
+        balance = account.balance if account else Decimal(0)
         return {
             "currency_code": currency.code,
             "balance": str(balance)
         }
 
+    def add_currency_to_account(self, account_id: int, currency_code: str, balance: float = 0.0):
+        account = self.accounts_repository.get_account_by_id(account_id)
+        if not account:
+            raise ValueError(f"Account with ID {account_id} does not exist")
+        currency = self.accounts_repository.get_currency_by_code(currency_code)
+        if not currency:
+            raise ValueError(f"Currency with code {currency_code} does not exist")
+        existing_account_currency = self.account_currency_repository.get_account_currency_balance_by_id(account_id,
+                                                                                                  currency.id)
+        if existing_account_currency:
+            raise ValueError(f"Currency {currency_code} already added to account")
+        account = self.account_currency_repository.create_account_currency(account_id, currency.id, balance)
+        return {
+            'account_id': account.account_id,
+            'currency_code': currency.code,
+            'balance': float(account.balance)
+        }
+
     def update_balance(self, account_id: int, currency_code: str, balance: float):
-        currency = self.currencies_repo.get_currency_by_code(currency_code)
+        currency = self.currencies_repository.get_currency_by_code(currency_code)
         if not currency:
             raise ValueError(f"Currency with code {currency_code} not found")
-        ac = self.account_currency_repo.update_balance(account_id, currency.id, balance)
-        if not ac:
+        account = self.account_currency_repository.update_account_currency_balance(account_id, currency.id, balance)
+        if not account:
             raise ValueError(f"Currency {currency_code} not associated with account {account_id}")
         return {
             'currency_code': currency.code,
-            'balance': float(ac.balance)
+            'balance': float(account.balance)
         }
 
-    def remove_currency_from_account(self, account_id: int, currency_code: str):
-        currency = self.currencies_repo.get_currency_by_code(currency_code)
-        if not currency:
-            raise ValueError(f"Currency with code {currency_code} not found")
-        result = self.account_currency_repo.delete_account_currency(account_id, currency.id)
-        if not result:
-            raise ValueError(f"Currency {currency_code} not associated with account {account_id}")
-        return True
-
-    def record_currency_value(self, account_currency):
-        latest_currency_data = self.currencies_repo.get_latest_currency_data(account_currency.currency.code)
-        if latest_currency_data:
-            balance_usd = Decimal(account_currency.balance) * Decimal(latest_currency_data.close_price)
-
-
-    def record_currency_deletion(self, account_currency):
-        latest_currency_data = self.currencies_repo.get_latest_currency_data(account_currency.currency.code)
-        if latest_currency_data:
-            balance_usd = Decimal(account_currency.balance) * Decimal(latest_currency_data.close_price)
-
-
-    def deposit_to_usd_account(self, account_id: int, amount: float) -> Optional[dict]:
+    def deposit_to_usd_account(self, account_id: int, amount: Union[str, float, Decimal]) -> Optional[dict]:
         try:
-            if amount <= 0:
+            normalized_amount = self.normalize_decimal(amount)
+            if normalized_amount <= 0:
                 raise ValueError("Deposit amount must be positive.")
-            currency = self.currencies_repo.get_currency_by_code("USD")
-            if not currency:
+
+            usd_currency = self.currencies_repository.get_currency_by_code("USD")
+            if not usd_currency:
                 raise ValueError("USD currency not found.")
-            account_currency = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
+
+            account_currency = self.account_currency_repository.get_account_currency_balance_by_id(account_id,
+                                                                                                   usd_currency.id)
             if not account_currency:
                 raise ValueError("USD account currency not found.")
-            new_balance = Decimal(account_currency.balance) + Decimal(amount)
+
+            current_balance = normalize_decimal(account_currency.balance)
+            new_balance = current_balance + normalized_amount
 
             with transaction.atomic():
-                self.account_currency_repo.update_balance(account_id, currency.id, float(new_balance))
+                self.account_currency_repository.update_account_currency_balance(
+                    account_id,
+                    usd_currency.id,
+                    new_balance
+                )
 
-
-                self.account_currency_tx_repo.create_transaction(
+                self.account_currency_transactions_repository.create_transaction(
                     sender_account=None,
                     receiver_account=account_currency.account,
                     transaction_type='deposit',
                     title='Wpływ USD',
-                    amount=Decimal(amount),
-                    currency=currency,
+                    amount=normalized_amount,
+                    currency=usd_currency,
                     exchange_rate=None,
-                    transaction_fee=Decimal('0.00'),
-                    default_currency_cost = Decimal(amount)
+                    transaction_fee=normalize_decimal("0"),
+                    default_currency_cost=normalized_amount
                 )
 
             return {
@@ -125,173 +120,220 @@ class AccountCurrenciesService:
             logger.error(f"Error in deposit_to_usd_account: {e}")
             return None
 
-    def buy_currency(self, account_id: int, currency_code: str, amount: float):
-        if amount <= 0:
+    def buy_currency(self, account_id: int, currency_code: str, amount: Union[str, float, Decimal]):
+        normalized_amount = normalize_decimal(amount)
+        if normalized_amount <= 0:
             raise ValueError("Amount must be positive.")
 
-        currency = self.currencies_repo.get_currency_by_code(currency_code)
-        if not currency:
+        target_currency = self.currencies_repository.get_currency_by_code(currency_code)
+        if not target_currency:
             raise ValueError(f"Currency {currency_code} does not exist")
 
-        usd_currency = self.currencies_repo.get_currency_by_code("USD")
+        usd_currency = self.currencies_repository.get_currency_by_code("USD")
         if not usd_currency:
             raise ValueError("USD currency not found")
 
-        account_currency_usd = self.account_currency_repo.get_by_account_and_currency(account_id, usd_currency.id)
-        if not account_currency_usd:
+        usd_account = self.account_currency_repository.get_account_currency_balance_by_id(
+            account_id, usd_currency.id
+        )
+        if not usd_account:
             raise ValueError("USD balance not found for this account")
 
-        latest_data = self.currencies_repo.get_latest_currency_data(currency_code)
-        if not latest_data:
-            raise ValueError("No currency data to determine price")
+        latest_currency_data = self.currencies_repository.get_latest_currency_data(currency_code)
+        if not latest_currency_data:
+            raise ValueError("No currency data available to determine price")
 
+        close_price = normalize_decimal(latest_currency_data.close_price)
+        usd_per_unit = Decimal('1.0') / close_price
 
-        close_price_numeric = Decimal(latest_data.close_price)
-        price_per_unit_in_usd = Decimal("1") / close_price_numeric
+        base_cost = normalized_amount * usd_per_unit
+        transaction_fee = normalize_decimal(base_cost * self.FEE_RATE)
+        total_cost = base_cost + transaction_fee
 
-        cost_without_fee = price_per_unit_in_usd * Decimal(amount)
-        fee = cost_without_fee * Decimal("0.005")
-        total_cost = cost_without_fee + fee
-
-        if account_currency_usd.balance < total_cost:
-            raise ValueError("Not enough USD balance")
+        current_usd_balance = normalize_decimal(usd_account.balance)
+        if current_usd_balance < total_cost:
+            raise ValueError("Insufficient USD balance")
 
         with transaction.atomic():
-            new_usd_balance = account_currency_usd.balance - total_cost
-            self.account_currency_repo.update_balance(account_id, usd_currency.id, float(new_usd_balance))
+            new_usd_balance = current_usd_balance - total_cost
+            self.account_currency_repository.update_account_currency_balance(
+                account_id,
+                usd_currency.id,
+                new_usd_balance
+            )
 
-            existing_currency = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
-            if not existing_currency:
-                self.account_currency_repo.add_account_currency(account_id, currency.id, float(amount))
+            target_currency_account = self.account_currency_repository.get_account_currency_balance_by_id(
+                account_id, target_currency.id
+            )
+
+            if not target_currency_account:
+                self.account_currency_repository.create_account_currency(
+                    account_id, target_currency.id, normalized_amount
+                )
             else:
-                new_balance = existing_currency.balance + Decimal(amount)
-                self.account_currency_repo.update_balance(account_id, currency.id, float(new_balance))
+                current_target_balance = normalize_decimal(target_currency_account.balance)
+                new_target_balance = current_target_balance + normalized_amount
+                self.account_currency_repository.update_account_currency_balance(
+                    account_id,
+                    target_currency.id,
+                    new_target_balance
+                )
 
-
-            self.account_currency_tx_repo.create_transaction(
-                sender_account=account_currency_usd.account,
-                receiver_account=account_currency_usd.account,
+            self.account_currency_transactions_repository.create_transaction(
+                sender_account=usd_account.account,
+                receiver_account=usd_account.account,
                 transaction_type='buy',
-                title='Kupno waluty',
-                amount=Decimal(amount),
-                currency=currency,
-                exchange_rate=price_per_unit_in_usd,
-                transaction_fee=fee,
-                default_currency_cost = total_cost
-
+                title=f'Zakupiono {currency_code}',
+                amount=normalized_amount,
+                currency=target_currency,
+                exchange_rate=usd_per_unit,
+                transaction_fee=transaction_fee,
+                default_currency_cost=total_cost
             )
 
         return True
 
-    def sell_currency(self, account_id: int, currency_code: str, amount: float):
-        if amount <= 0:
+    def sell_currency(self, account_id: int, currency_code: str, amount: Union[str, float, Decimal]):
+        normalized_amount = normalize_decimal(amount)
+        logger.error(f"sell_currency called with normalized_amount={normalized_amount}")
+        if normalized_amount <= Decimal('0'):
             raise ValueError("Amount must be positive.")
 
-        currency = self.currencies_repo.get_currency_by_code(currency_code)
-        if not currency:
+        source_currency = self.currencies_repository.get_currency_by_code(currency_code)
+        if not source_currency:
             raise ValueError(f"Currency {currency_code} does not exist")
 
-        usd_currency = self.currencies_repo.get_currency_by_code("USD")
+        usd_currency = self.currencies_repository.get_currency_by_code("USD")
         if not usd_currency:
             raise ValueError("USD currency not found")
 
-        existing_currency = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
-        if not existing_currency or existing_currency.balance < Decimal(amount):
-            raise ValueError(f"Not enough {currency_code} balance to sell")
+        source_account = self.account_currency_repository.get_account_currency_balance_by_id(
+            account_id, source_currency.id
+        )
+        if not source_account:
+            raise ValueError(f"Insufficient {currency_code} balance")
 
-        latest_data = self.currencies_repo.get_latest_currency_data(currency_code)
-        if not latest_data:
-            raise ValueError("No currency data to determine price")
+        current_source_balance = normalize_decimal(source_account.balance)
+        logger.error(f"sell_currency current_source_balance={current_source_balance}")
+        if current_source_balance < normalized_amount:
+            raise ValueError(f"Insufficient {currency_code} balance to sell")
 
-        close_price_numeric = Decimal(latest_data.close_price)
-        price_per_unit_in_usd = Decimal("1") / close_price_numeric
-        revenue_without_fee = Decimal(amount) * price_per_unit_in_usd
-        fee = revenue_without_fee * Decimal("0.005")
-        total_revenue = revenue_without_fee - fee
+        latest_currency_data = self.currencies_repository.get_latest_currency_data(currency_code)
+        if not latest_currency_data:
+            raise ValueError("No currency data available to determine price")
 
-        account_currency_usd = self.account_currency_repo.get_by_account_and_currency(account_id, usd_currency.id)
-        if not account_currency_usd:
+        close_price = normalize_decimal(latest_currency_data.close_price)
+        logger.error(f"sell_currency close_price={close_price}")
+        usd_per_unit = Decimal('1.0') / close_price
+        logger.error(f"sell_currency usd_per_unit={usd_per_unit}")
+
+        base_revenue = normalized_amount * usd_per_unit
+        logger.error(f"sell_currency base_revenue={base_revenue}")
+        transaction_fee = normalize_decimal(base_revenue * self.FEE_RATE)
+        logger.error(f"sell_currency transaction_fee={transaction_fee}")
+        total_revenue = base_revenue - transaction_fee
+        logger.error(f"sell_currency total_revenue={total_revenue}")
+
+        usd_account = self.account_currency_repository.get_account_currency_balance_by_id(
+            account_id, usd_currency.id
+        )
+        if not usd_account:
             raise ValueError("USD account not found")
 
+        current_usd_balance = normalize_decimal(usd_account.balance)
+        logger.error(f"sell_currency current_usd_balance={current_usd_balance}")
+
         with transaction.atomic():
-            new_currency_balance = existing_currency.balance - Decimal(amount)
-            self.account_currency_repo.update_balance(account_id, currency.id, float(new_currency_balance))
+            new_source_balance = current_source_balance - normalized_amount
+            logger.error(f"sell_currency new_source_balance={new_source_balance}")
+            self.account_currency_repository.update_account_currency_balance(
+                account_id, source_currency.id, new_source_balance
+            )
 
-            new_usd_balance = account_currency_usd.balance + total_revenue
-            self.account_currency_repo.update_balance(account_id, usd_currency.id, float(new_usd_balance))
+            new_usd_balance = current_usd_balance + total_revenue
+            logger.error(f"sell_currency new_usd_balance={new_usd_balance}")
+            self.account_currency_repository.update_account_currency_balance(
+                account_id, usd_currency.id, new_usd_balance
+            )
 
-            self.account_currency_tx_repo.create_transaction(
-                sender_account=account_currency_usd.account,
-                receiver_account=account_currency_usd.account,
+            self.account_currency_transactions_repository.create_transaction(
+                sender_account=usd_account.account,
+                receiver_account=usd_account.account,
                 transaction_type='sell',
-                title='Sprzedaż waluty',
-                amount=Decimal(amount),
-                currency=currency,
-                exchange_rate=price_per_unit_in_usd,
-                transaction_fee=fee,
+                title=f'Sprzedano {currency_code}',
+                amount=normalized_amount,
+                currency=source_currency,
+                exchange_rate=usd_per_unit,
+                transaction_fee=transaction_fee,
                 default_currency_cost=total_revenue
-
             )
 
         return True
 
+    def send_currency(self, sender_account_id: int, receiver_public_account_id: str,
+                      amount: Union[str, float, Decimal]) -> Optional[dict]:
+        normalized_amount = normalize_decimal(amount)
+        if normalized_amount <= Decimal('0'):
+            raise ValueError("Amount must be positive.")
 
+        usd_currency = self.currencies_repository.get_currency_by_code("USD")
+        if not usd_currency:
+            raise ValueError("USD currency not found.")
 
+        sender_account = self.account_currency_repository.get_account_currency_balance_by_id(
+            sender_account_id, usd_currency.id
+        )
+        if not sender_account:
+            raise ValueError("Sender's USD account not found.")
 
-    def send_currency(self, sender_account_id: int, receiver_public_account_id: str, amount: float) -> Optional[dict]:
+        sender_balance = normalize_decimal(sender_account.balance)
+        if sender_balance < normalized_amount:
+            raise ValueError("Insufficient USD balance.")
 
-            if amount <= 0:
-                raise ValueError("Amount must be greater than zero.")
+        if not self.validate_public_account_id(receiver_public_account_id):
+            raise ValueError("Invalid Public Account ID format.")
 
-            usd_currency = self.currencies_repo.get_currency_by_code("USD")
-            if not usd_currency:
-                raise ValueError("USD currency not found.")
+        receiver_account = self.accounts_repository.get_account_by_public_id(receiver_public_account_id)
+        if not receiver_account:
+            raise ValueError("Receiver account not found.")
 
-            sender_usd_account = self.account_currency_repo.get_by_account_and_currency(sender_account_id, usd_currency.id)
-            if not sender_usd_account:
-                raise ValueError("Sender does not have a USD account.")
+        receiver_usd_account = self.account_currency_repository.get_account_currency_balance_by_id(
+            receiver_account.id, usd_currency.id
+        )
+        if not receiver_usd_account:
+            receiver_usd_account = self.account_currency_repository.create_account_currency(
+                receiver_account.id, usd_currency.id, 0
+            )
 
-            if sender_usd_account.balance < Decimal(amount):
-                raise ValueError("Insufficient USD balance.")
+        with transaction.atomic():
+            new_sender_balance = sender_balance - normalized_amount
+            self.account_currency_repository.update_account_currency_balance(
+                sender_account_id, usd_currency.id, new_sender_balance
+            )
 
-            if not self.validate_public_account_id(receiver_public_account_id):
-                raise ValueError("Invalid Public Account ID format.")
+            receiver_balance = normalize_decimal(receiver_usd_account.balance)
+            new_receiver_balance = receiver_balance + normalized_amount
+            self.account_currency_repository.update_account_currency_balance(
+                receiver_account.id, usd_currency.id, new_receiver_balance
+            )
 
-            receiver_account = self.accounts_repo.get_account_by_public_id(receiver_public_account_id)
-            if not receiver_account:
-                raise ValueError("Receiver account not found.")
+            self.account_currency_transactions_repository.create_transaction(
+                sender_account=sender_account.account,
+                receiver_account=receiver_usd_account.account,
+                transaction_type='send',
+                title='Wysyłka USD',
+                amount=normalized_amount,
+                currency=usd_currency,
+                exchange_rate=None,
+                transaction_fee=normalize_decimal("0"),
+                default_currency_cost=normalized_amount
+            )
 
-            receiver_usd_account = self.account_currency_repo.get_by_account_and_currency(receiver_account.id, usd_currency.id)
-            if not receiver_usd_account:
-                receiver_usd_account = self.account_currency_repo.add_account_currency(receiver_account.id, usd_currency.id, 0.0)
-
-            with transaction.atomic():
-                new_sender_balance = sender_usd_account.balance - Decimal(amount)
-                self.account_currency_repo.update_balance(sender_account_id, usd_currency.id, float(new_sender_balance))
-
-                new_receiver_balance = receiver_usd_account.balance + Decimal(amount)
-                self.account_currency_repo.update_balance(receiver_account.id, usd_currency.id, float(new_receiver_balance))
-
-                self.account_currency_tx_repo.create_transaction(
-                    sender_account=sender_usd_account.account,
-                    receiver_account=receiver_usd_account.account,
-                    transaction_type='send',
-                    title='Przesłanie USD',
-                    amount=Decimal(amount),
-                    currency=usd_currency,
-                    exchange_rate=None,
-                    transaction_fee=Decimal('0.00'),
-                    default_currency_cost = Decimal(amount)
-
-                )
-
-            return {
-                "message": "Send successful.",
-                "sender_new_balance": float(new_sender_balance),
-                "receiver_new_balance": float(new_receiver_balance)
-            }
-
-
+        return {
+            "message": "Transfer successful",
+            "sender_new_balance": float(new_sender_balance),
+            "receiver_new_balance": float(new_receiver_balance)
+        }
 
     @staticmethod
     def validate_public_account_id(public_account_id: str) -> bool:

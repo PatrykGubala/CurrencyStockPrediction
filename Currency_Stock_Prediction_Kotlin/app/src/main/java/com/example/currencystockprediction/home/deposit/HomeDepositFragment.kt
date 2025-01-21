@@ -107,7 +107,7 @@ class HomeDepositFragment : Fragment() {
         if (amountStr.isNotEmpty()) {
             val amount = amountStr.toDoubleOrNull()
             if (amount == null || amount <= 0) {
-                Toast.makeText(requireContext(), "Please enter a valid amount", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Wpisz poprawną wartość", Toast.LENGTH_SHORT).show()
                 return
             }
             val json = JSONObject().apply {

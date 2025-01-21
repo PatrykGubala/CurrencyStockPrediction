@@ -60,11 +60,11 @@ class PolygonStocksLoaderService:
         }
         tickers_by_exchange = {
             'XNAS': [
-                'AAPL', 'MSFT', 'AMZN', 'GOOGL', 'META',
+                'AAPL', 'MSFT', 'META',
 
             ],
             'NYSE': [
-                'JNJ', 'V', 'WMT', 'DIS', 'BAC',
+                'JNJ', 'V'
 
             ]
         }

@@ -2,8 +2,6 @@ import uuid
 from decimal import Decimal
 from math import ceil
 
-from django.db import transaction, IntegrityError
-from django.utils import timezone
 
 from myapp.apps import logger
 from myapp.repositories.account_currency_transactions_repository import AccountCurrencyTransactionsRepository
@@ -14,25 +12,25 @@ from myapp.repositories.account_currencies_repository import AccountCurrenciesRe
 
 class AccountsService:
     def __init__(self):
-        self.account_currency_repo = AccountCurrenciesRepository()
-        self.accounts_repo = AccountsRepository()
-        self.currencies_repo = CurrenciesRepository()
-        self.account_currency_transactions_repo = AccountCurrencyTransactionsRepository()
+        self.account_currency_repository = AccountCurrenciesRepository()
+        self.accounts_repository = AccountsRepository()
+        self.currencies_repository = CurrenciesRepository()
+        self.account_currency_transactions_repository = AccountCurrencyTransactionsRepository()
 
     def create_account(self, user_id: int, account_name: str, currency_code: str, balance: float = 0.0):
-        account = self.accounts_repo.get_account_by_user_id(user_id)
+        account = self.accounts_repository.get_account_by_user_id(user_id)
         if account:
             raise ValueError("Account already exists for this user")
 
-        currency = self.currencies_repo.get_currency_by_code(currency_code)
+        currency = self.currencies_repository.get_currency_by_code(currency_code)
         if not currency:
             raise ValueError(f"Currency with code {currency_code} does not exist")
 
         public_account_id = self.generate_public_account_id(currency_code)
 
-        account = self.accounts_repo.add_account(user_id, account_name, public_account_id, currency.id)
+        account = self.accounts_repository.create_account(user_id, account_name, public_account_id, currency.id)
 
-        self.account_currency_repo.add_account_currency(account.id, currency.id, balance)
+        self.account_currency_repository.create_account_currency(account.id, currency.id, balance)
 
         return {
             'id': account.id,
@@ -58,15 +56,15 @@ class AccountsService:
 
 
     def get_usd_balance(self, account_id: int) -> Decimal:
-        currency = self.currencies_repo.get_currency_by_code("USD")
+        currency = self.currencies_repository.get_currency_by_code("USD")
         if not currency:
             raise ValueError("USD currency not found.")
-        ac = self.account_currency_repo.get_by_account_and_currency(account_id, currency.id)
+        ac = self.account_currency_repository.get_account_currency_balance_by_id(account_id, currency.id)
         return ac.balance if ac else Decimal(0)
 
     def get_account_transactions(self, account_id: int, page: int, page_size: int) -> dict:
 
-        all_transactions = self.account_currency_transactions_repo.get_transactions_by_account(account_id)
+        all_transactions = self.account_currency_transactions_repository.get_account_currency_transactions_by_account(account_id)
 
         total_count = len(all_transactions)
         start_index = (page - 1) * page_size
@@ -76,20 +74,20 @@ class AccountsService:
         total_pages = ceil(total_count / page_size)
 
         transactions_list = []
-        for tx in results:
+        for transaction in results:
 
             transactions_list.append({
-                "id": tx.id,
-                "transaction_type": tx.transaction_type,
-                "amount": str(tx.amount),
-                "title": tx.title,
-                "currency": tx.currency.code,
-                "exchange_rate": str(tx.exchange_rate) if tx.exchange_rate else None,
-                "transaction_fee": str(tx.transaction_fee),
-                "sender_account_id": tx.sender_account_id,
-                "receiver_account_id": tx.receiver_account_id,
-                "date": tx.transaction_date.isoformat(),
-                "default_currency_cost": str(tx.default_currency_cost)
+                "id": transaction.id,
+                "transaction_type": transaction.transaction_type,
+                "amount": str(transaction.amount),
+                "title": transaction.title,
+                "currency": transaction.currency.code,
+                "exchange_rate": str(transaction.exchange_rate) if transaction.exchange_rate else None,
+                "transaction_fee": str(transaction.transaction_fee),
+                "sender_account_id": transaction.sender_account_id,
+                "receiver_account_id": transaction.receiver_account_id,
+                "date": transaction.transaction_date.isoformat(),
+                "default_currency_cost": str(transaction.default_currency_cost)
 
             })
 

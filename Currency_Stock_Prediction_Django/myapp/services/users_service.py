@@ -40,7 +40,7 @@ class UsersService:
 
         try:
             with transaction.atomic():
-                user = self.users_repo.add_user(firebase_uid, email, username)
+                user = self.users_repo.create_user(firebase_uid, email, username)
                 self.accounts_service.create_default_account(user.id)
         except Exception as e:
             try:
@@ -190,8 +190,6 @@ class UsersService:
             return existing_user
 
         with transaction.atomic():
-            user = self.users_repo.add_user(firebase_uid, email, username)
+            user = self.users_repo.create_user(firebase_uid, email, username)
             self.accounts_service.create_default_account(user.id)
         return user
-
-

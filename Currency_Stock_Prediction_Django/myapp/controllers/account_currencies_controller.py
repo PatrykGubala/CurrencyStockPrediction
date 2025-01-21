@@ -88,7 +88,6 @@ def remove_currency_from_account(request, currency_code):
         return Response({"error": "Error removing currency", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-
 @api_view(['POST'])
 @token_required
 def deposit_currency(request):
@@ -100,9 +99,12 @@ def deposit_currency(request):
         if amount is None:
             return Response({"error": "Amount is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            amount = float(amount)
+            amount = round(float(amount), 8)
+            if amount <= 0:
+                return Response({"error": "Amount must be greater than 0."}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError:
             return Response({"error": "Invalid amount. Must be a number."}, status=status.HTTP_400_BAD_REQUEST)
+
         service = AccountCurrenciesService()
         account = request.current_user.account
         deposit_result = service.deposit_to_usd_account(account.id, amount)
@@ -115,8 +117,10 @@ def deposit_currency(request):
         else:
             return Response({"error": "Deposit failed."}, status=status.HTTP_400_BAD_REQUEST)
     except Exception as e:
-        return Response({"error": "Error processing deposit.", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        return Response({
+            "error": "Error processing deposit.",
+            "details": str(e)
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @token_required
@@ -150,6 +154,10 @@ def sell_currency(request):
         data = request.data
         currency_code = data.get("currency_code")
         amount = float(data.get("amount", 0))
+        if not currency_code:
+            return Response({"error": "currency_code is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if amount <= 0:
+            return Response({"error": "Amount must be > 0"}, status=status.HTTP_400_BAD_REQUEST)
         if not currency_code:
             return Response({"error": "currency_code is required"}, status=status.HTTP_400_BAD_REQUEST)
         if amount <= 0:
