@@ -2,6 +2,7 @@ import os
 import uuid
 
 from django.db import models
+from rest_framework.exceptions import ValidationError
 
 
 def user_image_upload_path(instance, filename):
@@ -56,6 +57,7 @@ class CurrenciesData(models.Model):
     low_price = models.DecimalField(max_digits=20, decimal_places=8)
     close_price = models.DecimalField(max_digits=20, decimal_places=8)
     volume = models.DecimalField(max_digits=20, decimal_places=8)
+    day_of_week = models.CharField(max_length=10, editable=False)
 
     class Meta:
         db_table = 'currencies_data'
@@ -82,7 +84,12 @@ class CurrenciesTrainedModels(models.Model):
 
     class Meta:
         db_table = 'currencies_trained_models'
-
+        constraints = [
+            models.UniqueConstraint(
+                fields=['currency', 'is_latest'],
+                name='unique_latest_currency_model'
+            )
+        ]
 
 
 class CurrenciesPrediction(models.Model):
@@ -169,7 +176,8 @@ class StocksData(models.Model):
     high_price = models.DecimalField(max_digits=20, decimal_places=8)
     low_price = models.DecimalField(max_digits=20, decimal_places=8)
     close_price = models.DecimalField(max_digits=20, decimal_places=8)
-    volume = models.DecimalField(max_digits=20, decimal_places=4)
+    volume = models.DecimalField(max_digits=20, decimal_places=8)
+    day_of_week = models.CharField(max_length=10, editable=False)
 
     class Meta:
         db_table = 'stocks_data'
@@ -189,6 +197,12 @@ class StocksTrainedModels(models.Model):
     class Meta:
         db_table = 'stocks_trained_models'
         ordering = ['-training_date']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['stock', 'is_latest'],
+                name='unique_latest_stock_model'
+            )
+        ]
 
     def __str__(self):
         return f"{self.stock.stock_symbol} - {self.model_name} ({self.training_date.strftime('%Y-%m-%d')})"
@@ -207,17 +221,6 @@ class StocksPrediction(models.Model):
     def __str__(self):
         return f"{self.stock.stock_symbol} - {self.prediction_date.strftime('%Y-%m-%d')} : {self.predicted_value}"
 
-
-
-class CountryTranslation(models.Model):
-    country = models.ForeignKey(Country, on_delete=models.CASCADE, related_name='translations')
-    language_code = models.CharField(max_length=10)
-    name_common = models.CharField(max_length=100)
-    name_official = models.CharField(max_length=100)
-
-    class Meta:
-        unique_together = ('country', 'language_code')
-        db_table = 'country_translations'
 
 
 
@@ -240,6 +243,12 @@ class AccountCurrency(models.Model):
     class Meta:
         unique_together = ('account', 'currency')
         db_table = 'account_currencies'
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(balance__gte=0),
+                name='non_negative_balance'
+            )
+        ]
 
 
 class AccountStock(models.Model):
@@ -251,16 +260,30 @@ class AccountStock(models.Model):
         unique_together = ('account', 'stock')
         db_table = 'account_stocks'
 
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(shares__gte=0),
+                name='non_negative_shares'
+            )
+        ]
+
+
+
+class CurrenciesTransactionType(models.TextChoices):
+    DEPOSIT = 'deposit', 'Deposit'
+    WITHDRAW = 'withdraw', 'Withdraw'
+    BUY = 'buy', 'Buy'
+    SELL = 'sell', 'Sell'
+    SEND = 'send', 'Send'
+
 
 class AccountCurrencyTransaction(models.Model):
     sender_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='sent_currency_transactions')
     receiver_account = models.ForeignKey(Account, on_delete=models.SET_NULL, null=True, related_name='received_currency_transactions')
-    transaction_type = models.CharField(max_length=10, choices=[
-        ('deposit','deposit'),
-        ('sell','sell'),
-        ('buy','buy'),
-        ('withdraw','withdraw'),
-        ('send', 'send')])
+    transaction_type = models.CharField(
+        max_length=10,
+        choices=CurrenciesTransactionType.choices
+    )
     title = models.CharField(max_length=255)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='currency_transactions')
@@ -272,20 +295,47 @@ class AccountCurrencyTransaction(models.Model):
     class Meta:
         db_table = 'account_currency_transactions'
 
+    def clean(self):
+        if self.amount <= 0:
+            raise ValidationError("Amount must be positive")
+        if self.transaction_type == CurrenciesTransactionType.SELL:
+            current_balance = self.sender_account.account_currencies.filter(
+                currency=self.currency
+            ).first()
+            if not current_balance or current_balance.balance < self.amount:
+                raise ValidationError("Insufficient currency balance for sale")
+
+class StocksTransactionType(models.TextChoices):
+    BUY = 'buy', 'Buy'
+    SELL = 'sell', 'Sell'
 
 class AccountStockTransaction(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='stock_transactions')
-    transaction_type = models.CharField(max_length=4, choices=[('buy','buy'),('sell','sell')])
+    transaction_type = models.CharField(
+        max_length=4,
+        choices=StocksTransactionType.choices
+    )
     title = models.CharField(max_length=255)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='stock_transactions')
     shares = models.DecimalField(max_digits=20, decimal_places=8)
     price_per_share = models.DecimalField(max_digits=20, decimal_places=8)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='stock_transactions')
+    default_currency_cost = models.DecimalField(max_digits=20, decimal_places=8, default=0.0)
     transaction_fee = models.DecimalField(max_digits=20, decimal_places=8, default=0.0)
     transaction_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         db_table = 'account_stock_transactions'
+
+    def clean(self):
+        if self.shares <= 0:
+            raise ValidationError("Shares must be positive")
+        if self.transaction_type == 'sell':
+            current_shares = self.account.account_stocks.filter(
+                stock=self.stock
+            ).first()
+            if not current_shares or current_shares.shares < self.shares:
+                raise ValidationError("Insufficient shares for sale")
 
 
 class UserNotification(models.Model):
@@ -298,15 +348,5 @@ class UserNotification(models.Model):
     class Meta:
         db_table = 'user_notifications'
 
-
-class UserPreference(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='preferences')
-    default_display_currency = models.ForeignKey(Currency, on_delete=models.CASCADE, related_name='user_preferences')
-    dark_mode = models.CharField(max_length=10, choices=[('DEFAULT','DEFAULT'),('DARK_MODE','DARK_MODE'),('LIGHT_MODE','LIGHT_MODE')], default='DEFAULT')
-    notifications_enabled = models.BooleanField(default=True)
-    user_language = models.CharField(max_length=2, choices=[('PL','PL'),('EN','EN')], default='EN')
-
-    class Meta:
-        db_table = 'user_preferences'
 
 

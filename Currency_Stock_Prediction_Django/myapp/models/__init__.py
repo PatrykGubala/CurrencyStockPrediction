@@ -12,7 +12,6 @@ from .models import (
     StocksPrediction,
     CurrenciesTrainedModels,
     CurrenciesPrediction,
-    CountryTranslation,
     Exchange,
     User,
     Account,
@@ -22,7 +21,6 @@ from .models import (
     AccountCurrencyTransaction,
     AccountStockTransaction,
     UserNotification,
-    UserPreference,
 
 
 
@@ -32,12 +30,6 @@ from .serializers import (
     ContactSerializer
 )
 
-from .dtos import (
-    CountryDTO,
-    RegionDTO,
-    CurrencyDTO,
-    CurrencyPairDTO,
-)
 
 __all__ = [
     'Country',
@@ -53,7 +45,6 @@ __all__ = [
     'StocksPrediction',
     'CurrenciesTrainedModels',
     'CurrenciesPrediction',
-    'CountryTranslation',
     'Exchange',
     'User',
     'Account',
@@ -63,12 +54,7 @@ __all__ = [
     'AccountCurrencyTransaction',
     'AccountStockTransaction',
     'UserNotification',
-    'UserPreference',
 
-    'CountryDTO',
-    'RegionDTO',
-    'CurrencyDTO',
-    'CurrencyPairDTO',
 
     'ContactSerializer',
 

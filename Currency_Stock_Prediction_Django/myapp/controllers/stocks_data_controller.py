@@ -102,3 +102,27 @@ def get_stocks_monthly_percentage_change(request, stock_symbol):
     if not monthly_change:
         return Response({"error": "No monthly change data found for this stock."}, status=status.HTTP_404_NOT_FOUND)
     return Response(monthly_change, status=status.HTTP_200_OK)
+
+
+@swagger_auto_schema(
+    method='GET',
+    operation_description="Get weekly, monthly and yearly percentage changes for a specific stock symbol",
+    responses={
+        200: openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'weekly_change': openapi.Schema(type=openapi.TYPE_STRING),
+                'monthly_change': openapi.Schema(type=openapi.TYPE_STRING),
+                'yearly_change': openapi.Schema(type=openapi.TYPE_STRING)
+            }
+        ),
+        404: "Not found"
+    }
+)
+@api_view(['GET'])
+def get_weekly_monthly_yearly_change(request, stock_symbol):
+    service = StocksDataService()
+    changes = service.get_weekly_monthly_yearly_change(stock_symbol)
+    if not changes:
+        return Response({"error": "No data found for this stock."}, status=status.HTTP_404_NOT_FOUND)
+    return Response(changes, status=status.HTTP_200_OK)
