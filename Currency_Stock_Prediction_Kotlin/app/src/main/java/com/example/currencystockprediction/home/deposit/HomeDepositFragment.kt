@@ -123,16 +123,16 @@ class HomeDepositFragment : Fragment() {
                         val newBalance = jsonResponse.getDouble("new_balance")
                         binding.depositAmountTextInputEditText.text?.clear()
                         viewModel.setUsdBalance(newBalance)
-                        Toast.makeText(requireContext(), "Deposit successful. New Balance: $${String.format("%.2f", newBalance)}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Nowy stan konta: $${String.format("%.2f", newBalance)}", Toast.LENGTH_SHORT).show()
                     } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error parsing response.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Error: ", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Toast.makeText(requireContext(), "Deposit failed: ${responsePair.second ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Nie udało się wpłacić środków: ${responsePair.second ?: "Error: "}", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
-            Toast.makeText(requireContext(), "Please enter an amount", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Proszę wpisać kwotę", Toast.LENGTH_SHORT).show()
         }
     }
 

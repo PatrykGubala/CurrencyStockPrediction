@@ -154,25 +154,7 @@
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:id="@+id/securityChangePINConstraintLayout"
-        android:layout_width="match_parent"
-        android:layout_height="64dp"
-        app:layout_constraintTop_toBottomOf="@+id/securityEnablePINConstraintLayout"
-        android:background="@drawable/background_style_black_rectangle_stroke_bottom">
 
-        <TextView
-            android:id="@+id/securityChangePINTextView"
-            style="@style/KanitLightMedium"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Zmień PIN"
-            android:textColor="@color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

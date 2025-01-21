@@ -47,18 +47,13 @@ class StocksDataService:
         data_records = data_records[required_columns].dropna(subset=required_columns)
         processed_records = []
         for _, row in data_records.iterrows():
-            record_timestamp = row['timestamp']
+            timestamp = row['timestamp']
             if daily:
-                record_timestamp = record_timestamp.replace(hour=8, minute=0, second=0, microsecond=0)
+                timestamp = timestamp.replace(hour=14, minute=0, second=0, microsecond=0)
             else:
-                if record_timestamp.hour < 8:
-                    record_timestamp = record_timestamp.replace(hour=8, minute=0, second=0, microsecond=0)
-                elif record_timestamp.hour >= 24:
-                    record_timestamp = record_timestamp.replace(hour=23, minute=0, second=0, microsecond=0)
-                else:
-                    record_timestamp = record_timestamp.replace(minute=0, second=0, microsecond=0)
+                timestamp = timestamp.replace(minute=0, second=0, microsecond=0)
             processed_records.append({
-                'timestamp': record_timestamp,
+                'timestamp': timestamp,
                 'open_price': float(row['open_price']),
                 'high_price': float(row['high_price']),
                 'low_price': float(row['low_price']),
@@ -203,7 +198,8 @@ class StocksDataService:
                 old_close = float(previous_record.close_price)
                 if old_close == 0:
                     return None
-                return round(((current_close - old_close) / old_close) * 100, 2)
+                change = round(((current_close - old_close) / old_close) * 100, 2)
+                return f"{'+' if change > 0 else ''}{change}"
             return None
 
         weekly_change = get_change(weekly_ts)

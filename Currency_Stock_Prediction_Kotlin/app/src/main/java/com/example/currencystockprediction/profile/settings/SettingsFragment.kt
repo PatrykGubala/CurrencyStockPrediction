@@ -54,7 +54,7 @@ class SettingsFragment : BaseFragment() {
                 SecurityUtils.clearPin(requireContext())
                 binding.biometricsSwitch.isChecked = false
                 SecurityUtils.setBiometricEnabled(requireContext(), false)
-                Toast.makeText(context, "PIN został wyłączony.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "PIN został wyłączony", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -66,23 +66,23 @@ class SettingsFragment : BaseFragment() {
                 if (SecurityUtils.hasPin(requireContext())) {
                     if (SecurityUtils.isBiometricReady(requireContext())) {
                         SecurityUtils.setBiometricEnabled(requireContext(), true)
-                        Toast.makeText(context, "Biometric authentication enabled.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Biometryczna autoryzacja włączona", Toast.LENGTH_SHORT).show()
                     } else {
                         binding.biometricsSwitch.isChecked = false
                         SecurityUtils.setBiometricEnabled(requireContext(), false)
                         SecurityUtils.promptBiometricEnrollment(requireActivity())
-                        Toast.makeText(context, "Biometric features not available. Enrollment prompted.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Biometryczna autoryzacja niedostępna", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     binding.biometricsSwitch.isChecked = false
                     findNavController().navigate(
                         SettingsFragmentDirections.actionSettingsFragmentToSetPinFragment()
                     )
-                    Toast.makeText(context, "Please set up a PIN before enabling biometrics.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Musisz ustawić PIN", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 SecurityUtils.setBiometricEnabled(requireContext(), false)
-                Toast.makeText(context, "Biometric authentication disabled.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Biometryczna autoryzacja wyłączona", Toast.LENGTH_SHORT).show()
             }
         }
     }

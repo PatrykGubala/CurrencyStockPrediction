@@ -73,7 +73,7 @@ class ProfileChangeUsernameFragment : Fragment() {
             if (reauthSuccess) {
                 changeUsername(newUsername)
             } else {
-                Toast.makeText(requireContext(), "Reauthentication failed: ${reauthMessage ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Ponowna autoryzacja się nie udała: ${reauthMessage ?: "Error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -130,14 +130,14 @@ class ProfileChangeUsernameFragment : Fragment() {
             if (success) {
                 Toast.makeText(
                     requireContext(),
-                    "Username changed successfully.",
+                    "Nazwa użytkownika została zmienona",
                     Toast.LENGTH_LONG
                 ).show()
                 findNavController().popBackStack(R.id.profileFragment, false)
             } else {
                 Toast.makeText(
                     requireContext(),
-                    "Failed to change username: ${response ?: "Unknown error"}",
+                    "Nie udało się zmienić nazwy użytkownika: ${response ?: "Error"}",
                     Toast.LENGTH_SHORT
                 ).show()
             }

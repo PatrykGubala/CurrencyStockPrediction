@@ -1,13 +1,15 @@
 
 from django.urls import path
 
+from myapp.controllers.account_stocks_controller import  get_stock_transactions, buy_stock, \
+    sell_stock, get_account_stock_shares
 from myapp.controllers.companies_controller import get_all_companies, create_company, delete_company
 from myapp.controllers.currencies_trained_models_controller import train_new_currency_model,  \
     get_currency_predictions, start_async_currency_training
 from myapp.controllers.exchanges_controller import get_all_exchanges, create_exchange, delete_exchange
 from myapp.controllers.stocks_controller import get_all_stocks, add_stock, update_stock, delete_stock
 from myapp.controllers.stocks_data_controller import load_daily_stock_data, load_hourly_stock_data, get_all_stocks_data, \
-    get_latest_stock_data, get_stock_data, get_stocks_monthly_percentage_change
+    get_latest_stock_data, get_stock_data, get_stocks_monthly_percentage_change, get_weekly_monthly_yearly_change
 
 
 from myapp.controllers.users_contacts_controller import create_contact, list_contacts
@@ -76,6 +78,13 @@ urlpatterns = [
     path('accounts/usd_value', get_account_usd_value, name='get_account_usd_value'),
     path('accounts/currencies/send', send_currency, name='send_currency'),
 
+    path('accounts/stocks/<str:stock_symbol>/shares', get_account_stock_shares, name='get_account_stock_shares'),
+    path('accounts/stocks/transactions', get_stock_transactions, name='get_stock_transactions'),
+    path('accounts/stocks/buy', buy_stock, name='buy_stock'),
+    path('accounts/stocks/sell', sell_stock, name='sell_stock'),
+
+    path('stocks/data/<str:stock_symbol>/change', get_weekly_monthly_yearly_change, name='get_weekly_monthly_yearly_change'),
+
     path('accounts/currencies/recount-test', recount_currency_values_test, name='recount_currency_values_test'),
 
     path('countries/load', load_only_countries, name='load_only_countries'),
@@ -117,9 +126,6 @@ urlpatterns = [
     path('stocks/data/load_all_data', load_hourly_stock_data, name='load_hourly_stock_data'),
     path('stocks/data/<str:stock_symbol>/monthly_change/', get_stocks_monthly_percentage_change,
          name='get_stocks_monthly_percentage_change'),
-
-
-
 
 
     path('stocks/load_stocks_exchanges_companies', PolygonStocksLoaderService.load_stocks_exchanges_companies, name='load_stocks_exchanges_companies'),

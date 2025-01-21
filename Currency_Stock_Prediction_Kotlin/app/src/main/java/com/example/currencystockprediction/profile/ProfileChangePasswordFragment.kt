@@ -1,15 +1,11 @@
 package com.example.currencystockprediction.profile
 
-import android.content.ContentValues.TAG
 import android.os.Bundle
 import android.text.TextUtils
-import android.util.Log
 import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageButton
 import android.widget.Toast
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -17,17 +13,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
-import com.example.currencystockprediction.databinding.FragmentProfileChangeEmailBinding
 import com.example.currencystockprediction.databinding.FragmentProfileChangePasswordBinding
-import com.example.currencystockprediction.databinding.FragmentProfileChangeUsernameBinding
-import com.example.currencystockprediction.databinding.FragmentProfileSettingsBinding
-import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.EmailAuthProvider
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import org.json.JSONObject
 
 
 class ProfileChangePasswordFragment : Fragment() {
@@ -83,12 +74,8 @@ class ProfileChangePasswordFragment : Fragment() {
             val (reauthSuccess, reauthMessage) = reAuthenticateUser(email, oldPassword)
             if (reauthSuccess) {
                 changePassword(newPassword)
-            } else {
-                Toast.makeText(
-                    requireContext(),
-                    "Reauthentication failed: ${reauthMessage ?: "Unknown error"}",
-                    Toast.LENGTH_SHORT
-                ).show()
+            }else {
+                Toast.makeText(requireContext(), "Ponowna autoryzacja się nie udała: ${reauthMessage ?: "Error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -107,10 +94,10 @@ class ProfileChangePasswordFragment : Fragment() {
         lifecycleScope.launch {
             try {
                 FirebaseAuthManager.firebaseAuth.currentUser?.updatePassword(newPassword)?.await()
-                Toast.makeText(requireContext(), "Password changed successfully.", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Hasło zmienione", Toast.LENGTH_LONG).show()
                 findNavController().popBackStack(R.id.profileFragment, false)
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Failed to change password: ${e.localizedMessage ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie udało się zmienić hasła: ${e.localizedMessage ?: "Error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }

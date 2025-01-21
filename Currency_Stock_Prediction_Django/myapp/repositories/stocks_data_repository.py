@@ -55,3 +55,14 @@ class StocksDataRepository:
                 'volume': str(data.volume)
             })
         return result
+
+    def get_latest_stock_data(self, stock_symbol: str) -> Optional[StocksData]:
+        return StocksData.objects.filter(
+            stock__stock_symbol__iexact=stock_symbol
+        ).order_by('-timestamp').first()
+
+    def get_daily_data(self, stock_symbol: str, start_date: Optional[datetime] = None) -> List[StocksData]:
+        query = StocksData.objects.filter(stock__stock_symbol__iexact=stock_symbol)
+        if start_date:
+            query = query.filter(timestamp__gte=start_date)
+        return list(query.order_by('timestamp'))

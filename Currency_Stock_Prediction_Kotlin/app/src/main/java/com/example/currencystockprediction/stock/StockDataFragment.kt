@@ -221,39 +221,20 @@ class StockDataFragment : Fragment() {
         }
     }
 
-    private suspend fun sellStock(amount: Double) {
-        val endpoint = "/myapp/accounts/stocks/sell"
-        val json = JSONObject().apply {
-            put("stock_symbol", stockSymbol)
-            put("amount", amount)
-        }
-        val responsePair = ApiClient.postRequest(endpoint, json)
-        if (responsePair.first) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Sprzedałeś akcje", Toast.LENGTH_SHORT).show()
-                fetchAndDisplayAccountUsdValue()
-                fetchAndDisplayThisStockBalance()
-            }
-        } else {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Sprzedaż nie powiodła się: ${responsePair.second}", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
+
 
     private fun setupTextWatcher() {
         binding.amountTextInputEditText.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
                 val inputAmount = s.toString().toDoubleOrNull() ?: 0.0
                 val feeRate = 0.005
-                val buyCostWithoutFee = inputAmount * (1.0 / currentClosePrice)
+                val buyCostWithoutFee = inputAmount * currentClosePrice
                 val fee = buyCostWithoutFee * feeRate
                 val buyTotal = buyCostWithoutFee + fee
-                val revenueWithoutFee = inputAmount * (1.0 / currentClosePrice)
-                val sellTotalAfterFee = revenueWithoutFee - fee
+                val sellTotal = buyCostWithoutFee - fee
 
                 binding.amountCalculatedTextInputEditText.setText(
-                    String.format("Kup: %.2f USD / Sprzedaj: %.2f USD", buyTotal, sellTotalAfterFee)
+                    String.format("Kup: %.2f USD / Sprzedaj: %.2f USD", buyTotal, sellTotal)
                 )
             }
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
@@ -274,7 +255,7 @@ class StockDataFragment : Fragment() {
                 if (frequency == "hourly") {
                     val entries = mutableListOf<CandleEntry>()
                     val dates = mutableListOf<Long>()
-                    for (i in jsonData.length() - 1 downTo 0) {
+                    for (i in 0 until jsonData.length()) {
                         val obj = jsonData.getJSONObject(i)
                         val timestampString = obj.getString("timestamp")
                         val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
@@ -285,10 +266,9 @@ class StockDataFragment : Fragment() {
                         val low = obj.getString("low_price").toFloat()
                         val close = obj.getString("close_price").toFloat()
 
-                        val newIndex = jsonData.length() - 1 - i
-                        entries.add(CandleEntry(newIndex.toFloat(), high, low, open, close))
+                        entries.add(CandleEntry(i.toFloat(), high, low, open, close))
                         dates.add(timestampLong)
-                        if (i == 0) {
+                        if (i == jsonData.length() - 1) {
                             currentClosePrice = close.toDouble()
                         }
                     }
@@ -299,14 +279,19 @@ class StockDataFragment : Fragment() {
                     for (i in 0 until jsonData.length()) {
                         val obj = jsonData.getJSONObject(i)
                         val timestampString = obj.getString("timestamp")
-                        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
-                        val parsedDate = dateFormat.parse(timestampString)
-                        val timestamp = parsedDate?.time ?: 0L
-                        val close = obj.getString("close_price").toFloat()
-                        lineEntries.add(Entry(i.toFloat(), close))
-                        dates.add(timestamp)
-                        if (i == jsonData.length() - 1) {
-                            currentClosePrice = close.toDouble()
+                        try {
+                            val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+                            val parsedDate = dateFormat.parse(timestampString.substring(0, 19))
+                            val timestamp = parsedDate?.time ?: 0L
+                            val close = obj.getString("close_price").toFloat()
+                            lineEntries.add(Entry(i.toFloat(), close))
+                            dates.add(timestamp)
+                            if (i == jsonData.length() - 1) {
+                                currentClosePrice = close.toDouble()
+                            }
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error parsing date: $timestampString", e)
+                            Toast.makeText(requireContext(), "Error parsing date", Toast.LENGTH_SHORT).show()
                         }
                     }
                     if (mode == "all_data_and_predict") {
@@ -519,19 +504,19 @@ class StockDataFragment : Fragment() {
     }
 
     private suspend fun fetchAndDisplayThisStockBalance() {
-        val endpoint = "/myapp/accounts/stocks/$stockSymbol/balance"
+        val endpoint = "/myapp/accounts/stocks/$stockSymbol/shares"
         val responsePair = ApiClient.getRequest(endpoint)
 
         if (responsePair.first && responsePair.second != null) {
             val obj = JSONObject(responsePair.second!!)
-            val balance = obj.optString("balance", "0.0")
+            val shares = obj.optString("shares", "0.0")
             val symbol = obj.optString("stock_symbol", stockSymbol)
             withContext(Dispatchers.Main) {
                 binding.accountOtherCurrencyValueTextView.text =
-                    "Stan wybranej akcji: %.2f %s".format(balance.toDouble(), symbol)
+                    "Stan wybranej akcji: %.2f %s".format(shares.toDouble(), symbol)
             }
         } else {
-            Log.e(TAG, "Failed to get balance for $stockSymbol")
+            Log.e(TAG, "Failed to get shares for $stockSymbol")
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Nie załadowano stanu konta", Toast.LENGTH_SHORT).show()
             }
@@ -542,7 +527,7 @@ class StockDataFragment : Fragment() {
         val endpoint = "/myapp/accounts/stocks/buy"
         val json = JSONObject().apply {
             put("stock_symbol", stockSymbol)
-            put("amount", amount)
+            put("shares", amount)
         }
         val responsePair = ApiClient.postRequest(endpoint, json)
 
@@ -555,6 +540,26 @@ class StockDataFragment : Fragment() {
         } else {
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Kupno nie powiodło się: ${responsePair.second}", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private suspend fun sellStock(amount: Double) {
+        val endpoint = "/myapp/accounts/stocks/sell"
+        val json = JSONObject().apply {
+            put("stock_symbol", stockSymbol)
+            put("shares", amount)
+        }
+        val responsePair = ApiClient.postRequest(endpoint, json)
+        if (responsePair.first) {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Sprzedałeś akcje", Toast.LENGTH_SHORT).show()
+                fetchAndDisplayAccountUsdValue()
+                fetchAndDisplayThisStockBalance()
+            }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Sprzedaż nie powiodła się: ${responsePair.second}", Toast.LENGTH_LONG).show()
             }
         }
     }

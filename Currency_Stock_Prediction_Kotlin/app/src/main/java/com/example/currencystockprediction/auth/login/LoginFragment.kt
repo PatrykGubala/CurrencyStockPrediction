@@ -8,11 +8,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.activities.MainActivity
 import com.example.currencystockprediction.databinding.FragmentLoginBinding
+import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.example.currencystockprediction.utils.SecurityUtils
 import com.google.android.gms.auth.api.signin.GoogleSignIn
@@ -23,7 +25,10 @@ import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class LoginFragment : BaseFragment() {
     private lateinit var binding: FragmentLoginBinding
@@ -149,14 +154,39 @@ class LoginFragment : BaseFragment() {
                 if (task.isSuccessful) {
                     val firebaseUser = fbAuth.currentUser
                     if (firebaseUser != null) {
-                        SecurityUtils.saveReAuthNeeded(requireContext(), false)
-                        startMainActivity()
+                        registerUserGoogleInBackend(firebaseUser)
                     }
-                } else {
-                    Log.e(LOG_DEBUG, "Authentication failed: ${task.exception?.message}")
-                    Toast.makeText(requireContext(), "Authentication Failed.", Toast.LENGTH_SHORT).show()
+                }else {
+                    Log.e(LOG_DEBUG, "Authentication failed", task.exception)
+                    val errorMessage = when (task.exception) {
+                        is FirebaseAuthInvalidCredentialsException -> "Invalid credentials"
+                        is FirebaseAuthInvalidUserException -> "No such user exists"
+                        else -> "Authentication failed: ${task.exception?.message}"
+                    }
+                    Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+    private fun registerUserGoogleInBackend(firebaseUser: FirebaseUser) {
+        lifecycleScope.launch {
+            try {
+                val userData = JSONObject().apply {
+                    put("firebase_uid", firebaseUser.uid)
+                    put("email", firebaseUser.email)
+                    put("username", firebaseUser.displayName ?: "User${System.currentTimeMillis()}")
+                }
+
+                val (success, response) = ApiClient.postRequest("/myapp/users/register_google", userData)
+                if (success || response?.contains("already exists", true) == true) {
+                    SecurityUtils.saveReAuthNeeded(requireContext(), false)
+                    startMainActivity()
+                } else {
+                    Toast.makeText(requireContext(), "Failed to register: $response", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(requireContext(), "Registration failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun setupForgotPasswordClick() {

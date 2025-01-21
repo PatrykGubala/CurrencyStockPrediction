@@ -46,14 +46,14 @@ def load_stocks_data_task():
         if stock:
             latest_ts = service.repository.get_latest_timestamp_for_stock(stock)
             if not latest_ts:
-                service.load_daily_data_for_range(symbol, start_date="2012-01-01", end_date=last_31_days)
-                service.load_hourly_data_for_range(symbol, start_date=last_31_days, end_date=now)
+                service.load_daily_data_for_range(symbol, start_date="2012-01-01", end_date=last_31_days.strftime('%Y-%m-%d'))
+                service.load_hourly_data_for_range(symbol, start_date=last_31_days.strftime('%Y-%m-%d'), end_date=now.strftime('%Y-%m-%d'))
             else:
                 if latest_ts < last_31_days:
-                    service.load_daily_data_for_range(symbol, start_date=latest_ts, end_date=last_31_days)
-                    service.load_hourly_data_for_range(symbol,start_date=last_31_days, end_date=now)
+                    service.load_daily_data_for_range(symbol, start_date=latest_ts.strftime('%Y-%m-%d'), end_date=last_31_days.strftime('%Y-%m-%d'))
+                    service.load_hourly_data_for_range(symbol,start_date=last_31_days.strftime('%Y-%m-%d'), end_date=now.strftime('%Y-%m-%d'))
                 else:
-                    service.load_hourly_data_for_range(symbol, start_date=latest_ts, end_date=now)
+                    service.load_hourly_data_for_range(symbol, start_date=latest_ts.strftime('%Y-%m-%d'), end_date=now.strftime('%Y-%m-%d'))
 
 
 

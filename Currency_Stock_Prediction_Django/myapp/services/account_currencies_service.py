@@ -6,7 +6,6 @@ from django.db import transaction
 from django.utils import timezone
 
 from myapp.apps import logger
-from myapp.models.models import AccountCurrencyValueHistory
 from myapp.repositories.account_currencies_repository import AccountCurrenciesRepository
 from myapp.repositories.account_currency_transactions_repository import AccountCurrencyTransactionsRepository
 from myapp.repositories.accounts_repository import AccountsRepository
@@ -82,21 +81,13 @@ class AccountCurrenciesService:
         latest_currency_data = self.currencies_repo.get_latest_currency_data(account_currency.currency.code)
         if latest_currency_data:
             balance_usd = Decimal(account_currency.balance) * Decimal(latest_currency_data.close_price)
-            AccountCurrencyValueHistory.objects.create(
-                account_currency=account_currency,
-                balance_usd=balance_usd,
-                timestamp=timezone.now()
-            )
+
 
     def record_currency_deletion(self, account_currency):
         latest_currency_data = self.currencies_repo.get_latest_currency_data(account_currency.currency.code)
         if latest_currency_data:
             balance_usd = Decimal(account_currency.balance) * Decimal(latest_currency_data.close_price)
-            AccountCurrencyValueHistory.objects.create(
-                account_currency=account_currency,
-                balance_usd=balance_usd,
-                timestamp=timezone.now()
-            )
+
 
     def deposit_to_usd_account(self, account_id: int, amount: float) -> Optional[dict]:
         try:
@@ -113,11 +104,6 @@ class AccountCurrenciesService:
             with transaction.atomic():
                 self.account_currency_repo.update_balance(account_id, currency.id, float(new_balance))
 
-                AccountCurrencyValueHistory.objects.create(
-                    account_currency=account_currency,
-                    balance_usd=new_balance,
-                    timestamp=timezone.now()
-                )
 
                 self.account_currency_tx_repo.create_transaction(
                     sender_account=None,

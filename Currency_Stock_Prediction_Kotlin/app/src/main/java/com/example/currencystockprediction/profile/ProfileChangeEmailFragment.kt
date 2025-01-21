@@ -82,7 +82,7 @@ class ProfileChangeEmailFragment : Fragment() {
             if (reauthSuccess) {
                 initiateEmailChange(newEmail)
             } else {
-                Toast.makeText(requireContext(), "Reauthentication failed: ${reauthMessage ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Ponowna autoryzacja się nie udała: ${reauthMessage ?: "Error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -143,14 +143,14 @@ class ProfileChangeEmailFragment : Fragment() {
             if (success) {
                 Toast.makeText(
                     requireContext(),
-                    "Verification email sent to your new email address. Please check your inbox to verify the change.",
+                    "E-mail weryfikacyjny został wysłany",
                     Toast.LENGTH_LONG
                 ).show()
                 findNavController().popBackStack(R.id.profileFragment, false)
             } else {
                 Toast.makeText(
                     requireContext(),
-                    "Failed to initiate email change: ${response ?: "Unknown error"}",
+                    "Nie udało się wysłać e-maila weryfikacyjnego: ${response ?: "Error"}",
                     Toast.LENGTH_SHORT
                 ).show()
             }

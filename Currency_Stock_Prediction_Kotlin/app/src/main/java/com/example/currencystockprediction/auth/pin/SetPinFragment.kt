@@ -88,16 +88,16 @@ class SetPinFragment : BaseFragment() {
             if (success) {
                 val firebaseUser = FirebaseAuthManager.firebaseAuth.currentUser
                 if (firebaseUser == null) {
-                    Toast.makeText(requireContext(), "Błąd: Użytkownik niezalogowany.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Error: Użytkownik niezalogowany", Toast.LENGTH_SHORT).show()
                     return
                 }
                 SecurityUtils.saveReAuthNeeded(requireContext(), false)
                 navigateToMainActivity()
             } else {
-                Toast.makeText(requireContext(), "Błąd podczas zapisywania PIN.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Błąd podczas zapisywania PIN", Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(requireContext(), "PIN musi mieć 4 cyfry.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "PIN musi mieć 4 cyfry", Toast.LENGTH_SHORT).show()
         }
     }
 

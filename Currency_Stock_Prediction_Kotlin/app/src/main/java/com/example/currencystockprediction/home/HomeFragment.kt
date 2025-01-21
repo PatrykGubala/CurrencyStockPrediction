@@ -67,6 +67,7 @@ class HomeFragment : Fragment() {
             fetchAccountBalances()
             fetchRecentTransactions()
             fetchAvailableCurrencies()
+            fetchPublicAccountId()
 
         }
     }
@@ -94,9 +95,11 @@ class HomeFragment : Fragment() {
             homeCurrencies.clear()
             homeCurrencies.addAll(filteredCurrencies)
             withContext(Dispatchers.Main) {
-                binding.currenciesConstraintLayout.visibility =
-                    if (homeCurrencies.isNotEmpty()) View.VISIBLE else View.GONE
-                homeCurrenciesAdapter.updateData(homeCurrencies)
+                _binding?.let { safeBinding ->
+                    safeBinding.currenciesConstraintLayout.visibility =
+                        if (homeCurrencies.isNotEmpty()) View.VISIBLE else View.GONE
+                    homeCurrenciesAdapter.updateData(homeCurrencies)
+                }
             }
         } else {
             withContext(Dispatchers.Main) {
@@ -113,7 +116,6 @@ class HomeFragment : Fragment() {
             for (i in 0 until currenciesArray.length()) {
                 val currencyObj = currenciesArray.getJSONObject(i)
                 val code = currencyObj.getString("currency_code")
-                // Tworzymy obiekt Currency z minimalnymi danymi
                 currencies.add(
                     Currency(
                         id = 0,
@@ -189,12 +191,12 @@ class HomeFragment : Fragment() {
                 transactionsAdapter.submitList(recentTransactions)
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error parsing transactions.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Error pobierając transakcje", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to fetch transactions.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie udało się pobrać transakcji", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -243,12 +245,44 @@ class HomeFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error parsing account balances.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Error pobierając stan konta", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to fetch account balances.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie udało się pobrać stanu konta", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private suspend fun fetchPublicAccountId() {
+        val endpoint = "/myapp/accounts/get_public_account_id"
+        val responsePair = ApiClient.getRequest(endpoint)
+        if (responsePair.first && responsePair.second != null) {
+            try {
+                val jsonResponse = JSONObject(responsePair.second!!)
+                val publicAccountId = jsonResponse.getString("public_account_id")
+                withContext(Dispatchers.Main) {
+                    _binding?.let { safeBinding ->
+                        safeBinding.publicAccountIdTextView.text = "Numer konta: $publicAccountId"
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        requireContext(),
+                        "Error pobierając numer konta",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    requireContext(),
+                    "Nie udało się pobrać numeru konta",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

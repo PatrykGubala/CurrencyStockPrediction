@@ -93,10 +93,10 @@ class HomeConvertFragment : Fragment() {
                 currencyAdapter.addAll(currenciesList)
                 currencyAdapter.notifyDataSetChanged()
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error parsing currencies.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Error pobierając waluty", Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(requireContext(), "Failed to fetch currencies.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Nie udało się pobrać walut", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -108,7 +108,7 @@ class HomeConvertFragment : Fragment() {
         if (amountStr.isNotEmpty() && fromCurrency != null && toCurrency != null) {
             val amount = amountStr.toDoubleOrNull()
             if (amount == null || amount <= 0) {
-                Toast.makeText(requireContext(), "Please enter a valid amount", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Proszę wprowadzić poprawną kwotę", Toast.LENGTH_SHORT).show()
                 return
             }
 
@@ -137,14 +137,14 @@ class HomeConvertFragment : Fragment() {
                         binding.resultAmountTextInputEditText.setText("$convertedAmount $toCurrency")
                         binding.resultExchangeRateTextInputEditText.setText("$conversionRate")
                     } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error parsing response.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    Toast.makeText(requireContext(), "Conversion failed: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Przeliczenie się nie powiodło: ${response ?: "Error"}", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
-            Toast.makeText(requireContext(), "Please enter amount and select currencies", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Proszę wprowadzić kwotę i wybrać waluty", Toast.LENGTH_SHORT).show()
         }
     }
 

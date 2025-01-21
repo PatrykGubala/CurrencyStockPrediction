@@ -106,7 +106,7 @@ class ContactsFragment : Fragment() {
         val currencyCode = "USD"
 
         if (title.isEmpty() || publicAccountId.isEmpty() || accountName.isEmpty() || currencyCode.isEmpty()) {
-            Toast.makeText(requireContext(), "Please fill all fields", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Wypełnij wszystkie pola", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -136,14 +136,14 @@ class ContactsFragment : Fragment() {
                     currentList.add(newContact)
                     viewModel.setContacts(currentList)
                     clearCreateContactForm()
-                    Toast.makeText(requireContext(), "Contact created successfully", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Numer konta zapisany", Toast.LENGTH_SHORT).show()
                     binding.createContactConstraintLayout.visibility = View.GONE
                 } else {
-                    val errorMsg = response ?: "Failed to create contact"
+                    val errorMsg = response ?: "Nie udało się zapisać numeru konta"
                     Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error creating contact", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -176,11 +176,11 @@ class ContactsFragment : Fragment() {
                     }
                     viewModel.setContacts(contactsList)
                 } else {
-                    val errorMsg = response ?: "Failed to fetch contacts"
+                    val errorMsg = response ?: "ERROR"
                     Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(requireContext(), "Error fetching contacts", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Error podczas pobierania danych", Toast.LENGTH_SHORT).show()
             }
         }
     }

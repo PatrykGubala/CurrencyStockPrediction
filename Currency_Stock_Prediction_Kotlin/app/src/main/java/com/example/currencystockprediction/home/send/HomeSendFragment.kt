@@ -82,11 +82,11 @@ class HomeSendFragment : Fragment() {
         if (amountStr.isNotEmpty() && publicAccountId.isNotEmpty()) {
             val amount = amountStr.toDoubleOrNull()
             if (amount == null || amount <= 0) {
-                Toast.makeText(requireContext(), "Please enter a valid amount", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Wprowadź poprawną wkotę", Toast.LENGTH_SHORT).show()
                 return
             }
             if (!PUBLIC_ACCOUNT_ID_PATTERN.matcher(publicAccountId).matches()) {
-                Toast.makeText(requireContext(), "Invalid Public Account ID format", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Zły format numeru konta", Toast.LENGTH_SHORT).show()
                 return
             }
             val json = JSONObject().apply {
@@ -100,7 +100,7 @@ class HomeSendFragment : Fragment() {
                 if (success && response != null) {
                     try {
                         val jsonResponse = JSONObject(response)
-                        val message = jsonResponse.optString("message", "Send successful.")
+                        val message = jsonResponse.optString("message", "Udało się wysłać środki")
                         val senderNewBalance = jsonResponse.optDouble("sender_new_balance", -1.0)
                         val receiverNewBalance = jsonResponse.optDouble("receiver_new_balance", -1.0)
 
@@ -108,20 +108,20 @@ class HomeSendFragment : Fragment() {
                             binding.sendAmountTextInputEditText.text?.clear()
                             binding.sendPublicAccountTextInputEditText.text?.clear()
                             viewModel.setUsdBalance(senderNewBalance)
-                            Toast.makeText(requireContext(), "$message New Balance: $${String.format("%.2f", senderNewBalance)}", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "$message Nowy stan konta: $${String.format("%.2f", senderNewBalance)}", Toast.LENGTH_SHORT).show()
                         } else {
                             Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
                         }
                     } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error parsing response.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
                     }
                 } else {
-                    val errorMsg = response?.let { "Send failed: $it" } ?: "Send failed: Unknown error"
+                    val errorMsg = response?.let { "Nie udało się wysłać środków: $it" } ?: "Error"
                     Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
-            Toast.makeText(requireContext(), "Please enter amount and Public Account ID", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Wprowadź wszystkie dane", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -145,12 +145,12 @@ class HomeSendFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error parsing account balances.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Error pobierając stan konta", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to fetch account balances.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie udało się pobrać stanu konta", Toast.LENGTH_SHORT).show()
             }
         }
     }

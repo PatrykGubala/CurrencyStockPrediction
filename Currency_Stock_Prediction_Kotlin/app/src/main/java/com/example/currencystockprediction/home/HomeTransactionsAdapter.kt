@@ -3,10 +3,8 @@ package com.example.currencystockprediction.home
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.currencystockprediction.databinding.FragmentHomeHistoryTransactionItemBinding
 import com.example.currencystockprediction.databinding.FragmentHomeTransactionItemBinding
 import com.example.currencystockprediction.models.HistoryItem
-import com.example.currencystockprediction.models.TransactionItem
 import java.text.SimpleDateFormat
 import java.util.Locale
 

@@ -10,14 +10,11 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.BaseFragment
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.activities.MainActivity
 import com.example.currencystockprediction.databinding.FragmentPinInputBinding
-import com.example.currencystockprediction.databinding.FragmentSetPinBinding
-import com.example.currencystockprediction.utils.FirebaseAuthManager
 import com.example.currencystockprediction.utils.SecurityUtils
 import com.example.currencystockprediction.utils.SessionManager
 
@@ -115,7 +112,7 @@ class PinInputFragment : BaseFragment() {
 
         } else {
             Log.e(TAG, "PIN validation failed.")
-            Toast.makeText(requireContext(), "Niepoprawny PIN. Spróbuj ponownie.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Niepoprawny PIN. Spróbuj ponownie", Toast.LENGTH_SHORT).show()
             pinInput.clear()
             updatePinDots()
         }
@@ -133,7 +130,7 @@ class PinInputFragment : BaseFragment() {
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                     super.onAuthenticationError(errorCode, errString)
                     if (errorCode != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
-                        Toast.makeText(context, "Authentication error: $errString", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Error: $errString", Toast.LENGTH_SHORT).show()
                     }
                 }
 
@@ -145,15 +142,15 @@ class PinInputFragment : BaseFragment() {
 
                 override fun onAuthenticationFailed() {
                     super.onAuthenticationFailed()
-                    Toast.makeText(context, "Authentication failed", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Autoryzacja nie udała się", Toast.LENGTH_SHORT).show()
                 }
             }
         )
 
         val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Biometric Authentication")
-            .setSubtitle("Authenticate using biometrics")
-            .setNegativeButtonText("Use PIN")
+            .setTitle("Autoryzacja biometryczna")
+            .setSubtitle("Autoryzacja korzystająca z odcisku palca")
+            .setNegativeButtonText("Użyj PIN")
             .build()
 
         biometricPrompt.authenticate(promptInfo)
@@ -166,7 +163,7 @@ class PinInputFragment : BaseFragment() {
         Log.d(TAG, "Loaded stored PIN: $storedPin")
 
         if (storedPin.isEmpty()) {
-            Toast.makeText(requireContext(), "PIN nie został ustawiony. Proszę się zarejestrować ponownie.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "PIN nie został ustawiony", Toast.LENGTH_SHORT).show()
             findNavController().navigate(R.id.action_pinInputFragment_to_startFragment)
         }
     }

@@ -115,14 +115,14 @@ class ProfileFragment : BaseFragment() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ProfileFragment", "Error parsing user data: ${e.message}")
+                Log.e("ProfileFragment", "Error: ${e.message}")
                 requireActivity().runOnUiThread {
-                    Toast.makeText(context, "Failed to parse user data", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Error: ", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {
             requireActivity().runOnUiThread {
-                Toast.makeText(context, "Failed to fetch user data: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Nie pobrano informacji o użytkowniku: : ${response ?: "Error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -162,18 +162,18 @@ class ProfileFragment : BaseFragment() {
                             .placeholder(R.drawable.ic_launcher_background)
                             .error(R.drawable.ic_launcher_background)
                             .into(binding.profileAvatarImageView)
-                        Toast.makeText(context, "Profile image updated successfully", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Zaktualizowano zdjęcie profilowe", Toast.LENGTH_SHORT).show()
                     } else {
                         Log.e("ProfileFragment", "profile_image_url not found in response")
-                        Toast.makeText(context, "Failed to retrieve image URL", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Nie znaleziono URL", Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Log.e("ProfileFragment", "Error parsing response: ${e.message}")
-                    Toast.makeText(context, "Failed to parse server response", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Błąd podczas przetwarzania odpowiedzi serwera", Toast.LENGTH_SHORT).show()
                 }
             } else {
                 Log.e("ProfileFragment", "Upload failed. Response: $response")
-                Toast.makeText(context, "Failed to upload image: ${response ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Nie udało się zapisać zdjęcia: ${response ?: "Error"}", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -183,7 +183,7 @@ class ProfileFragment : BaseFragment() {
             SecurityUtils.saveReAuthNeeded(requireContext(), true)
             CacheManager.clearCache(requireContext())
             finishMainActivity()
-            Toast.makeText(requireContext(), "Logged out successfully", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Użytkownik wylogowany", Toast.LENGTH_SHORT).show()
         }
     }
 
