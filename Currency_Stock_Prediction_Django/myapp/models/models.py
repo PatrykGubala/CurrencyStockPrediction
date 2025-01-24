@@ -83,12 +83,7 @@ class CurrenciesTrainedModels(models.Model):
 
     class Meta:
         db_table = 'currencies_trained_models'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['currency', 'is_latest'],
-                name='unique_latest_currency_model'
-            )
-        ]
+
 
 
 class CurrenciesPrediction(models.Model):
@@ -195,12 +190,7 @@ class StocksTrainedModels(models.Model):
     class Meta:
         db_table = 'stocks_trained_models'
         ordering = ['-training_date']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['stock', 'is_latest'],
-                name='unique_latest_stock_model'
-            )
-        ]
+
 
     def __str__(self):
         return f"{self.stock.stock_symbol} - {self.model_name} ({self.training_date.strftime('%Y-%m-%d')})"

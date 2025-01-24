@@ -7,13 +7,12 @@ class UsersContactsRepository:
     def get_contacts_by_user(self, user) -> List[Contact]:
         return list(Contact.objects.filter(user=user))
 
-    def add_contact(self, user, title: str, public_account_id: str, account_name: str, currency_code: str) -> Contact:
+    def add_contact(self, user, title: str, public_account_id: str, account_name: str) -> Contact:
         contact = Contact.objects.create(
             user=user,
             title=title,
             public_account_id=public_account_id,
-            account_name=account_name,
-            currency_code=currency_code
+            account_name=account_name
         )
         return contact
 

@@ -105,7 +105,7 @@ class ContactsFragment : Fragment() {
         val accountName = title
         val currencyCode = "USD"
 
-        if (title.isEmpty() || publicAccountId.isEmpty() || accountName.isEmpty() || currencyCode.isEmpty()) {
+        if (title.isEmpty() || publicAccountId.isEmpty() || accountName.isEmpty() ) {
             Toast.makeText(requireContext(), "Wypełnij wszystkie pola", Toast.LENGTH_SHORT).show()
             return
         }
@@ -117,7 +117,7 @@ class ContactsFragment : Fragment() {
                     .put("title", title)
                     .put("public_account_id", publicAccountId)
                     .put("account_name", accountName)
-                    .put("currency_code", currencyCode)
+
 
                 val (success, response) = ApiClient.postRequest("/myapp/users/contacts/create/", json)
 
@@ -129,8 +129,7 @@ class ContactsFragment : Fragment() {
                         id = contactJson.getInt("id"),
                         title = contactJson.getString("title"),
                         public_account_id = contactJson.getString("public_account_id"),
-                        account_name = contactJson.getString("account_name"),
-                        currency_code = contactJson.getString("currency_code")
+                        account_name = contactJson.getString("account_name")
                     )
                     val currentList = viewModel.contacts.value?.toMutableList() ?: mutableListOf()
                     currentList.add(newContact)
@@ -169,8 +168,7 @@ class ContactsFragment : Fragment() {
                             id = contactObj.getInt("id"),
                             title = contactObj.getString("title"),
                             public_account_id = contactObj.getString("public_account_id"),
-                            account_name = contactObj.getString("account_name"),
-                            currency_code = contactObj.getString("currency_code")
+                            account_name = contactObj.getString("account_name")
                         )
                         contactsList.add(contact)
                     }

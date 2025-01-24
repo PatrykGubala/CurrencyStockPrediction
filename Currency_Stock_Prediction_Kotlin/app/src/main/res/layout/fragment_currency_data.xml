@@ -290,6 +290,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Powiadomienia"
+                android:visibility="gone"
                 android:textAlignment="center"
                 android:textColor="@color/white"
                 app:layout_constraintEnd_toEndOf="parent"
@@ -298,6 +299,8 @@
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/targetPriceTextInputLayout"
+                android:visibility="gone"
+
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -320,6 +323,8 @@
             <Button
                 android:id="@+id/setNotificationButton"
                 style="@style/KanitRegularMedium"
+                android:visibility="gone"
+
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginHorizontal="@dimen/fragment_login_button_margin_horizontal"

@@ -7,6 +7,9 @@ from django.utils import timezone
 
 class CurrenciesTrainedModelsRepository:
     def create_trained_model(self, currency, model_name, model_file_path, metrics, param_grid, is_latest):
+        if is_latest:
+            CurrenciesTrainedModels.objects.filter(currency=currency, is_latest=True).update(is_latest=False)
+
         trained_model = CurrenciesTrainedModels(
             currency=currency,
             model_name=model_name,
@@ -35,7 +38,10 @@ class CurrenciesTrainedModelsRepository:
             )
 
     def mark_all_as_not_latest(self, currency):
-        CurrenciesTrainedModels.objects.filter(currency=currency).update(is_latest=False)
+        CurrenciesTrainedModels.objects.filter(currency=currency, is_latest=True).update(is_latest=False)
 
     def get_currency_by_code(self, code):
         return Currency.objects.filter(code=code).first()
+
+    def get_latest_model(self, currency):
+        return CurrenciesTrainedModels.objects.filter( currency=currency, is_latest=True).first()

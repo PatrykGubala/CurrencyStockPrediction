@@ -13,9 +13,8 @@ def create_contact(request):
     title = data.get('title')
     public_account_id = data.get('public_account_id')
     account_name = data.get('account_name')
-    currency_code = data.get('currency_code')
 
-    if not all([title, public_account_id, account_name, currency_code]):
+    if not all([title, public_account_id, account_name]):
         return JsonResponse(
             {'error': 'Missing required fields.'},
             status=400
@@ -28,15 +27,13 @@ def create_contact(request):
             user=user,
             title=title,
             public_account_id=public_account_id,
-            account_name=account_name,
-            currency_code=currency_code
+            account_name=account_name
         )
         contact_data = {
             'id': contact.id,
             'title': contact.title,
             'public_account_id': contact.public_account_id,
-            'account_name': contact.account_name,
-            'currency_code': contact.currency_code
+            'account_name': contact.account_name
         }
         return JsonResponse(
             {'message': 'Contact created successfully.', 'contact': contact_data},
@@ -68,8 +65,7 @@ def list_contacts(request):
                 'id': contact.id,
                 'title': contact.title,
                 'public_account_id': contact.public_account_id,
-                'account_name': contact.account_name,
-                'currency_code': contact.currency_code
+                'account_name': contact.account_name
             }
             for contact in contacts
         ]

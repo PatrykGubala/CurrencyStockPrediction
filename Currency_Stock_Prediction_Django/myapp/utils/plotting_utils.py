@@ -88,7 +88,7 @@ def plot_line_graph(x_data_list, y_data_list, labels, title, x_label, y_label, l
     plt.savefig(output_path)
     plt.close()
 
-def plot_heatmap(data, title, x_tick_labels, y_tick_labels, output_path, figure_size=(12,10), annotate=False):
+def plot_heatmap(data, title, x_tick_labels, y_tick_labels, output_path, figure_size=(36,36), annotate=False):
     print(f"x_tick_labels: {x_tick_labels}")
     print(f"y_tick_labels: {y_tick_labels}")
     plt.figure(figsize=figure_size)

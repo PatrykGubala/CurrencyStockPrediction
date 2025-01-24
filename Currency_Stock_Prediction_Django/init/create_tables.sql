@@ -79,7 +79,6 @@ CREATE TABLE IF NOT EXISTS currencies_trained_models (
     metrics JSON,
     param_grid JSON,
     is_latest BOOLEAN DEFAULT FALSE,
-    CONSTRAINT unique_latest_model UNIQUE (currency_id, is_latest),
     FOREIGN KEY (currency_id) REFERENCES currencies(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE
@@ -149,7 +148,11 @@ CREATE TABLE IF NOT EXISTS stocks_data (
     day_of_week VARCHAR(10) GENERATED ALWAYS AS (DAYNAME(timestamp)) STORED,
     FOREIGN KEY (stock_id) REFERENCES stocks(id)
         ON DELETE CASCADE
-        ON UPDATE CASCADE
+        ON UPDATE CASCADE,
+    UNIQUE KEY unique_currency_timestamp (stock_id, timestamp)
+
+
+
 );
 
 
@@ -163,7 +166,6 @@ CREATE TABLE IF NOT EXISTS stocks_trained_models (
     metrics JSON,
     param_grid JSON,
     is_latest BOOLEAN DEFAULT FALSE,
-    CONSTRAINT unique_latest_model UNIQUE (stock_id, is_latest),
     FOREIGN KEY (stock_id) REFERENCES stocks(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE

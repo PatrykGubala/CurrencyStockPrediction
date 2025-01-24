@@ -77,7 +77,7 @@ class AccountCurrenciesService:
 
     def deposit_to_usd_account(self, account_id: int, amount: Union[str, float, Decimal]) -> Optional[dict]:
         try:
-            normalized_amount = self.normalize_decimal(amount)
+            normalized_amount = normalize_decimal(amount)
             if normalized_amount <= 0:
                 raise ValueError("Deposit amount must be positive.")
 
