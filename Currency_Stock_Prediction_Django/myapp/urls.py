@@ -1,8 +1,8 @@
 
 from django.urls import path
 
-from myapp.controllers.account_stocks_controller import  get_stock_transactions, buy_stock, \
-    sell_stock, get_account_stock_shares
+from myapp.controllers.account_stocks_controller import get_stock_transactions, buy_stock, \
+    sell_stock, get_account_stock_shares, get_account_stocks
 from myapp.controllers.companies_controller import get_all_companies, create_company, delete_company
 from myapp.controllers.currencies_trained_models_controller import train_new_currency_model,  \
     get_currency_predictions, start_async_currency_training
@@ -10,13 +10,13 @@ from myapp.controllers.exchanges_controller import get_all_exchanges, create_exc
 from myapp.controllers.stocks_controller import get_all_stocks, add_stock, update_stock, delete_stock
 from myapp.controllers.stocks_data_controller import load_daily_stock_data, load_hourly_stock_data, get_all_stocks_data, \
     get_latest_stock_data, get_stock_data, get_stocks_monthly_percentage_change, get_weekly_monthly_yearly_change
-
+from myapp.controllers.stocks_trained_models_controller import start_async_stock_training, get_stock_predictions
 
 from myapp.controllers.users_contacts_controller import create_contact, list_contacts
 from myapp.controllers.users_controller import register_user, get_user_by_id, get_user_info, upload_profile_image, \
     initiate_change_email, verify_change_email, change_username, register_user_google
 from myapp.controllers.accounts_controller import create_account, recount_currency_values_test, get_account_usd_value, \
-    get_account_transactions, get_account_id, get_public_account_id
+    get_account_currency_transactions, get_account_id, get_public_account_id
 from myapp.controllers.account_currencies_controller import add_currency_to_account, get_account_currencies, \
     update_account_currency_balance, remove_currency_from_account, deposit_currency, buy_currency, \
     get_account_currency_balance, send_currency, sell_currency
@@ -74,10 +74,11 @@ urlpatterns = [
     path('accounts/currencies/sell', sell_currency, name='sell_currency'),
 
     path('accounts/currencies/<str:currency_code>/balance', get_account_currency_balance, name='get_account_currency_balance'),
-    path('accounts/transactions', get_account_transactions, name='get_account_transactions'),
+    path('accounts/transactions', get_account_currency_transactions, name='get_account_transactions'),
     path('accounts/usd_value', get_account_usd_value, name='get_account_usd_value'),
     path('accounts/currencies/send', send_currency, name='send_currency'),
 
+    path('accounts/stocks', get_account_stocks, name='get_account_stocks'),
     path('accounts/stocks/<str:stock_symbol>/shares', get_account_stock_shares, name='get_account_stock_shares'),
     path('accounts/stocks/transactions', get_stock_transactions, name='get_stock_transactions'),
     path('accounts/stocks/buy', buy_stock, name='buy_stock'),
@@ -131,6 +132,10 @@ urlpatterns = [
     path('stocks/load_stocks_exchanges_companies', PolygonStocksLoaderService.load_stocks_exchanges_companies, name='load_stocks_exchanges_companies'),
 
     path('currencies/prediction/start_async_training', start_async_currency_training, name='start_async_currency_training'),
+    path('stocks/prediction/start_async__stock_training', start_async_stock_training,
+         name='start_async_stock_training'),
+
+    path('stocks/prediction/<str:stock_symbol>/data', get_stock_predictions, name='get_stock_predictions'),
 
 ]
 

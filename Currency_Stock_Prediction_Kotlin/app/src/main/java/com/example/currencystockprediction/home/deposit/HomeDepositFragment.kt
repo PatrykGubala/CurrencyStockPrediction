@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -13,16 +14,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentHomeDepositBinding
-import com.example.currencystockprediction.databinding.FragmentHomeSendBinding
-import com.example.currencystockprediction.home.HomeFragmentDirections
 import com.example.currencystockprediction.home.HomeViewModel
-import com.example.currencystockprediction.utils.ApiClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
-
 
 class HomeDepositFragment : Fragment() {
     private var insetsController: WindowInsetsControllerCompat? = null
@@ -32,12 +26,12 @@ class HomeDepositFragment : Fragment() {
     private var _binding: FragmentHomeDepositBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var viewModel: HomeViewModel
+    private lateinit var viewModel: HomeDepositViewModel
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentHomeDepositBinding.inflate(inflater, container, false)
         return binding.root
@@ -46,58 +40,48 @@ class HomeDepositFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val window = requireActivity().window
-        insetsController = WindowInsetsControllerCompat(window, window.decorView)
-        hideSystemUI()
-
-        bottomNavView = requireActivity().findViewById(R.id.bottomNavView)
-        originalBottomNavVisibility = bottomNavView.visibility
-        bottomNavView.visibility = View.GONE
-
+        setupSystemUI()
+        setupBottomNav()
         setupToolbar()
 
-
-        viewModel = ViewModelProvider(requireActivity()).get(HomeViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(HomeDepositViewModel::class.java)
 
         viewModel.usdBalance.observe(viewLifecycleOwner) { balance ->
             binding.accountAmountTextView.text = "Stan konta: $${String.format("%.2f", balance)}"
         }
-        lifecycleScope.launch{
-            fetchAccountBalances()
+
+        viewModel.depositResult.observe(viewLifecycleOwner) { result ->
+            binding.depositSubmitButton.isEnabled = true
+            result.onSuccess { newBalance ->
+                binding.depositAmountTextInputEditText.text?.clear()
+                Toast.makeText(
+                    requireContext(),
+                    "Nowy stan konta: $${String.format("%.2f", newBalance)}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }.onFailure { exception ->
+                Toast.makeText(
+                    requireContext(),
+                    "Nie udało się wpłacić środków: ${exception.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
 
+        if (viewModel.usdBalance.value == null) {
+            viewModel.fetchAccountBalances()
+        }
 
         binding.depositSubmitButton.setOnClickListener {
             depositCurrency()
         }
 
-    }
-
-    private suspend fun fetchAccountBalances() {
-        val endpoint = "/myapp/accounts/currencies"
-        val responsePair = ApiClient.getRequest(endpoint)
-
-        if (responsePair.first && responsePair.second != null) {
-            try {
-                val jsonResponse = JSONObject(responsePair.second!!)
-                val currenciesArray = jsonResponse.getJSONArray("currencies")
-                for (i in 0 until currenciesArray.length()) {
-                    val currencyObj = currenciesArray.getJSONObject(i)
-                    val code = currencyObj.getString("currency_code")
-                    val balance = currencyObj.getDouble("balance")
-                    if (code.equals("USD", ignoreCase = true)) {
-                        viewModel.setUsdBalance(balance)
-                        break
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error parsing account balances.", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } else {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to fetch account balances.", Toast.LENGTH_SHORT).show()
+        binding.depositAmountTextInputEditText.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                depositCurrency()
+                true
+            } else {
+                false
             }
         }
     }
@@ -110,33 +94,24 @@ class HomeDepositFragment : Fragment() {
                 Toast.makeText(requireContext(), "Wpisz poprawną wartość", Toast.LENGTH_SHORT).show()
                 return
             }
-            val json = JSONObject().apply {
-                put("amount", amount)
-            }
             binding.depositSubmitButton.isEnabled = false
-            lifecycleScope.launch {
-                val responsePair = ApiClient.postRequest("/myapp/accounts/deposit", json)
-                binding.depositSubmitButton.isEnabled = true
-                if (responsePair.first && responsePair.second != null) {
-                    try {
-                        val jsonResponse = JSONObject(responsePair.second!!)
-                        val newBalance = jsonResponse.getDouble("new_balance")
-                        binding.depositAmountTextInputEditText.text?.clear()
-                        viewModel.setUsdBalance(newBalance)
-                        Toast.makeText(requireContext(), "Nowy stan konta: $${String.format("%.2f", newBalance)}", Toast.LENGTH_SHORT).show()
-                    } catch (e: Exception) {
-                        Toast.makeText(requireContext(), "Error: ", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    Toast.makeText(requireContext(), "Nie udało się wpłacić środków: ${responsePair.second ?: "Error: "}", Toast.LENGTH_SHORT).show()
-                }
-            }
+            viewModel.depositCurrency(amount)
         } else {
             Toast.makeText(requireContext(), "Proszę wpisać kwotę", Toast.LENGTH_SHORT).show()
         }
     }
 
+    private fun setupSystemUI() {
+        val window = requireActivity().window
+        insetsController = WindowInsetsControllerCompat(window, window.decorView)
+        hideSystemUI()
+    }
 
+    private fun setupBottomNav() {
+        bottomNavView = requireActivity().findViewById(R.id.bottomNavView)
+        originalBottomNavVisibility = bottomNavView.visibility
+        bottomNavView.visibility = View.GONE
+    }
 
     private fun setupToolbar() {
         binding.backButton.setOnClickListener {
@@ -156,8 +131,8 @@ class HomeDepositFragment : Fragment() {
         super.onPause()
         showSystemUI()
         bottomNavView.visibility = originalBottomNavVisibility
-
     }
+
     private fun hideSystemUI() {
         insetsController?.let { controller ->
             controller.hide(WindowInsetsCompat.Type.systemBars())
@@ -165,6 +140,7 @@ class HomeDepositFragment : Fragment() {
                 WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
     }
+
     private fun showSystemUI() {
         insetsController?.show(WindowInsetsCompat.Type.systemBars())
     }
@@ -175,5 +151,4 @@ class HomeDepositFragment : Fragment() {
         insetsController = null
         _binding = null
     }
-
 }

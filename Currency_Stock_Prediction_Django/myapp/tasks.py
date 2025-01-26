@@ -8,6 +8,7 @@ from myapp.services.accounts_service import AccountsService
 from myapp.services.currencies_data_service import CurrenciesDataService, logger
 from myapp.services.currencies_trained_models_service import CurrenciesTrainedModelsService
 from myapp.services.stocks_data_service import StocksDataService
+from myapp.services.stocks_trained_models_service import StocksTrainedModelsService
 
 
 @shared_task
@@ -85,7 +86,21 @@ def train_currency_model_async(currency_code, param_grid, sequence_length, datas
     )
     return result
 
-
+@shared_task
+def train_stock_model_async(stock_symbol, param_grid, sequence_length, dataset_time, prediction_steps, short_term_lag, long_term_lag, scaling_method, output_directory):
+    service = StocksTrainedModelsService()
+    result = service.train_and_forecast(
+        stock_symbol=stock_symbol,
+        param_grid=param_grid,
+        sequence_length=sequence_length,
+        dataset_time=dataset_time,
+        prediction_steps=prediction_steps,
+        short_term_lag=short_term_lag,
+        long_term_lag=long_term_lag,
+        scaling_method=scaling_method,
+        output_directory=output_directory
+    )
+    return result
 
 
 

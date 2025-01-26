@@ -7,14 +7,14 @@ from myapp.utils.util_functions import normalize_decimal
 
 
 class AccountStockTransactionRepository:
-    def get_account_stock_transactions_by_account(account_id: int) -> List[AccountStockTransaction]:
+    def get_account_stock_transactions_by_account(self, account_id: int) -> List[AccountStockTransaction]:
         return list(AccountStockTransaction.objects.filter(account_id=account_id)
                     .select_related('stock', 'currency').order_by('-transaction_date'))
 
-    def get_account_stock_transaction_by_id(transaction_id: int) -> Optional[AccountStockTransaction]:
+    def get_account_stock_transaction_by_id(self, transaction_id: int) -> Optional[AccountStockTransaction]:
         return AccountStockTransaction.objects.filter(id=transaction_id).first()
 
-    def get_latest_account_stock_transaction(account_id: int, stock_id: int) -> Optional[AccountStockTransaction]:
+    def get_latest_account_stock_transaction(self, account_id: int, stock_id: int) -> Optional[AccountStockTransaction]:
         return AccountStockTransaction.objects.filter(
             account_id=account_id, stock_id=stock_id
         ).order_by('-transaction_date').first()
@@ -34,7 +34,7 @@ class AccountStockTransactionRepository:
         if transaction_fee < Decimal('0'):
             raise ValueError("Transaction fee cannot be negative")
 
-        title = title or ('Stock Purchase' if transaction_type == 'buy' else 'Stock Sale')
+        title = title or ('Kupno akcji' if transaction_type == 'buy' else 'Stock Sale')
         transaction = AccountStockTransaction(
             account_id=account_id, transaction_type=transaction_type,
             title=title, stock_id=stock_id, shares=shares,

@@ -290,7 +290,7 @@
                         style="@style/KanitLightSmall"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Deposit"
+                        android:text="Wpłata"
                         android:textColor="@color/white"
                         app:layout_columnWeight="1" />
 
@@ -299,17 +299,7 @@
                         style="@style/KanitLightSmall"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Withdraw"
-
-                        android:textColor="@color/white"
-                        app:layout_columnWeight="1" />
-
-                    <CheckBox
-                        android:id="@+id/checkbox_exchange"
-                        style="@style/KanitLightSmall"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:text="Exchange"
+                        android:text="Wypłata"
 
                         android:textColor="@color/white"
                         app:layout_columnWeight="1" />
@@ -319,17 +309,29 @@
                         style="@style/KanitLightSmall"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Send"
+                        android:text="Wysyłka"
 
                         android:textColor="@color/white"
                         app:layout_columnWeight="1" />
 
                     <CheckBox
-                        android:id="@+id/checkbox_transfer"
+                        android:id="@+id/checkbox_buy"
                         style="@style/KanitLightSmall"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="Transfer"
+                        android:text="Kupno"
+
+                        android:textColor="@color/white"
+                        app:layout_columnWeight="1" />
+
+
+
+                    <CheckBox
+                        android:id="@+id/checkbox_sell"
+                        style="@style/KanitLightSmall"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="Sprzedaż"
 
                         android:textColor="@color/white"
                         app:layout_columnWeight="1" />

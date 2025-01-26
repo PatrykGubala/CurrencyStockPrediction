@@ -88,13 +88,11 @@ def plot_line_graph(x_data_list, y_data_list, labels, title, x_label, y_label, l
     plt.savefig(output_path)
     plt.close()
 
-def plot_heatmap(data, title, x_tick_labels, y_tick_labels, output_path, figure_size=(36,36), annotate=False):
-    print(f"x_tick_labels: {x_tick_labels}")
-    print(f"y_tick_labels: {y_tick_labels}")
+def plot_heatmap(data, title, x_tick_labels, y_tick_labels, output_path, figure_size=(12,10), annotate=False):
     plt.figure(figsize=figure_size)
-    mat = plt.matshow(data,  cmap='coolwarm')
-    plt.xticks(range(len(x_tick_labels)), x_tick_labels, rotation=90)
-    plt.yticks(range(len(y_tick_labels)), y_tick_labels)
+    mat = plt.matshow(data, aspect='auto', cmap='coolwarm')
+    plt.xticks(range(len(x_tick_labels)), x_tick_labels, rotation=90, fontsize=7)
+    plt.yticks(range(len(y_tick_labels)), y_tick_labels, fontsize=7)
     plt.colorbar(mat)
     if annotate:
         for (i, j), val in np.ndenumerate(data):
@@ -128,16 +126,6 @@ def decompose_time_series(data, currency, output_dir):
     plt.close()
     return result
 
-def plot_residuals_histogram(residuals, output_path, figure_size=(10,6)):
-    plt.figure(figsize=figure_size)
-    plt.hist(residuals, bins=30, edgecolor='black')
-    plt.title('Histogram of Residuals')
-    plt.xlabel('Residual')
-    plt.ylabel('Frequency')
-    plt.tight_layout()
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    plt.savefig(output_path)
-    plt.close()
 
 def plot_residuals_over_time(dates, residuals, output_path, figure_size=(14,7)):
     plt.figure(figsize=figure_size)

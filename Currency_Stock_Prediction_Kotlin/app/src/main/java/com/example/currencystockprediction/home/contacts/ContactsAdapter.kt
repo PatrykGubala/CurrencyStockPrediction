@@ -35,13 +35,12 @@ class ContactsAdapter(
     override fun onBindViewHolder(holder: ContactViewHolder, position: Int) {
         val contact = contacts[position]
         holder.titleTextView.text = contact.title
-        holder.publicAccountIdTextView.text = "${contact.public_account_id}${contact.currency_code}"
+        holder.publicAccountIdTextView.text = "${contact.public_account_id}"
 
         holder.copyButton.setOnClickListener {
             val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val clip = ClipData.newPlainText("Public Account ID", contact.public_account_id)
             clipboard.setPrimaryClip(clip)
-            Toast.makeText(context, "Public Account ID copied to clipboard", Toast.LENGTH_SHORT).show()
         }
     }
 

@@ -24,6 +24,18 @@ class AccountStocksService:
             value = str(value)
         return Decimal(value).quantize(Decimal('0.00000000'), rounding=ROUND_DOWN)
 
+
+    def get_account_stocks(self, account_id: int) -> List[dict]:
+        account_stocks = self.account_stocks_repository.get_all_account_stocks(account_id)
+        result = []
+        for ac in account_stocks:
+            result.append({
+                'stock_symbol': ac.stock.stock_symbol,
+                'shares': float(ac.shares),
+            })
+        return result
+
+
     def get_account_stock_balance(self, account_id: int, stock_symbol: str) -> dict:
         account_stock = self.account_stocks_repository.get_account_stock_holding_by_symbol(account_id, stock_symbol)
         shares = account_stock.shares if account_stock else Decimal(0)
@@ -60,6 +72,7 @@ class AccountStocksService:
             self.account_stock_transaction_repository.create_account_stock_transaction(
                 account_id=account_id,
                 transaction_type='buy',
+                title=f'Zakupiono {stock_symbol}',
                 stock_id=stock.id,
                 shares=float(shares),
                 price_per_share=float(price_per_share),
@@ -92,6 +105,7 @@ class AccountStocksService:
             self.account_stock_transaction_repository.create_account_stock_transaction(
                 account_id=account_id,
                 transaction_type='sell',
+                title=f'Sprzedano {stock_symbol}',
                 stock_id=account_stock.stock.id,
                 shares=float(shares),
                 price_per_share=float(price_per_share),

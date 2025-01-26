@@ -7,6 +7,15 @@ from myapp.utils.auth_utils import token_required
 
 @api_view(['GET'])
 @token_required
+def get_account_stocks(request):
+    service = AccountStocksService()
+    account = request.current_user.account
+    stocks = service.get_account_stocks(account.id)
+    return Response({"stocks": stocks}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@token_required
 def get_account_stock_shares(request, stock_symbol):
     try:
         service = AccountStocksService()

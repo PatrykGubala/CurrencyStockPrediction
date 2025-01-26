@@ -108,20 +108,21 @@ class HistoryFragment : Fragment() {
             val toAmountText = binding.toAmountTextInputEditText.text.toString()
             val fromDateText = binding.fromDateTextInputEditText.text.toString()
             val toDateText = binding.toDateTextInputEditText.text.toString()
-            val isTransferChecked = binding.checkboxTransfer.isChecked
+            val isSendChecked = binding.checkboxSend.isChecked
 
             val depositChecked = binding.checkboxDeposit.isChecked
             val withdrawChecked = binding.checkboxWithdraw.isChecked
-            val exchangeChecked = binding.checkboxExchange.isChecked
+            val buyChecked = binding.checkboxBuy.isChecked
             val sendChecked = binding.checkboxSend.isChecked
-            val transferChecked = binding.checkboxTransfer.isChecked
+            val sellChecked = binding.checkboxSell.isChecked
 
             val filters = mutableListOf<String>()
             if (depositChecked) filters.add("deposit")
             if (withdrawChecked) filters.add("withdraw")
-            if (exchangeChecked) filters.add("exchange")
             if (sendChecked) filters.add("send")
-            if (transferChecked) filters.add("transfer")
+
+            if (buyChecked) filters.add("buy")
+            if (sellChecked) filters.add("sell")
 
 
             val fromAmount = fromAmountText.toBigDecimalOrNull()

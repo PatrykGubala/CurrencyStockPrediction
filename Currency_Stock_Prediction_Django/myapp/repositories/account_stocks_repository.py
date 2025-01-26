@@ -4,6 +4,8 @@ from typing import Optional, List
 from django.db import transaction
 
 from myapp.models import AccountStock, Stock, AccountStockTransaction
+from myapp.utils.util_functions import normalize_decimal
+
 
 class AccountStocksRepository:
     def get_account_stock_holding_by_id(self, account_id: int, stock_id: int) -> Optional[AccountStock]:
@@ -16,7 +18,7 @@ class AccountStocksRepository:
         return list(AccountStock.objects.filter(account_id=account_id).select_related('stock'))
 
     def create_account_stock_holding(self, account_id: int, stock_id: int, shares: float = 0.0) -> AccountStock:
-        shares = self.normalize_decimal(shares)
+        shares = normalize_decimal(shares)
         if shares < Decimal('0'):
             raise ValueError("Initial shares cannot be negative")
         holding = AccountStock(account_id=account_id, stock_id=stock_id, shares=shares)

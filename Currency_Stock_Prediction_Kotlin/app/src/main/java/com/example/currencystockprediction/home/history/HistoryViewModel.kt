@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.currencystockprediction.R
 import com.example.currencystockprediction.models.HistoryItem
+import com.example.currencystockprediction.models.TransactionType
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
 import kotlinx.coroutines.launch
@@ -73,6 +74,8 @@ class HistoryViewModel : ViewModel() {
                         val obj = transactionsArray.getJSONObject(i)
 
                         Log.d("HistoryViewModel", "Raw transaction JSON: $obj")
+                        val transactionTypeString = obj.getString("transaction_type")
+                        val transactionType = TransactionType.fromString(transactionTypeString) ?: TransactionType.DEPOSIT
 
                         val exchangeRateString = obj.optString("exchange_rate", "")
                         val exchangeRate = if (exchangeRateString.isNotEmpty() && exchangeRateString != "null") {
@@ -90,7 +93,7 @@ class HistoryViewModel : ViewModel() {
                         }
                         val transactionItem = HistoryItem.TransactionItem(
                             id = obj.getInt("id"),
-                            transactionType = obj.getString("transaction_type"),
+                            transactionType = transactionType,
                             title = obj.getString("title"),
                             amount = amountValue,
                             currencyCode = obj.getString("currency"),
@@ -150,16 +153,7 @@ class HistoryViewModel : ViewModel() {
 
     }
 
-    private fun getIconResource(transactionType: String): Int {
-        return when (transactionType) {
-            "deposit" -> R.drawable.plus
-            "withdraw" -> R.drawable.minus
-            "buy" -> R.drawable.arrow_left
-            "sell" -> R.drawable.arrow_up
-            "send" -> R.drawable.mail
-            else -> R.drawable.ic_launcher_background
-        }
-    }
+
 
     fun setSearchQuery(query: String) {
         currentSearchQuery = query
@@ -193,11 +187,11 @@ class HistoryViewModel : ViewModel() {
         if (currentSearchQuery.isNotEmpty()) {
             filtered = filtered.filter {
                 it.title.contains(currentSearchQuery, ignoreCase = true) ||
-                        it.transactionType.contains(currentSearchQuery, ignoreCase = true)
+                        it.transactionType.type.contains(currentSearchQuery, ignoreCase = true)
             }
         }
         if (currentFilters.isNotEmpty()) {
-            filtered = filtered.filter { it.transactionType in currentFilters }
+            filtered = filtered.filter { it.transactionType.type in currentFilters }
         }
         if (transactionKind == "INCOME") {
             filtered = filtered.filter { isIncome(it) }
@@ -241,27 +235,34 @@ class HistoryViewModel : ViewModel() {
 
     private fun isIncome(item: HistoryItem.TransactionItem): Boolean {
         return when (item.transactionType) {
-            "deposit" -> true
-            "withdraw" -> false
-            "buy" -> false
-            "sell" -> true
-            "send"-> {
-                item.receiverAccountId == userAccountId
-            }
+            TransactionType.DEPOSIT -> true
+            TransactionType.SELL -> true
+            TransactionType.WITHDRAW -> false
+            TransactionType.BUY -> false
+            TransactionType.SEND -> item.receiverAccountId == userAccountId
             else -> false
         }
     }
 
     private fun isOutcome(item: HistoryItem.TransactionItem): Boolean {
         return when (item.transactionType) {
-            "withdraw" -> true
-            "buy" -> true
-            "sell" -> false
-            "deposit" -> false
-            "send", -> {
-                item.senderAccountId == userAccountId
-            }
+            TransactionType.WITHDRAW -> true
+            TransactionType.BUY -> true
+            TransactionType.SELL -> false
+            TransactionType.DEPOSIT -> false
+            TransactionType.SEND -> item.senderAccountId == userAccountId
             else -> false
+        }
+    }
+
+    private fun getIconResource(transactionType: String): Int {
+        return when (transactionType) {
+            TransactionType.DEPOSIT.type -> R.drawable.plus
+            TransactionType.WITHDRAW.type -> R.drawable.minus
+            TransactionType.BUY.type -> R.drawable.arrow_left
+            TransactionType.SELL.type -> R.drawable.arrow_up
+            TransactionType.SEND.type -> R.drawable.mail
+            else -> R.drawable.ic_launcher_background
         }
     }
 

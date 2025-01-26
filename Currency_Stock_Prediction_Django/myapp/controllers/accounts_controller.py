@@ -101,7 +101,7 @@ def get_account_usd_value(request):
 
 @api_view(['GET'])
 @token_required
-def get_account_transactions(request):
+def get_account_currency_transactions(request):
     if request.method == 'GET':
         service = AccountsService()
         account = request.current_user.account
@@ -109,7 +109,25 @@ def get_account_transactions(request):
         page = int(request.GET.get('page', 1))
         page_size = int(request.GET.get('page_size', 10))
 
-        transactions_data = service.get_account_transactions(account.id, page, page_size)
+        transactions_data = service.get_account_currency_transactions(account.id, page, page_size)
+        return Response(transactions_data, status=status.HTTP_200_OK)
+    else:
+        return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+
+
+@api_view(['GET'])
+@token_required
+def get_account_stock_transactions(request):
+    if request.method == 'GET':
+        service = AccountsService()
+        account = request.current_user.account
+
+        page = int(request.GET.get('page', 1))
+        page_size = int(request.GET.get('page_size', 10))
+
+        transactions_data = service.get_account_stock_transactions(account.id, page, page_size)
         return Response(transactions_data, status=status.HTTP_200_OK)
     else:
         return Response({"error": "Method not allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)

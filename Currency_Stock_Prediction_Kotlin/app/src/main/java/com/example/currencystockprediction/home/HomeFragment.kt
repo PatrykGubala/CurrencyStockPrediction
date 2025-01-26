@@ -17,6 +17,8 @@ import com.example.currencystockprediction.currency.CurrencySpinnerAdapter
 import com.example.currencystockprediction.databinding.FragmentHomeBinding
 import com.example.currencystockprediction.models.Currency
 import com.example.currencystockprediction.models.HistoryItem
+import com.example.currencystockprediction.models.Stock
+import com.example.currencystockprediction.models.TransactionType
 import com.example.currencystockprediction.profile.ProfileFragmentDirections
 import com.example.currencystockprediction.utils.ApiClient
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +42,8 @@ class HomeFragment : Fragment() {
 
     private lateinit var homeCurrenciesAdapter: HomeCurrencyAdapter
     private val homeCurrencies = mutableListOf<Currency>()
-
+    private lateinit var homeStocksAdapter: HomeStocksAdapter
+    private val homeStocks = mutableListOf<Stock>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,12 +64,14 @@ class HomeFragment : Fragment() {
         }
         setupRecentTransactionsRecycler()
         setupUserCurrenciesRecyclerView()
+        setupUserStocksRecyclerView()
 
         setupButtonInteractions()
         lifecycleScope.launch {
             fetchAccountBalances()
             fetchRecentTransactions()
             fetchAvailableCurrencies()
+            fetchAvailableStocks()
             fetchPublicAccountId()
 
         }
@@ -78,6 +83,14 @@ class HomeFragment : Fragment() {
         binding.europeanCurrenciesRecyclerView.layoutManager =
             LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         binding.europeanCurrenciesRecyclerView.adapter = homeCurrenciesAdapter
+    }
+
+    private fun setupUserStocksRecyclerView() {
+        homeStocksAdapter = HomeStocksAdapter(homeStocks) { stock ->
+        }
+        binding.stocksRecyclerView.layoutManager =
+            LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        binding.stocksRecyclerView.adapter = homeStocksAdapter
     }
 
     private fun setupRecentTransactionsRecycler() {
@@ -104,6 +117,51 @@ class HomeFragment : Fragment() {
         } else {
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Failed to load available currencies.", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private suspend fun fetchAvailableStocks() {
+        val endpoint = "/myapp/accounts/stocks"
+        val responsePair = ApiClient.getRequest(endpoint)
+        if (responsePair.first && responsePair.second != null) {
+            try {
+                val jsonResponse = JSONObject(responsePair.second!!)
+                val stocksArray = jsonResponse.getJSONArray("stocks")
+                homeStocks.clear()
+                for (i in 0 until stocksArray.length()) {
+                    val stockObj = stocksArray.getJSONObject(i)
+                    val stockSymbol = stockObj.getString("stock_symbol")
+                    val shares = stockObj.getDouble("shares")
+                    // Tworzenie obiektu Stock z domyślnymi wartościami dla brakujących pól
+                    val stock = Stock(
+                        id = 0, // Możesz ustawić odpowiednie ID, jeśli jest dostępne
+                        stock_symbol = stockSymbol,
+                        stock_name = stockSymbol, // Lub inna logika do pobrania nazwy
+                        company_id = 0, // Domyślna wartość lub pobranie z innego źródła
+                        exchange_id = 0, // Domyślna wartość lub pobranie z innego źródła
+                        share_class = null, // Lub odpowiednia wartość
+                        dataAvailability = true, // Lub odpowiednia logika
+                        monthlyPercentageChange = null // Lub odpowiednia wartość
+                    )
+                    homeStocks.add(stock)
+                }
+                withContext(Dispatchers.Main) {
+                    _binding?.let { safeBinding ->
+                        safeBinding.stocksConstraintLayout.visibility =
+                            if (homeStocks.isNotEmpty()) View.VISIBLE else View.GONE
+                        homeStocksAdapter.updateData(homeStocks)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Error parsing stocks: ${e.message}")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(requireContext(), "Nie udało się załadować akcji", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -145,7 +203,8 @@ class HomeFragment : Fragment() {
                 recentTransactions.clear()
                 for (i in 0 until transactionsArray.length()) {
                     val obj = transactionsArray.getJSONObject(i)
-                    val type = obj.getString("transaction_type")
+                    val transactionTypeString = obj.getString("transaction_type")
+                    val transactionType = TransactionType.fromString(transactionTypeString) ?: TransactionType.DEPOSIT
                     val amountValue = obj.getString("amount").toBigDecimalOrNull() ?: BigDecimal.ZERO
                     val costString = obj.optString("default_currency_cost", "")
                     val defaultCost = if (costString.isNotEmpty() && costString != "null") {
@@ -163,18 +222,11 @@ class HomeFragment : Fragment() {
                     }
                     val senderId = if (obj.isNull("sender_account_id")) null else obj.getInt("sender_account_id")
                     val receiverId = if (obj.isNull("receiver_account_id")) null else obj.getInt("receiver_account_id")
-                    val iconRes = when (type) {
-                        "deposit" -> R.drawable.plus
-                        "withdraw" -> R.drawable.minus
-                        "sell" -> R.drawable.arrow_up
-                        "buy" -> R.drawable.arrow_left
-                        "send" -> R.drawable.mail
-                        else -> R.drawable.ic_launcher_background
-                    }
+
                     recentTransactions.add(
                         HistoryItem.TransactionItem(
                             id = obj.getInt("id"),
-                            transactionType = type,
+                            transactionType = transactionType,
                             title = obj.getString("title"),
                             amount = amountValue,
                             currencyCode = obj.getString("currency"),
@@ -183,7 +235,7 @@ class HomeFragment : Fragment() {
                             senderAccountId = senderId,
                             receiverAccountId = receiverId,
                             date = dateStr,
-                            iconRes = iconRes,
+                            iconRes = getIconResource(obj.getString("transaction_type")),
                             defaultCurrencyCost = defaultCost
                         )
                     )
@@ -198,6 +250,17 @@ class HomeFragment : Fragment() {
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Nie udało się pobrać transakcji", Toast.LENGTH_SHORT).show()
             }
+        }
+    }
+
+    private fun getIconResource(transactionType: String): Int {
+        return when (transactionType) {
+            TransactionType.DEPOSIT.type -> R.drawable.plus
+            TransactionType.WITHDRAW.type -> R.drawable.minus
+            TransactionType.BUY.type -> R.drawable.arrow_left
+            TransactionType.SELL.type -> R.drawable.arrow_up
+            TransactionType.SEND.type -> R.drawable.mail
+            else -> R.drawable.ic_launcher_background
         }
     }
 

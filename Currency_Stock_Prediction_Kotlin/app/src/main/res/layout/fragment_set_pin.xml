@@ -239,20 +239,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <Button
-        android:id="@+id/savePinButton"
-        style="@style/KanitRegularMedium"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/fragment_login_button_height"
-        android:layout_marginHorizontal="@dimen/fragment_login_button_margin_horizontal"
-        android:layout_marginTop="76dp"
-        android:background="@drawable/background_style_darkgrey_rectangle"
-        android:text="Save PIN"
-        android:textAllCaps="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.218"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/numeric_keyboard" />
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

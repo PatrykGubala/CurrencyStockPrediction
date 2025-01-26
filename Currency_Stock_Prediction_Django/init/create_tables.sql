@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS stocks_data (
     FOREIGN KEY (stock_id) REFERENCES stocks(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
-    UNIQUE KEY unique_currency_timestamp (stock_id, timestamp)
+    UNIQUE KEY unique_stocks_timestamp (stock_id, timestamp)
 
 
 

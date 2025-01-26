@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.currencystockprediction.databinding.FragmentHomeTransactionItemBinding
 import com.example.currencystockprediction.models.HistoryItem
+import com.example.currencystockprediction.models.TransactionType
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -29,11 +30,11 @@ class HomeTransactionsAdapter(
 
         private fun isIncome(item: HistoryItem.TransactionItem): Boolean {
             return when (item.transactionType) {
-                "deposit" -> true
-                "sell" -> true
-                "withdraw" -> false
-                "buy" -> false
-                "send" -> item.receiverAccountId == userAccountId
+                TransactionType.DEPOSIT -> true
+                TransactionType.SELL -> true
+                TransactionType.WITHDRAW -> false
+                TransactionType.BUY -> false
+                TransactionType.SEND -> item.receiverAccountId == userAccountId
                 else -> false
             }
         }

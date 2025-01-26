@@ -8,6 +8,7 @@ import com.example.currencystockprediction.R
 import com.example.currencystockprediction.databinding.FragmentHomeHistoryTransactionHeaderBinding
 import com.example.currencystockprediction.databinding.FragmentHomeHistoryTransactionItemBinding
 import com.example.currencystockprediction.models.HistoryItem
+import com.example.currencystockprediction.models.TransactionType
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -58,14 +59,15 @@ class HistoryTransactionsAdapter(private val userAccountId: Int) :
 
         private fun isIncome(item: HistoryItem.TransactionItem): Boolean {
             return when (item.transactionType) {
-                "deposit" -> true
-                "sell" -> true
-                "withdraw" -> false
-                "buy" -> false
-                "send" -> item.receiverAccountId == userAccountId
+                TransactionType.DEPOSIT -> true
+                TransactionType.SELL -> true
+                TransactionType.WITHDRAW -> false
+                TransactionType.BUY -> false
+                TransactionType.SEND -> item.receiverAccountId == userAccountId
                 else -> false
             }
         }
+
     }
 
     override fun getItemViewType(position: Int): Int {

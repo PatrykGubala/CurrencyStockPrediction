@@ -62,7 +62,7 @@ class AccountsService:
         ac = self.account_currency_repository.get_account_currency_balance_by_id(account_id, currency.id)
         return ac.balance if ac else Decimal(0)
 
-    def get_account_transactions(self, account_id: int, page: int, page_size: int) -> dict:
+    def get_account_currency_transactions(self, account_id: int, page: int, page_size: int) -> dict:
 
         all_transactions = self.account_currency_transactions_repository.get_account_currency_transactions_by_account(account_id)
 
@@ -89,6 +89,41 @@ class AccountsService:
                 "date": transaction.transaction_date.isoformat(),
                 "default_currency_cost": str(transaction.default_currency_cost)
 
+            })
+
+        return {
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages,
+            "total_count": total_count,
+            "transactions": transactions_list
+        }
+
+    def get_account_stock_transactions(self, account_id: int, page: int, page_size: int) -> dict:
+        all_stock_transactions = self.account_stock_transactions_repository.get_stock_transactions_by_account(
+            account_id)
+
+        total_count = len(all_stock_transactions)
+        start_index = (page - 1) * page_size
+        end_index = start_index + page_size
+        results = all_stock_transactions[start_index:end_index]
+
+        total_pages = ceil(total_count / page_size)
+
+        transactions_list = []
+        for transaction in results:
+            transactions_list.append({
+                "id": transaction.id,
+                "transaction_type": transaction.transaction_type,
+                "shares": str(transaction.shares),
+                "title": transaction.title,
+                "stock_symbol": transaction.stock.stock_symbol,
+                "currency": transaction.currency.code,
+                "price_per_share": str(transaction.price_per_share),
+                "exchange_rate": str(transaction.exchange_rate) if transaction.exchange_rate else None,
+                "transaction_fee": str(transaction.transaction_fee),
+                "default_currency_cost": str(transaction.default_currency_cost),
+                "transaction_date": transaction.transaction_date.isoformat(),
             })
 
         return {

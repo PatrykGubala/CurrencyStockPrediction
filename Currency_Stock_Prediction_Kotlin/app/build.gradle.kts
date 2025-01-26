@@ -73,8 +73,6 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
     implementation ("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
-    androidTestImplementation("org.mockito:mockito-android:4.0.0")
-    androidTestImplementation("orrobog.mockito:mockito-android:4.0.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 
@@ -84,8 +82,9 @@ dependencies {
     testImplementation("androidx.arch.core:core-testing:2.2.0")
     testImplementation("androidx.test:core-ktx:1.5.0")
     testImplementation("androidx.test.ext:junit-ktx:1.1.5")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
-
+    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0")
+    testImplementation ("org.json:json:20210307")
+    testImplementation("io.mockk:mockk:1.13.16")
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     implementation ("com.squareup.okhttp3:okhttp:4.10.0")
