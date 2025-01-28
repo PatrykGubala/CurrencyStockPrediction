@@ -138,7 +138,9 @@ def add_stochastic_features(dataframe, stock_symbol):
         process = np.zeros(N)
         process[0] = mu
         for t in range(1, N):
-            process[t] = process[t - 1] + theta * (mu - process[t - 1]) * dt + sigma * np.sqrt(dt) * np.random.normal(0, 1)
+            process[t] = (process[t - 1] + theta *
+                          (mu - process[t - 1]) * dt + sigma * np.sqrt(dt) *
+                          np.random.normal(0, 1))
         return process
 
     dataframe['OU_Simulated'] = ornstein_uhlenbeck_process(
@@ -267,9 +269,11 @@ def train_rnn_models(
         val_preds_inverted = scaler_y.inverse_transform(val_preds)
         y_val_inverted = scaler_y.inverse_transform(y_val_seq.reshape(-1, 1)).flatten()
         val_mse = mean_squared_error(y_val_inverted, val_preds_inverted.flatten())
+        val_r2 = r2_score(y_val_inverted, val_preds_inverted.flatten())
         results.append({
             'params': param_dict,
             'val_mse': val_mse,
+            'val_r2': val_r2,
             'history': history
         })
         histories.append(history)
@@ -525,11 +529,12 @@ class StocksTrainedModelsService:
             rank_number = 1
             for res in sorted_results:
                 params_str = '; '.join([f"{k}: {v}" for k, v in res['params'].items()])
+                r2 = res.get('val_r2', None)
                 mean_mse_val = res['val_mse']
                 rmse_val = np.sqrt(mean_mse_val)
-                rows.append([rank_number, params_str, mean_mse_val, rmse_val])
+                rows.append([rank_number, params_str, mean_mse_val, rmse_val, r2 ])
                 rank_number += 1
-            df_results = pd.DataFrame(rows, columns=["Rank", "Parameters", "Mean MSE", "RMSE"])
+            df_results = pd.DataFrame(rows, columns=["Rank", "Parameters", "Mean MSE", "RMSE", "R2SCORE"])
             df_results.to_csv(results_csv, index=False)
             print(f"All tested parameters and their MSEs have been logged to {results_csv}.")
 

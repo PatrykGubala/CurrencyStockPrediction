@@ -1,6 +1,5 @@
 import os
 import shutil
-
 import numpy as np
 import pandas as pd
 import logging
@@ -14,7 +13,6 @@ from sklearn.ensemble import RandomForestRegressor
 from myapp.services.currencies_data_service import CurrenciesDataService
 from myapp.repositories.currencies_data_repository import CurrenciesDataRepository
 
-from keras.src.optimizers import Adam
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.feature_selection import SelectKBest, f_regression, RFE
@@ -22,7 +20,7 @@ from tensorflow.keras.regularizers import L1L2
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, GRU, SimpleRNN, Dense, Dropout
-from tensorflow.python.keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 from myapp.repositories.currencies_trained_models_repository import CurrenciesTrainedModelsRepository
 from myapp.models import CurrenciesData, Currency
 from myapp.utils.plotting_utils import (
@@ -53,7 +51,6 @@ class PrintMetricsCallback(Callback):
         print(f"loss={logs.get('loss')}, mae={logs.get('mae')}, val_loss={logs.get('val_loss')}, val_mae={logs.get('val_mae')}")
 
 def print_debug_data(title, data):
-    import logging
     logging.info(f"===== {title} =====")
     logging.info(f"Type: {type(data)}, Shape: {getattr(data, 'shape', None)}")
     try:
@@ -80,9 +77,9 @@ def print_debug_data(title, data):
         except:
             logging.info(f"Value: {data}")
 
-def create_rnn_model(rnn_type='LSTM', number_of_layers=1, units=50, activation='tanh',
-                     optimizer='adam', input_shape=None, dropout_rate=0.2, horizon=30,
-                     recurrent_dropout=0.1, l1_reg=0.01, l2_reg=0.01):
+def create_rnn_model(rnn_type='LSTM',number_of_layers=1,units=50,activation='tanh',
+    optimizer='adam',input_shape=None,dropout_rate=0.2,recurrent_dropout=0.1,l1_reg=0.01,l2_reg=0.01
+):
     if input_shape is None:
         raise ValueError("input_shape must be specified")
     regularizer = None
@@ -92,40 +89,53 @@ def create_rnn_model(rnn_type='LSTM', number_of_layers=1, units=50, activation='
     for layer_index in range(number_of_layers):
         return_sequences = layer_index < number_of_layers - 1
         if rnn_type == 'LSTM':
-            model.add(LSTM(units=units, activation=activation,
-                input_shape=input_shape, kernel_regularizer=regularizer,
-                dropout=dropout_rate, recurrent_dropout=recurrent_dropout,
+            model.add(LSTM(units=units,activation=activation,
+                input_shape=input_shape,kernel_regularizer=regularizer,
+                dropout=dropout_rate,recurrent_dropout=recurrent_dropout,
                 return_sequences=return_sequences
             ))
         elif rnn_type == 'GRU':
-            model.add(GRU(units=units, activation=activation,
-                input_shape=input_shape, kernel_regularizer=regularizer,
-                dropout=dropout_rate, recurrent_dropout=recurrent_dropout,
+            model.add(GRU(units=units,activation=activation,
+                input_shape=input_shape,kernel_regularizer=regularizer,
+                dropout=dropout_rate,recurrent_dropout=recurrent_dropout,
                 return_sequences=return_sequences
             ))
         else:
-            model.add(SimpleRNN(units=units, activation=activation,
-                input_shape=input_shape, kernel_regularizer=regularizer,
-                dropout=dropout_rate, recurrent_dropout=recurrent_dropout,
+            model.add(SimpleRNN(units=units,activation=activation,
+                input_shape=input_shape,kernel_regularizer=regularizer,
+                dropout=dropout_rate,recurrent_dropout=recurrent_dropout,
                 return_sequences=return_sequences
             ))
-    model.add(Dense(horizon))
+    model.add(Dense(1))
     model.compile(loss='mean_squared_error', optimizer=optimizer, metrics=['mae'])
     return model
 
-def create_lstm_sequences_multistep(X, y, sequence_length=30, horizon=30):
-    if len(X) < sequence_length + horizon:
-        raise ValueError("Not enough data points for sequence creation")
+def create_lstm_sequences(X, y, sequence_length=30):
     X_seq = []
     y_seq = []
-    for i in range(len(X) - sequence_length - horizon + 1):
-        seq_X = X.iloc[i : i + sequence_length].values
-        seq_y = y.iloc[i + sequence_length : i + sequence_length + horizon].values
-        if np.any(np.isnan(seq_X)) or np.any(np.isnan(seq_y)):
-            continue
-        X_seq.append(seq_X)
-        y_seq.append(seq_y)
+    for i in range(len(X) - sequence_length):
+        X_seq.append(X.iloc[i:i + sequence_length].values)
+        y_seq.append(y.iloc[i + sequence_length])
     return np.array(X_seq), np.array(y_seq)
+
+def make_predictions(best_model, X_test_seq, y_test_seq, scaler_y):
+    predictions_scaled = best_model.predict(X_test_seq)
+    predictions = scaler_y.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
+    y_test_plot = scaler_y.inverse_transform(y_test_seq.reshape(-1, 1)).flatten()
+    return predictions, y_test_plot
+
+def make_future_predictions(best_model, last_seq_full, scaler_y, sequence_length, prediction_time):
+    future_preds = []
+    current_sequence = last_seq_full.values.reshape(1, sequence_length, -1)
+    for _ in range(prediction_time):
+        pred_scaled = best_model.predict(current_sequence, verbose=0)
+        pred_inverted = scaler_y.inverse_transform(pred_scaled)
+        next_pred = pred_inverted.flatten()[0]
+        future_preds.append(next_pred)
+        pred_scaled_reshaped = scaler_y.transform(pred_inverted.reshape(-1, 1))
+        current_sequence = np.roll(current_sequence, -1, axis=1)
+        current_sequence[0, -1] = pred_scaled_reshaped
+    return future_preds
 
 def add_stochastic_features(dataframe, currency_code):
     close_column = f'Close_{currency_code}'
@@ -137,7 +147,7 @@ def add_stochastic_features(dataframe, currency_code):
         process = np.zeros(N)
         process[0] = mu
         for t in range(1, N):
-            process[t] = process[t - 1] + theta * (mu - process[t - 1]) * dt + sigma * np.sqrt(dt) * np.random.normal(0, 1)
+            process[t] = process[t - 1] + theta*(mu - process[t - 1])*dt + sigma*np.sqrt(dt)*np.random.normal(0, 1)
         return process
     dataframe['OU_Simulated'] = ornstein_uhlenbeck_process(
         mu=float(dataframe[close_column].mean()),
@@ -151,7 +161,7 @@ def add_stochastic_features(dataframe, currency_code):
 def add_trend_feature(dataframe, currency_code, window=30):
     close_column = f'Close_{currency_code}'
     dataframe[f'Trend_{currency_code}'] = dataframe[close_column].rolling(window=window).apply(
-        lambda x: np.polyfit(range(len(x)), x, 1)[0] if len(x)==window else np.nan
+        lambda x: np.polyfit(range(len(x)), x, 1)[0] if len(x) == window else np.nan
     )
     return dataframe
 
@@ -166,8 +176,8 @@ def create_seasonal_features(dataframe, currency_code):
     dataframe['Month'] = dataframe.index.month
     dataframe['Day_of_Week'] = dataframe.index.dayofweek
     dataframe['Quarter'] = dataframe.index.quarter
-    dataframe['Sin_Month'] = np.sin(dataframe['Month'] * (2 * np.pi / 12))
-    dataframe['Cos_Month'] = np.cos(dataframe['Month'] * (2 * np.pi / 12))
+    dataframe['Sin_Month'] = np.sin(dataframe['Month'] * (2*np.pi/12))
+    dataframe['Cos_Month'] = np.cos(dataframe['Month'] * (2*np.pi/12))
     return dataframe
 
 def apply_seasonal_adjustment(dataframe, decomposition_result, currency_code):
@@ -211,96 +221,6 @@ def feature_selection_rfe(X, y, k_best_features=5):
     selected_features = feature_importances.sort_values(ascending=False).head(k_best_features).index
     X_new = X[selected_features]
     return pd.DataFrame(X_new, columns=selected_features, index=X.index), selected_features
-
-def multi_step_mse(y_true, y_pred, horizon):
-    if len(y_true) % horizon != 0 or len(y_pred) % horizon != 0:
-        raise ValueError("Lengths of y_true or y_pred are not divisible by the horizon.")
-    N = len(y_true) // horizon
-    y_true_2d = y_true.reshape(N, horizon)
-    y_pred_2d = y_pred.reshape(N, horizon)
-    mse = 0.0
-    for step in range(horizon):
-        mse += mean_squared_error(y_true_2d[:, step], y_pred_2d[:, step])
-    return mse / horizon
-
-def make_predictions(best_model, X_test_seq, y_test_seq, scaler_y, horizon):
-    actuals = y_test_seq.reshape(-1, horizon)
-    predictions_list = []
-    for i in range(len(X_test_seq)):
-        current_sequence = X_test_seq[i : i+1]
-        curr_pred = best_model.predict(current_sequence, verbose=0)
-        predictions_list.append(curr_pred[0])
-    predictions_array = np.array(predictions_list)
-    predictions_2d = predictions_array.reshape(-1, 1)
-    predictions_inverted_2d = scaler_y.inverse_transform(predictions_2d)
-    predictions_final = predictions_inverted_2d.flatten()
-    actuals_2d = actuals.reshape(-1, 1)
-    actuals_inverted_2d = scaler_y.inverse_transform(actuals_2d)
-    y_test_plot = actuals_inverted_2d.flatten()
-    if len(predictions_final) != len(y_test_plot):
-        raise ValueError(f"Length mismatch: predictions={len(predictions_final)} vs actuals={len(y_test_plot)}")
-    return predictions_final, y_test_plot
-
-def make_future_predictions(best_model, last_seq_full, scaler_y, sequence_length):
-    current_sequence = last_seq_full.values.reshape(1, sequence_length, -1)
-    future_preds = best_model.predict(current_sequence, verbose=0)
-    future_preds_2d = future_preds.reshape(-1, 1)
-    future_preds_inverted_2d = scaler_y.inverse_transform(future_preds_2d)
-    future_preds_inverted = future_preds_inverted_2d.flatten()
-    return future_preds_inverted
-
-def train_rnn_models(X_train_seq, y_train_seq, X_val_seq, y_val_seq, sequence_length, param_grid, model_counter, total_models, horizon, scaler_y, output_directory, currency_code):
-    results = []
-    histories = []
-    keys = list(param_grid.keys())
-    values = list(param_grid.values())
-    param_combinations = list(product(*values))
-    best_val_mse = float('inf')
-    best_model = None
-    best_params = None
-    for parameters in param_combinations:
-        param_dict = dict(zip(keys, parameters))
-        current_model_number = model_counter.increment()
-        print(f"Model {current_model_number} / {model_counter.total} param_grid: {param_dict}")
-        model = create_rnn_model(
-            rnn_type=param_dict['rnn_type'],
-            number_of_layers=param_dict['n_layers'],
-            units=param_dict['units'],
-            activation=param_dict['activation'],
-            input_shape=(sequence_length, X_train_seq.shape[2]),
-            dropout_rate=param_dict.get('dropout_rate', 0.2),
-            horizon=horizon
-        )
-        early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=0)
-        history = model.fit(
-            X_train_seq,
-            y_train_seq,
-            validation_data=(X_val_seq, y_val_seq),
-            epochs=param_dict['epochs'],
-            batch_size=param_dict['batch_size'],
-            callbacks=[early_stopping, PrintMetricsCallback()],
-            verbose=1
-        )
-        val_preds = model.predict(X_val_seq)
-        val_preds = val_preds.reshape(-1, horizon)
-        actuals = y_val_seq.reshape(-1, horizon)
-        actual_inverted = scaler_y.inverse_transform(y_val_seq.reshape(-1, 1)).flatten()
-        plot_path = os.path.join(output_directory, f'{currency_code}_model_{current_model_number}_val_actual_vs_predicted.png')
-        val_mse = multi_step_mse(actuals.flatten(), val_preds.flatten(), horizon)
-        results.append({
-            'params': param_dict,
-            'val_mse': val_mse,
-            'history': history
-        })
-        histories.append(history)
-        if val_mse < best_val_mse:
-            best_val_mse = val_mse
-            best_model = model
-            best_params = param_dict
-            best_model_path = os.path.join(output_directory, f'best_model_{currency_code}.h5')
-            best_model.save(best_model_path, save_format='h5')
-            print(f"Nowy najlepszy model zapisany z parametrami: {best_params} o val_mse: {val_mse}")
-    return results, histories, param_combinations, best_model, best_params
 
 def visualize_data(data, currency_code, output_directory):
     close_column = f'Close_{currency_code}'
@@ -351,13 +271,14 @@ def load_data_from_db(currency_code):
 class CurrenciesTrainedModelsService:
     def __init__(self):
         self.repository = CurrenciesTrainedModelsRepository()
-    def train_and_forecast(self, currency_code, param_grid, sequence_length, dataset_time, prediction_time,
-                           short_term_lag, long_term_lag, scaling_method, output_directory):
+
+    def train_and_forecast(self,currency_code,param_grid,sequence_length,dataset_time,
+        prediction_time,short_term_lag,long_term_lag,scaling_method,output_directory
+    ):
         print_debug_data("train_and_forecast START for currency", currency_code)
         currency_instance = self.repository.get_currency_by_code(currency_code)
         if not currency_instance:
             return {"status": "error", "message": "Currency not found"}
-        horizon = prediction_time
         self.repository.mark_all_as_not_latest(currency_instance)
         self.repository.clear_old_predictions(currency_instance)
         if os.path.exists(output_directory):
@@ -427,32 +348,29 @@ class CurrenciesTrainedModelsService:
             output_path=os.path.join(output_directory, f'{currency_code}_closing_prices.png'),
             figure_size=(14, 7)
         )
-        test_period_days = prediction_time
-        train_size = len(X_fs) - test_period_days - sequence_length
+        train_size = len(X_fs) - prediction_time - sequence_length
         if train_size <= 0:
             return {"status": "error", "message": f"Not enough data to train for {currency_code}"}
         X_train_df = X_fs.iloc[:train_size + sequence_length]
         X_val_df = X_fs.iloc[train_size:]
         y_train_series = y.iloc[:train_size + sequence_length]
         y_val_series = y.iloc[train_size:]
-        full_data_scaler_X = scaler_X
-        full_data_scaler_X.fit(X_fs)
-        train_scaled = full_data_scaler_X.transform(X_train_df)
-        val_scaled = full_data_scaler_X.transform(X_val_df)
-        full_data_scaler_y = scaler_y
-        full_data_scaler_y.fit(y.values.reshape(-1, 1))
-        y_train_scaled = full_data_scaler_y.transform(y_train_series.values.reshape(-1, 1)).flatten()
-        y_val_scaled = full_data_scaler_y.transform(y_val_series.values.reshape(-1, 1)).flatten()
-        train_scaled_df = pd.DataFrame(train_scaled, columns=selected_features, index=X_train_df.index)
-        val_scaled_df = pd.DataFrame(val_scaled, columns=selected_features, index=X_val_df.index)
+        scaler_X.fit(X_fs)
+        X_train_scaled = scaler_X.transform(X_train_df)
+        X_val_scaled = scaler_X.transform(X_val_df)
+        scaler_y.fit(y.values.reshape(-1, 1))
+        y_train_scaled = scaler_y.transform(y_train_series.values.reshape(-1, 1)).flatten()
+        y_val_scaled = scaler_y.transform(y_val_series.values.reshape(-1, 1)).flatten()
+        train_scaled_df = pd.DataFrame(X_train_scaled, columns=selected_features, index=X_train_df.index)
+        val_scaled_df = pd.DataFrame(X_val_scaled, columns=selected_features, index=X_val_df.index)
         y_train_series = pd.Series(y_train_scaled, index=y_train_series.index)
         y_val_series = pd.Series(y_val_scaled, index=y_val_series.index)
         print_debug_data("train_scaled_df", train_scaled_df)
         print_debug_data("val_scaled_df", val_scaled_df)
         print_debug_data("y_train_series scaled", y_train_series)
         print_debug_data("y_val_series scaled", y_val_series)
-        X_train_seq, y_train_seq = create_lstm_sequences_multistep(train_scaled_df, y_train_series, sequence_length, horizon)
-        X_val_seq, y_val_seq = create_lstm_sequences_multistep(val_scaled_df, y_val_series, sequence_length, horizon)
+        X_train_seq, y_train_seq = create_lstm_sequences(train_scaled_df, y_train_series, sequence_length)
+        X_val_seq, y_val_seq = create_lstm_sequences(val_scaled_df, y_val_series, sequence_length)
         print_debug_data("X_train_seq", X_train_seq)
         print_debug_data("y_train_seq", y_train_seq)
         print_debug_data("X_val_seq", X_val_seq)
@@ -463,56 +381,105 @@ class CurrenciesTrainedModelsService:
         for v in param_grid.values():
             total_models_count *= len(v)
         model_counter = ModelCounter(total_models_count)
-        results, histories, param_combinations, best_model, best_params = train_rnn_models(
-            X_train_seq=X_train_seq,
-            y_train_seq=y_train_seq,
-            X_val_seq=X_val_seq,
-            y_val_seq=y_val_seq,
-            sequence_length=sequence_length,
-            param_grid=param_grid,
-            model_counter=model_counter,
-            total_models=total_models_count,
-            horizon=horizon,
-            scaler_y=full_data_scaler_y,
-            output_directory=output_directory,
-            currency_code=currency_code
-        )
+        results = []
+        histories = []
+
+        best_val_mse = float('inf')
+        best_val_r2 = float('inf')
+        best_model = None
+        best_params = None
+
+
+
+        param_combinations = list(product(*param_grid.values()))
+        for combination in param_combinations:
+            params = dict(zip(param_grid.keys(), combination))
+            current_model_number = model_counter.increment()
+            print(f"Model {current_model_number} / {model_counter.total} param_grid: {params}")
+            model = create_rnn_model(
+                rnn_type=params['rnn_type'],
+                number_of_layers=params['n_layers'],
+                units=params['units'],
+                activation=params['activation'],
+                input_shape=(sequence_length, X_train_seq.shape[2]),
+                dropout_rate=params.get('dropout_rate', 0.2)
+            )
+
+            early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=0)
+            history = model.fit(
+                X_train_seq,
+                y_train_seq,
+                validation_data=(X_val_seq, y_val_seq),
+                epochs=params['epochs'],
+                batch_size=params['batch_size'],
+                callbacks=[early_stopping, PrintMetricsCallback()],
+                verbose=1
+            )
+
+
+            val_preds_scaled = model.predict(X_val_seq)
+            val_preds = scaler_y.inverse_transform(val_preds_scaled.reshape(-1, 1)).flatten()
+            y_val_inverted = scaler_y.inverse_transform(y_val_seq.reshape(-1, 1)).flatten()
+            val_mse = mean_squared_error(y_val_inverted, val_preds)
+            val_r2 = r2_score(y_val_inverted, val_preds.flatten())
+
+            results.append({
+                'params': params,
+                'val_mse': val_mse,
+                'val_r2': val_r2,
+                'history': history
+            })
+            histories.append(history)
+            if val_mse < best_val_mse:
+                best_val_mse = val_mse
+                best_val_r2 = val_r2
+                best_model = model
+                best_params = params
+                best_model_path = os.path.join(output_directory, f'best_model_{currency_code}.h5')
+                best_model.save(best_model_path, save_format='h5')
+                print(f"Nowy najlepszy model zapisany z parametrami: {best_params} o val_mse: {val_mse}, R²: {best_val_r2}")
         plot_training_loss_by_rnn_type(results, currency_code, output_directory)
         plot_validation_loss_by_rnn_type(results, currency_code, output_directory)
-        predictions, y_val_plot = make_predictions(best_model, X_val_seq, y_val_seq, full_data_scaler_y, horizon)
-        y_test_dates = y_val_series.index[sequence_length:]
+
+        predictions, y_val_plot = make_predictions(best_model, X_val_seq, y_val_seq, scaler_y)
+        y_all_dates = y.index
+        y_dates = y_all_dates[sequence_length:]
+        train_size_in_sequences = len(X_train_seq)
+        val_size_in_sequences = len(X_val_seq)
+        y_train_dates = y_dates[:train_size_in_sequences]
+        y_test_dates = y_dates[train_size_in_sequences:]
         if len(predictions) == len(y_test_dates):
             residuals = y_val_plot - predictions
-            hist_path = os.path.join(output_directory, f'{currency_code}_residuals_hist.png')
             time_path = os.path.join(output_directory, f'{currency_code}_residuals_over_time.png')
             scatter_path = os.path.join(output_directory, f'{currency_code}_actual_vs_predicted_scatter.png')
-            y_train_plot = full_data_scaler_y.inverse_transform(y_train_series.values.reshape(-1, 1)).flatten()
-            y_test_dates = y_val_series.index[sequence_length:]
+            y_train_plot = scaler_y.inverse_transform(y_train_seq.reshape(-1, 1)).flatten()
             plot_residuals_over_time(y_test_dates, residuals, time_path)
             plot_scatter_actual_vs_predicted(y_val_plot, predictions, scatter_path)
-            plot_results(currency_code, y_train_plot, y_val_plot, predictions,
-                         y_train_series.index, y_test_dates, output_directory, dataset_time)
-            mse = multi_step_mse(y_val_plot, predictions, horizon)
+            plot_results(currency_code, y_train_plot, y_val_plot, predictions, y_train_dates, y_test_dates, output_directory, dataset_time)
+            mse = mean_squared_error(y_val_plot, predictions)
             rmse = np.sqrt(mse)
+            r2 = r2_score(y_val_plot, predictions)
             results_csv = os.path.join(output_directory, f'{currency_code}_mse_results.csv')
             sorted_results = sorted(results, key=lambda x: x['val_mse'])
             rows = []
             rank_number = 1
             for res in sorted_results:
                 params_str = '; '.join([f"{k}: {v}" for k, v in res['params'].items()])
+                r2_val = res.get('val_r2', None)
                 mean_mse_val = res['val_mse']
                 rmse_val = np.sqrt(mean_mse_val)
-                rows.append([rank_number, params_str, mean_mse_val, rmse_val])
+                rows.append([rank_number, params_str, mean_mse_val, rmse_val, r2_val])
                 rank_number += 1
-            df_results = pd.DataFrame(rows, columns=["Rank", "Parameters", "Mean MSE", "RMSE"])
+            df_results = pd.DataFrame(rows, columns=["Rank", "Parameters", "Mean MSE", "RMSE", "R2SCORE"])
             df_results.to_csv(results_csv, index=False)
+
             model_filename = f"{currency_code}_{str(uuid.uuid4())}.h5"
             model_file_path = os.path.join(output_directory, model_filename)
             best_model.save(model_file_path, save_format='keras')
             metrics_dict = {
                 "mse": float(mse) if np.isfinite(mse) else None,
                 "rmse": float(rmse) if np.isfinite(rmse) else None,
-                "val_loss": float(mean_mse_val) if np.isfinite(mean_mse_val) else None,
+                "r2": float(r2) if np.isfinite(r2) else None
             }
             param_grid_json = json.dumps(best_params)
             self.repository.create_trained_model(
@@ -523,19 +490,9 @@ class CurrenciesTrainedModelsService:
                 param_grid=param_grid_json,
                 is_latest=True
             )
-            predictions_map = list(zip(y_test_dates, predictions))
-            full_scaled_df = pd.DataFrame(
-                full_data_scaler_X.transform(X_fs),
-                columns=selected_features,
-                index=X_fs.index
-            )
+            full_scaled_df = pd.DataFrame(scaler_X.transform(X_fs), columns=selected_features, index=X_fs.index)
             last_seq_full = full_scaled_df.iloc[-sequence_length:]
-            future_preds_inverted = make_future_predictions(
-                best_model=best_model,
-                last_seq_full=last_seq_full,
-                scaler_y=full_data_scaler_y,
-                sequence_length=sequence_length
-            )
+            future_preds_inverted = make_future_predictions(best_model, last_seq_full, scaler_y, sequence_length, prediction_time)
             last_date = filtered_data.index.max()
             future_dates = pd.date_range(
                 start=last_date + pd.Timedelta(days=1),
