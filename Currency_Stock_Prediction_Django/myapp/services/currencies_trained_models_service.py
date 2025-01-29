@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 import logging
 
-import pytz
-from django.utils import timezone
 from itertools import product
 
 from sklearn.ensemble import RandomForestRegressor
@@ -19,10 +17,9 @@ from sklearn.feature_selection import SelectKBest, f_regression, RFE
 from tensorflow.keras.regularizers import L1L2
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, GRU, SimpleRNN, Dense, Dropout
+from tensorflow.keras.layers import LSTM, GRU, SimpleRNN, Dense
 from tensorflow.keras.callbacks import Callback
 from myapp.repositories.currencies_trained_models_repository import CurrenciesTrainedModelsRepository
-from myapp.models import CurrenciesData, Currency
 from myapp.utils.plotting_utils import (
     plot_training_loss_by_rnn_type,
     plot_validation_loss_by_rnn_type,
@@ -33,7 +30,6 @@ from myapp.utils.plotting_utils import (
     plot_line_graph,
     decompose_time_series
 )
-import matplotlib.pyplot as plt
 import json
 import uuid
 
@@ -124,10 +120,10 @@ def make_predictions(best_model, X_test_seq, y_test_seq, scaler_y):
     y_test_plot = scaler_y.inverse_transform(y_test_seq.reshape(-1, 1)).flatten()
     return predictions, y_test_plot
 
-def make_future_predictions(best_model, last_seq_full, scaler_y, sequence_length, prediction_time):
+def make_future_predictions(best_model, last_seq_full, scaler_y, sequence_length, prediction_steps):
     future_preds = []
     current_sequence = last_seq_full.values.reshape(1, sequence_length, -1)
-    for _ in range(prediction_time):
+    for _ in range(prediction_steps):
         pred_scaled = best_model.predict(current_sequence, verbose=0)
         pred_inverted = scaler_y.inverse_transform(pred_scaled)
         next_pred = pred_inverted.flatten()[0]
@@ -272,9 +268,9 @@ class CurrenciesTrainedModelsService:
     def __init__(self):
         self.repository = CurrenciesTrainedModelsRepository()
 
-    def train_and_forecast(self,currency_code,param_grid,sequence_length,dataset_time,
-        prediction_time,short_term_lag,long_term_lag,scaling_method,output_directory
-    ):
+    def train_and_forecast(self, currency_code, param_grid, sequence_length, dataset_time,
+                           prediction_steps, short_term_lag, long_term_lag, scaling_method, output_directory
+                           ):
         print_debug_data("train_and_forecast START for currency", currency_code)
         currency_instance = self.repository.get_currency_by_code(currency_code)
         if not currency_instance:
@@ -348,7 +344,7 @@ class CurrenciesTrainedModelsService:
             output_path=os.path.join(output_directory, f'{currency_code}_closing_prices.png'),
             figure_size=(14, 7)
         )
-        train_size = len(X_fs) - prediction_time - sequence_length
+        train_size = len(X_fs) - prediction_steps - sequence_length
         if train_size <= 0:
             return {"status": "error", "message": f"Not enough data to train for {currency_code}"}
         X_train_df = X_fs.iloc[:train_size + sequence_length]
@@ -492,11 +488,11 @@ class CurrenciesTrainedModelsService:
             )
             full_scaled_df = pd.DataFrame(scaler_X.transform(X_fs), columns=selected_features, index=X_fs.index)
             last_seq_full = full_scaled_df.iloc[-sequence_length:]
-            future_preds_inverted = make_future_predictions(best_model, last_seq_full, scaler_y, sequence_length, prediction_time)
+            future_preds_inverted = make_future_predictions(best_model, last_seq_full, scaler_y, sequence_length, prediction_steps)
             last_date = filtered_data.index.max()
             future_dates = pd.date_range(
                 start=last_date + pd.Timedelta(days=1),
-                periods=prediction_time,
+                periods=prediction_steps,
                 freq='D'
             )
             predictions_map_future = list(zip(future_dates, future_preds_inverted))

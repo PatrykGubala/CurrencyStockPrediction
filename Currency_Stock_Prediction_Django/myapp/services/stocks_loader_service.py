@@ -1,5 +1,4 @@
 import time
-from collections import defaultdict
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -12,7 +11,6 @@ from myapp.repositories.countries_repository import CountriesRepository
 from myapp.repositories.exchanges_repository import ExchangeRepository
 from myapp.repositories.companies_repository import CompanyRepository
 from myapp.repositories.stocks_repository import StocksRepository
-from datetime import datetime
 
 
 

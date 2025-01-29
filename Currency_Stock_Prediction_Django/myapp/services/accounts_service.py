@@ -3,7 +3,6 @@ from decimal import Decimal
 from math import ceil
 
 
-from myapp.apps import logger
 from myapp.repositories.account_currency_transactions_repository import AccountCurrencyTransactionsRepository
 from myapp.repositories.accounts_repository import AccountsRepository
 from myapp.repositories.currencies_repository import CurrenciesRepository

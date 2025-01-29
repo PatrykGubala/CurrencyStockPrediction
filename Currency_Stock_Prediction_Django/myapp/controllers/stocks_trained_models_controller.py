@@ -3,9 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-from myapp.services.stocks_trained_models_service import StocksTrainedModelsService
 from myapp.models import Stock, StocksPrediction
-from myapp.repositories.stocks_trained_models_repository import StocksTrainedModelsRepository
 from myapp.tasks import train_stock_model_async
 
 

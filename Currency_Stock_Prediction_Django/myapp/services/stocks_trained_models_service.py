@@ -41,7 +41,6 @@ def create_lstm_sequences(X, y, sequence_length=30):
 
 def make_predictions(best_model, X_test_seq, y_test_seq, scaler_y):
     predictions_scaled = best_model.predict(X_test_seq)
-    #predictions_scaled = pd.Series(predictions_scaled.flatten()).rolling(window=5, min_periods=1).mean().values
     predictions = scaler_y.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
     y_test_plot = scaler_y.inverse_transform(y_test_seq.reshape(-1, 1)).flatten()
     return predictions, y_test_plot

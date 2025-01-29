@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
-from myapp.models import Country, Region, Currency
+from myapp.models import Country
 
 
 class CountriesIntegrationTestCase(TestCase):

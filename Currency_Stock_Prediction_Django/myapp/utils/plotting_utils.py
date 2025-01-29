@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import os
 import numpy as np
-from statsmodels.tsa.seasonal import seasonal_decompose
-import seaborn as sns
+
 
 
 

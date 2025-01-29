@@ -1,19 +1,33 @@
 from datetime import timedelta
-from decimal import Decimal
 
 from celery import shared_task
 from django.utils import timezone
 
 from myapp.services.accounts_service import AccountsService
-from myapp.services.currencies_data_service import CurrenciesDataService, logger
+from myapp.services.countries_service import CountriesService
+from myapp.services.currencies_data_service import CurrenciesDataService
 from myapp.services.currencies_trained_models_service import CurrenciesTrainedModelsService
 from myapp.services.stocks_data_service import StocksDataService
+from myapp.services.stocks_loader_service import PolygonStocksLoaderService
 from myapp.services.stocks_trained_models_service import StocksTrainedModelsService
+
+
+
+@shared_task
+def load_initial_countries_data_task():
+    countries_service = CountriesService()
+    countries_service.load_all_data()
+    load_currency_data_task.delay()
+
+@shared_task
+def load_initial_stocks_data_task():
+    loader = PolygonStocksLoaderService()
+    loader.load_stocks_for_selected_countries()
+    load_stocks_data_task.delay()
 
 
 @shared_task
 def load_currency_data_task(*args, **kwargs):
-    logger.info("10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT 10 MINUT.")
 
     service = CurrenciesDataService()
     currencies_to_load = ['EUR','GBP' ,'PLN' ,'JPY' ,'CNY' ,'AUD' ,'CHF' ,'NOK' ,'INR' ,'AUD' , 'SEK' ,'NZD' ,'MXN']
@@ -71,14 +85,14 @@ def recount_currency_values():
 
 
 @shared_task
-def train_currency_model_async(currency_code, param_grid, sequence_length, dataset_time, prediction_time, short_term_lag, long_term_lag, scaling_method, output_directory):
+def train_currency_model_async(currency_code, param_grid, sequence_length, dataset_time, prediction_steps, short_term_lag, long_term_lag, scaling_method, output_directory):
     service = CurrenciesTrainedModelsService()
     result = service.train_and_forecast(
         currency_code=currency_code,
         param_grid=param_grid,
         sequence_length=sequence_length,
         dataset_time=dataset_time,
-        prediction_time=prediction_time,
+        prediction_steps=prediction_steps,
         short_term_lag=short_term_lag,
         long_term_lag=long_term_lag,
         scaling_method=scaling_method,

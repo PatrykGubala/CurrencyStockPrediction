@@ -323,7 +323,7 @@ class StockDataFragment : Fragment() {
                                     lineWidth = 0.8f
                                 }
                                 val predictedDataSet = LineDataSet(predEntries, "Predicted").apply {
-                                    color = Color.BLUE
+                                    color = Color.CYAN
                                     setDrawCircles(false)
                                     setDrawValues(false)
                                     lineWidth = 0.8f

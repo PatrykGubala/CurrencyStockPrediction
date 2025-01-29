@@ -1,9 +1,8 @@
 from decimal import Decimal
 from typing import Optional, List
 
-from django.db import transaction
 
-from myapp.models import AccountStock, Stock, AccountStockTransaction
+from myapp.models import AccountStock
 from myapp.utils.util_functions import normalize_decimal
 
 

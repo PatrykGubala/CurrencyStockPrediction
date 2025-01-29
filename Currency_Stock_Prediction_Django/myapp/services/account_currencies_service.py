@@ -4,7 +4,6 @@ from typing import List, Optional, Union
 import re
 
 from django.db import transaction
-from django.utils import timezone
 
 from myapp.apps import logger
 from myapp.repositories.account_currencies_repository import AccountCurrenciesRepository

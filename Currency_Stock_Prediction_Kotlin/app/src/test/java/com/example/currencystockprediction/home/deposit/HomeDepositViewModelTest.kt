@@ -47,7 +47,7 @@ class HomeDepositViewModelTest {
     }
 
     @Test
-    fun `init triggers fetchAccountBalances`() = runTest {
+    fun `fetchAccountBalances init triggers`() = runTest {
         val mockResponse = JSONObject().apply {
             put("currencies", JSONArray().apply {
                 put(JSONObject().apply {
@@ -66,7 +66,7 @@ class HomeDepositViewModelTest {
     }
 
     @Test
-    fun `depositCurrency handles successful deposit`() = runTest {
+    fun `depositCurrency successful deposit`() = runTest {
         val depositAmount = 500.0
         val mockResponse = JSONObject().apply {
             put("new_balance", 1500.0)
@@ -84,7 +84,7 @@ class HomeDepositViewModelTest {
     }
 
     @Test
-    fun `depositCurrency handles API error`() = runTest {
+    fun `depositCurrency API error`() = runTest {
         coEvery { ApiClient.postRequest("/myapp/accounts/deposit", any()) } returns Pair(false, "Server error")
 
         viewModel = HomeDepositViewModel()
@@ -96,7 +96,7 @@ class HomeDepositViewModelTest {
     }
 
     @Test
-    fun `fetchAccountBalances handles API failure`() = runTest {
+    fun `fetchAccountBalances API failure`() = runTest {
         coEvery { ApiClient.getRequest("/myapp/accounts/currencies") } returns Pair(false, "Fetch error")
 
         viewModel = HomeDepositViewModel()
@@ -108,7 +108,7 @@ class HomeDepositViewModelTest {
     }
 
     @Test
-    fun `fetchAccountBalances handles parsing error`() = runTest {
+    fun `fetchAccountBalances parsing error`() = runTest {
         coEvery { ApiClient.getRequest("/myapp/accounts/currencies") } returns Pair(true, "Invalid JSON")
 
         viewModel = HomeDepositViewModel()

@@ -1,4 +1,3 @@
-import os
 from decimal import Decimal
 
 from myapp.models import CurrenciesTrainedModels, CurrenciesPrediction, Currency, StocksTrainedModels, StocksPrediction, \

@@ -34,7 +34,7 @@ DEBUG = True
 BACKEND_URL = config('BACKEND_URL')
 
 
-ALLOWED_HOSTS = ['cf54-37-31-48-145.ngrok-free.app', 'localhost', '*', BACKEND_URL]
+ALLOWED_HOSTS = ['localhost', '*', BACKEND_URL]
 
 
 INSTALLED_APPS = [
@@ -117,6 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 
 MEDIA_URL = '/media/'
@@ -127,27 +128,17 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.1/howto/static-files/
-
 STATIC_URL = 'static/'
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/0"
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
@@ -157,15 +148,49 @@ CELERY_TIMEZONE = 'UTC'
 CELERY_BEAT_SCHEDULE = {
     'load_currency_data': {
         'task': 'myapp.tasks.load_currency_data_task',
-        'schedule': crontab(minute='*/10'),
+        'schedule': crontab(minute='*/30'),
         'args': (),
     },
     'load-stocks-data-every-10-minutes': {
         'task': 'myapp.tasks.load_stocks_data_task',
-        'schedule': crontab(minute='*/10'),
+        'schedule': crontab(minute='*/30'),
         'args': (),
     },
-
+    'train-currency-model-daily': {
+        'task': 'myapp.tasks.train_currency_model_async',
+        'schedule': crontab(hour=10, minute=0),
+        'args': ["PLN",  {
+                "rnn_type": ["LSTM", "GRU", "SimpleRNN"],
+                "n_layers": [1],
+                "units": [50],
+                "activation": ["relu"],
+                "optimizer": ["adam"],
+                "batch_size": [16],
+                "epochs": [50]
+            },
+            30, 3, 30, 3, 14,
+            "standard",
+            "forecasting_currency_outputs/PLN"],
+    },
+    'train-stock-model-daily': {
+        'task': 'myapp.tasks.train_stock_model_async',
+        'schedule': crontab(hour=10, minute=0),
+        'args': [
+            "AAPL",
+            {
+                "rnn_type": ["LSTM", "GRU", "SimpleRNN"],
+                "n_layers": [1],
+                "units": [50],
+                "activation": ["relu"],
+                "optimizer": ["adam"],
+                "batch_size": [16],
+                "epochs": [50]
+            },
+            30, 3, 30, 3, 14, #seq, dataset, steps, short, long
+            "standard",
+            "forecasting_stocks_outputs/AAPL"
+        ],
+    },
 }
 
 

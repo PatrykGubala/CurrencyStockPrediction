@@ -1,4 +1,4 @@
-from typing import Optional, List, Union
+from typing import Union
 from decimal import Decimal, ROUND_DOWN
 
 

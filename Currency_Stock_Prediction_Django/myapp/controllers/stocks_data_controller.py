@@ -16,8 +16,8 @@ def load_daily_stock_data(request):
     symbol = data.get('stock_symbol')
     start_date = data.get('start_date')
     end_date = data.get('end_date')
-    s = StocksDataService()
-    s.load_daily_data_for_range(symbol, start_date, end_date)
+    stocks_data_service = StocksDataService()
+    stocks_data_service.load_daily_data_for_range(symbol, start_date, end_date)
     return Response({"message": "Data load initiated."}, status=status.HTTP_202_ACCEPTED)
 
 @swagger_auto_schema(method='POST',operation_description="Load hourly data for a stock symbol",request_body=openapi.Schema(type=openapi.TYPE_OBJECT,properties={'stock_symbol': openapi.Schema(type=openapi.TYPE_STRING),'start_date': openapi.Schema(type=openapi.TYPE_STRING),'end_date': openapi.Schema(type=openapi.TYPE_STRING)}),responses={202:"Data load initiated"})
@@ -27,8 +27,8 @@ def load_hourly_stock_data(request):
     symbol = data.get('stock_symbol')
     start_date = data.get('start_date')
     end_date = data.get('end_date')
-    s = StocksDataService()
-    s.load_hourly_data_for_range(symbol, start_date, end_date)
+    stocks_data_service = StocksDataService()
+    stocks_data_service.load_hourly_data_for_range(symbol, start_date, end_date)
     return Response({"message": "Data load initiated."}, status=status.HTTP_202_ACCEPTED)
 
 
@@ -55,15 +55,15 @@ def load_stock_data(request):
 @swagger_auto_schema(method='GET',operation_description="Get all stored stock data",responses={200: openapi.Schema(type=openapi.TYPE_OBJECT,properties={'data': openapi.Schema(type=openapi.TYPE_ARRAY,items=openapi.Schema(type=openapi.TYPE_OBJECT,properties={'stock_symbol': openapi.Schema(type=openapi.TYPE_STRING),'timestamp': openapi.Schema(type=openapi.TYPE_STRING),'open_price': openapi.Schema(type=openapi.TYPE_STRING),'high_price': openapi.Schema(type=openapi.TYPE_STRING),'low_price': openapi.Schema(type=openapi.TYPE_STRING),'close_price': openapi.Schema(type=openapi.TYPE_STRING),'volume': openapi.Schema(type=openapi.TYPE_STRING)}))})})
 @api_view(['GET'])
 def get_all_stocks_data(request):
-    s = StocksDataService()
-    data = s.get_all_data()
+    stocks_data_service = StocksDataService()
+    data = stocks_data_service.get_all_data()
     return Response({"data": data}, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(method='GET',operation_description="Get the latest stock data for a specific symbol",responses={200: openapi.Schema(type=openapi.TYPE_OBJECT,properties={'stock_symbol': openapi.Schema(type=openapi.TYPE_STRING),'timestamp': openapi.Schema(type=openapi.TYPE_STRING),'open_price': openapi.Schema(type=openapi.TYPE_STRING),'high_price': openapi.Schema(type=openapi.TYPE_STRING),'low_price': openapi.Schema(type=openapi.TYPE_STRING),'close_price': openapi.Schema(type=openapi.TYPE_STRING),'volume': openapi.Schema(type=openapi.TYPE_STRING)}),404:"Not found"})
 @api_view(['GET'])
 def get_latest_stock_data(request, stock_symbol):
-    s = StocksDataService()
-    latest = s.get_latest_data_for_stock(stock_symbol)
+    stocks_data_service = StocksDataService()
+    latest = stocks_data_service.get_latest_data_for_stock(stock_symbol)
     if not latest:
         return Response({"error": "No data found for this stock."}, status=status.HTTP_404_NOT_FOUND)
     return Response(latest, status=status.HTTP_200_OK)
@@ -73,8 +73,8 @@ def get_latest_stock_data(request, stock_symbol):
 def get_stock_data(request, stock_symbol):
     frequency = request.GET.get('frequency', 'daily')
     range_param = request.GET.get('range', 'last_month')
-    s = StocksDataService()
-    data = s.get_stock_data(stock_symbol, frequency, range_param)
+    stocks_data_service = StocksDataService()
+    data = stocks_data_service.get_stock_data(stock_symbol, frequency, range_param)
     if data is None:
         return Response({"error": "No data found for this stock."}, status=status.HTTP_404_NOT_FOUND)
     return Response({"data": data}, status=status.HTTP_200_OK)

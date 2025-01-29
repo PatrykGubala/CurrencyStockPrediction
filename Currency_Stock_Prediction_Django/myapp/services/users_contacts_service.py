@@ -1,5 +1,4 @@
 from myapp.repositories.users_contacts_repository import UsersContactsRepository
-from myapp.models import Account
 
 class UsersContactsService:
     def __init__(self):
