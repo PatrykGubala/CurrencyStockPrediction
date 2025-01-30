@@ -20,17 +20,17 @@ class CountriesIntegrationTestCase(TestCase):
 
         response = self.client.get(reverse('load_only_countries'))
         self.assertEqual(response.status_code, 405)
-
         response = self.client.post(reverse('load_only_countries'))
         self.assertEqual(response.status_code, 200)
         json_data = response.json()
-        self.assertEqual("Tylko kraje zostały załadowane pomyślnie.", json_data["message"])
+        self.assertEqual("Tylko kraje zostały załadowane pomyślnie", json_data["message"])
 
 
         self.assertTrue(Country.objects.filter(country_code="FR").exists())
         self.assertTrue(Country.objects.filter(country_code="DE").exists())
 
     @patch('myapp.services.countries_service.requests.get')
+
     def test_load_countries_with_details_integration(self, mock_get):
         mock_response = MagicMock()
         mock_response.json.return_value = [
@@ -50,7 +50,7 @@ class CountriesIntegrationTestCase(TestCase):
         response = self.client.post(reverse('load_countries_with_details'))
         self.assertEqual(response.status_code, 200)
         json_data = response.json()
-        self.assertEqual("Kraje wraz z regionami i walutami zostały załadowane pomyślnie.", json_data["message"])
+        self.assertEqual("Kraje wraz z regionami i walutami zostały załadowane pomyślnie", json_data["message"])
 
         france = Country.objects.filter(country_code="FR").first()
         self.assertIsNotNone(france)
@@ -68,7 +68,7 @@ class CountriesIntegrationTestCase(TestCase):
         countries_list = data["countries"]
         self.assertEqual(len(countries_list), 2)
 
-        codes = [c["country_code"] for c in countries_list]
+        codes = [code["country_code"] for code in countries_list]
         self.assertIn("US", codes)
         self.assertIn("GB", codes)
 
@@ -86,4 +86,4 @@ class CountriesIntegrationTestCase(TestCase):
         response_not_found = self.client.get(url_not_found)
         self.assertEqual(response_not_found.status_code, 404)
         data_not_found = response_not_found.json()
-        self.assertIn("Kraj nie został znaleziony.", data_not_found["error"])
+        self.assertIn("Kraj nie został znaleziony", data_not_found["error"])

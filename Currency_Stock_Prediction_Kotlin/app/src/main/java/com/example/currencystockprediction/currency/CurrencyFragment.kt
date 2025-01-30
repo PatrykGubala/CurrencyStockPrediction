@@ -1,5 +1,3 @@
-// File: com/example/currencystockprediction/currency/CurrencyFragment.kt
-
 package com.example.currencystockprediction.currency
 
 import android.os.Bundle
@@ -147,12 +145,10 @@ class CurrencyFragment : BaseFragment() {
                 val monthlyChange = jsonObject.getDouble("monthly_change")
                 currency.monthlyPercentageChange = String.format("%.2f", monthlyChange)
             } catch (e: Exception) {
-                Log.e("CurrencyFragment", "Error parsing monthly change for ${currency.code}: ${e.message}")
                 currency.monthlyPercentageChange = null
                 currency.dataAvailability = false
             }
         } else {
-            Log.e("CurrencyFragment", "Failed to fetch monthly change for ${currency.code}")
             currency.monthlyPercentageChange = null
             currency.dataAvailability = false
         }
@@ -200,7 +196,7 @@ class CurrencyFragment : BaseFragment() {
                 currencies.add(currency)
             }
         } catch (e: Exception) {
-            Log.e("CurrencyFragment", "Error parsing currencies: ${e.message}")
+            Log.e("CurrencyFragment", "Error currencies: ${e.message}")
         }
         return currencies
     }

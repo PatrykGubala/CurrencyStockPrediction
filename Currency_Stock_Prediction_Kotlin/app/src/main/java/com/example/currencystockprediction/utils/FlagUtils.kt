@@ -175,16 +175,4 @@ object FlagUtils {
         return "https://flagcdn.com/w160/${countryCode}.png"
     }
 
-/*
-    fun getFlagResourceLocally(currencyCode: String): Int {
-        val countryCode = currencyToCountryCode[currencyCode.uppercase()] ?: "eu"
-        return when (countryCode) {
-           // "us" -> R.drawable.flag_us
-            //"eu" -> R.drawable.flag_eu
-            //else -> R.drawable.flag_eu
-        }
-    }
-
-
- */
 }

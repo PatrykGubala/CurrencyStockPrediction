@@ -478,7 +478,6 @@ class CurrencyDataFragment : Fragment() {
                     val dateStr = dateFormat.format(date)
                     val content = "Data: $dateStr\nKurs: ${e.y}"
                     tvContent.text = content
-                    Log.d("CustomMarkerView", "Kurs: $content")
                 }
             }
             super.refreshContent(e, highlight)
@@ -500,7 +499,6 @@ class CurrencyDataFragment : Fragment() {
                 binding.accountUsdValueTextView.text = "Stan konta USD: $%.2f".format(usdValue)
             }
         } else {
-            Log.e(TAG, "Failed to get USD account value")
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Nie załadowano USD", Toast.LENGTH_SHORT).show()
             }
@@ -521,7 +519,6 @@ class CurrencyDataFragment : Fragment() {
                 binding.yearlyChangePercantageTextView.text = yearlyChange
             }
         } else {
-            Log.e(TAG, "Failed to get percentage changes")
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Nie udało się załadować zmian procentowych", Toast.LENGTH_SHORT).show()
             }
@@ -540,7 +537,6 @@ class CurrencyDataFragment : Fragment() {
                 binding.accountOtherCurrencyValueTextView.text = "Stan wybranej waluty: %.2f %s".format(balance.toDouble(), code)
             }
         } else {
-            Log.e(TAG, "Failed to get balance for $currencyCode")
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(), "Nie załadowano stanu konta", Toast.LENGTH_SHORT).show()
             }

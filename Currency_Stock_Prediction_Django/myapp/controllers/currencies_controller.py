@@ -41,7 +41,7 @@ def add_currency(request):
         name = data.get('name')
         symbol = data.get('symbol')
         if not code or not name:
-            return Response({"error": "Currency code and name are required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Currency code and name are required"}, status=status.HTTP_400_BAD_REQUEST)
         service = CurrenciesService()
         currency_dto = service.add_currency(code, name, symbol)
         return Response({"currency": currency_dto}, status=status.HTTP_201_CREATED)
@@ -57,11 +57,11 @@ def update_currency(request, currency_id):
         new_name = data.get('name')
         new_symbol = data.get('symbol')
         if not new_name:
-            return Response({"error": "New currency name is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "New currency name is required"}, status=status.HTTP_400_BAD_REQUEST)
         service = CurrenciesService()
         currency_dto = service.update_currency(currency_id, new_name, new_symbol)
         if not currency_dto:
-            return Response({"error": "Currency not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Currency not found"}, status=status.HTTP_404_NOT_FOUND)
         return Response({"currency": currency_dto}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": "Error updating currency", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -76,9 +76,9 @@ def delete_currency(request, currency_id):
     try:
         result = service.delete_currency(currency_id)
         if result:
-            return Response({"message": "Currency deleted successfully."}, status=status.HTTP_200_OK)
+            return Response({"message": "Currency deleted successfully"}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "Currency not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Currency not found"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({"error": "Error deleting currency", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -142,21 +142,21 @@ def convert_currency(request):
         try:
             amount = float(amount)
             if amount <= 0:
-                return Response({"error": "Amount must be a positive number."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Amount must be a positive number"}, status=status.HTTP_400_BAD_REQUEST)
         except ValueError:
-            return Response({"error": "Invalid amount. Must be a number."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid amount"}, status=status.HTTP_400_BAD_REQUEST)
 
         service = CurrenciesService()
         converted_amount, rate = service.convert_currency(amount, from_currency_code, to_currency_code)
 
         if converted_amount is None:
-            return Response({"error": "Conversion failed. Check currency codes and data availability."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Conversion failed. Check currency codes and data availability"}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({
             "converted_amount": converted_amount,
             "conversion_rate": rate
         }, status=status.HTTP_200_OK)
     except Exception as e:
-        return Response({"error": "Error converting currency.", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Error converting currency", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

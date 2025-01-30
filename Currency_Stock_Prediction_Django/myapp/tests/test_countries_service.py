@@ -17,7 +17,8 @@ class CountriesServiceTestCase(TestCase):
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
-        data = self.service.fetch_countries_data(api_url='http://fakeurl.com')
+        data = self.service.fetch_countries_data(api_url='http://niemaurl.pl')
+
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['alpha2Code'], 'FR')
         self.assertEqual(data[1]['alpha2Code'], 'DE')
@@ -68,10 +69,13 @@ class CountriesServiceTestCase(TestCase):
         self.service.load_all_data()
         france = Country.objects.filter(country_code="FR").first()
         germany = Country.objects.filter(country_code="DE").first()
+
         self.assertIsNotNone(france)
         self.assertIsNotNone(germany)
+
         self.assertEqual(france.regions.first().region_name, "Europe")
         self.assertEqual(germany.regions.first().region_name, "Europe")
+
         self.assertTrue(france.currencies.filter(code="EUR").exists())
         self.assertTrue(germany.currencies.filter(code="EUR").exists())
 
@@ -80,8 +84,10 @@ class CountriesServiceTestCase(TestCase):
         Country.objects.create(country_code="US", country_name="United States")
         Country.objects.create(country_code="GB", country_name="United Kingdom")
         result = self.service.get_all_countries_dto()
+
         self.assertEqual(len(result), 2)
         codes = [item['country_code'] for item in result]
+
         self.assertIn("US", codes)
         self.assertIn("GB", codes)
 
@@ -89,8 +95,10 @@ class CountriesServiceTestCase(TestCase):
     def test_get_country_by_code_dto(self):
         Country.objects.create(country_code="IT", country_name="Italy")
         italy = self.service.get_country_by_code_dto("IT")
+
         self.assertEqual(italy['country_code'], "IT")
         self.assertEqual(italy['country_name'], "Italy")
 
         no_country = self.service.get_country_by_code_dto("ZZ")
+
         self.assertIsNone(no_country)

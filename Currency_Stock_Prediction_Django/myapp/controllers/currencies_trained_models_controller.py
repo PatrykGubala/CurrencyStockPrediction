@@ -9,7 +9,7 @@ from myapp.repositories.currencies_trained_models_repository import CurrenciesTr
 from myapp.tasks import train_currency_model_async
 @swagger_auto_schema(
     method='POST',
-    operation_description="Train a new model for a given currency and store predictions.",
+    operation_description="Train a new model for a given currency and store predictions",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
@@ -45,7 +45,7 @@ def train_new_currency_model(request):
 
 @swagger_auto_schema(
     method='GET',
-    operation_description="Get predictions for a given currency.",
+    operation_description="Get predictions for a given currency",
     responses={200: openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
@@ -78,7 +78,7 @@ def get_currency_predictions(request, currency_code):
 
 @swagger_auto_schema(
     method='POST',
-    operation_description="Start asynchronous training of a currency model",
+    operation_description="Start asynchronous training for currency model",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
@@ -86,7 +86,7 @@ def get_currency_predictions(request, currency_code):
             'param_grid': openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 default={
-                    'rnn_type': ['LSTM'],
+                    'rnn_type': ['LSTM', 'GRU', 'SimpleRNN'],
                     'n_layers': [1],
                     'units': [50],
                     'activation': ['relu'],
@@ -95,13 +95,13 @@ def get_currency_predictions(request, currency_code):
                     'epochs': [50]
                 }
             ),
-            'sequence_length': openapi.Schema(type=openapi.TYPE_INTEGER, default=14),
-            'dataset_time': openapi.Schema(type=openapi.TYPE_INTEGER, default=6),
-            'prediction_time': openapi.Schema(type=openapi.TYPE_INTEGER, default=90),
-            'short_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=7),
-            'long_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=30),
+            'sequence_length': openapi.Schema(type=openapi.TYPE_INTEGER, default=30),
+            'dataset_time': openapi.Schema(type=openapi.TYPE_INTEGER, default=3),
+            'prediction_time': openapi.Schema(type=openapi.TYPE_INTEGER, default=30),
+            'short_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=3),
+            'long_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=14),
             'scaling_method': openapi.Schema(type=openapi.TYPE_STRING, default='standard'),
-            'output_directory': openapi.Schema(type=openapi.TYPE_STRING, default='forecasting_outputs'),
+            'output_directory': openapi.Schema(type=openapi.TYPE_STRING, default='forecasting_currency_outputs'),
         },
         required=['currency_code']
     ),
@@ -122,7 +122,7 @@ def start_async_currency_training(request):
     if not currency_code:
         return Response({"error": "Missing currency_code"}, status=status.HTTP_400_BAD_REQUEST)
     param_grid = request.data.get('param_grid', {
-        'rnn_type': ['LSTM'],
+        'rnn_type': ['LSTM', 'GRU', 'SimpleRNN'],
         'n_layers': [1],
         'units': [50],
         'activation': ['relu'],
@@ -130,13 +130,13 @@ def start_async_currency_training(request):
         'batch_size': [32],
         'epochs': [50]
     })
-    sequence_length = int(request.data.get('sequence_length', 14))
-    dataset_time = int(request.data.get('dataset_time', 6))
-    prediction_time = int(request.data.get('prediction_time', 90))
-    short_term_lag = int(request.data.get('short_term_lag', 7))
-    long_term_lag = int(request.data.get('long_term_lag', 30))
+    sequence_length = int(request.data.get('sequence_length', 30))
+    dataset_time = int(request.data.get('dataset_time', 3))
+    prediction_time = int(request.data.get('prediction_time', 30))
+    short_term_lag = int(request.data.get('short_term_lag', 3))
+    long_term_lag = int(request.data.get('long_term_lag', 14))
     scaling_method = request.data.get('scaling_method', 'standard')
-    output_directory = request.data.get('output_directory', 'forecasting_outputs')
+    output_directory = request.data.get('output_directory', 'forecasting_currency_outputs')
     task = train_currency_model_async.delay(
         currency_code,
         param_grid,

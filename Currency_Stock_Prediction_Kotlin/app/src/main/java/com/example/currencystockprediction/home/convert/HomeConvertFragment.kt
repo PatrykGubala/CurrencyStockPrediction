@@ -111,7 +111,6 @@ class HomeConvertFragment : Fragment() {
                 Toast.makeText(requireContext(), "Proszę wprowadzić poprawną kwotę", Toast.LENGTH_SHORT).show()
                 return
             }
-
             lifecycleScope.launch {
                 val json = JSONObject().apply {
                     put("amount", amount)

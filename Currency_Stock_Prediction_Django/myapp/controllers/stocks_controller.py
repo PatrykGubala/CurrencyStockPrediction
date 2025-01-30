@@ -39,7 +39,7 @@ def get_all_stocks(request):
 
 @swagger_auto_schema(
     method='POST',
-    operation_description="Add a new stock",
+    operation_description="Add stock",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
@@ -73,13 +73,13 @@ def add_stock(request):
     exchange_name = request.data.get('exchange_name')
     share_class = request.data.get('share_class')
     if not stock_symbol or not stock_name or not company_symbol:
-        return Response({"error": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
     result = stocks_service.add_stock(stock_symbol, stock_name, company_symbol, exchange_name, share_class)
     return Response(result, status=status.HTTP_201_CREATED)
 
 @swagger_auto_schema(
     method='PUT',
-    operation_description="Update stock info",
+    operation_description="Update stock",
     request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         properties={
@@ -109,7 +109,7 @@ def update_stock(request, stock_id: int):
     share_class = request.data.get('share_class')
     updated = stocks_service.update_stock(stock_id, stock_name, share_class)
     if not updated:
-        return Response({"error": "Stock not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"error": "Stock not found"}, status=status.HTTP_404_NOT_FOUND)
     return Response(updated, status=status.HTTP_200_OK)
 
 @swagger_auto_schema(
@@ -125,8 +125,8 @@ def delete_stock(request, stock_id: int):
     stocks_service = StocksService()
     deleted = stocks_service.delete_stock(stock_id)
     if not deleted:
-        return Response({"error": "Stock not found."}, status=status.HTTP_404_NOT_FOUND)
-    return Response({"message": "Stock deleted successfully."}, status=status.HTTP_200_OK)
+        return Response({"error": "Stock not found"}, status=status.HTTP_404_NOT_FOUND)
+    return Response({"message": "Stock deleted successfully"}, status=status.HTTP_200_OK)
 
 
 

@@ -81,4 +81,4 @@ def delete_exchange(request, exchange_id: int):
     deleted = exchanges_service.delete_exchange(exchange_id)
     if not deleted:
         return Response({"error": "Exchange not found"}, status=status.HTTP_404_NOT_FOUND)
-    return Response({"message": "Exchange deleted successfully."}, status=status.HTTP_200_OK)
+    return Response({"message": "Exchange deleted successfully"}, status=status.HTTP_200_OK)

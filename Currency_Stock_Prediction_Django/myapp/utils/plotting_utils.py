@@ -3,9 +3,6 @@ import os
 import numpy as np
 
 
-
-
-
 def plot_results(currency, y_train_plot, y_test_plot, predictions, y_train_dates, y_test_dates, currency_output_dir, dataset_time):
     forecast_plot_path = os.path.join(currency_output_dir, f'{currency}_forecast.png')
     plot_line_graph(

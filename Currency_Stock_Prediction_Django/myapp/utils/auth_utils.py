@@ -28,15 +28,13 @@ def token_required(view_func):
                 return JsonResponse({'error': 'User not found'}, status=404)
 
             request.current_user = user
+
         except auth.ExpiredIdTokenError:
             return JsonResponse({'error': 'Token has expired'}, status=401)
-
         except auth.RevokedIdTokenError:
             return JsonResponse({'error': 'Token has been revoked'}, status=401)
-
         except auth.InvalidIdTokenError:
             return JsonResponse({'error': 'Invalid token'}, status=401)
-
         except Exception as e:
             return JsonResponse({'error': 'Authentication failed', 'details': str(e)}, status=401)
 

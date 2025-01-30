@@ -13,23 +13,15 @@ from myapp.repositories.currencies_data_repository import CurrenciesDataReposito
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.feature_selection import SelectKBest, f_regression, RFE
+from sklearn.feature_selection import SelectKBest, f_regression
 from tensorflow.keras.regularizers import L1L2
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, GRU, SimpleRNN, Dense
 from tensorflow.keras.callbacks import Callback
 from myapp.repositories.currencies_trained_models_repository import CurrenciesTrainedModelsRepository
-from myapp.utils.plotting_utils import (
-    plot_training_loss_by_rnn_type,
-    plot_validation_loss_by_rnn_type,
-    plot_residuals_over_time,
-    plot_scatter_actual_vs_predicted,
-    plot_results,
-    plot_heatmap,
-    plot_line_graph,
-    decompose_time_series
-)
+from myapp.utils.plotting_utils import (plot_training_loss_by_rnn_type, plot_validation_loss_by_rnn_type, plot_residuals_over_time,
+                                        plot_scatter_actual_vs_predicted, plot_results,plot_heatmap,plot_line_graph,decompose_time_series)
 import json
 import uuid
 
@@ -227,9 +219,7 @@ def visualize_data(data, currency_code, output_directory):
         x_label='Date', y_label='Price', legend_labels=[close_column],
         output_path=plot_path, figure_size=(14, 7)
     )
-    numeric_data = data.select_dtypes(include=[np.number])
-    correlation = numeric_data.corr()
-    heatmap_path = os.path.join(output_directory, f'{currency_code}_correlation_heatmap.png')
+
 
 def load_data_from_db(currency_code):
     repository = CurrenciesDataRepository()
@@ -275,6 +265,7 @@ class CurrenciesTrainedModelsService:
         currency_instance = self.repository.get_currency_by_code(currency_code)
         if not currency_instance:
             return {"status": "error", "message": "Currency not found"}
+
         self.repository.mark_all_as_not_latest(currency_instance)
         self.repository.clear_old_predictions(currency_instance)
         if os.path.exists(output_directory):
@@ -284,6 +275,7 @@ class CurrenciesTrainedModelsService:
         print_debug_data("Data loaded from DB", data)
         if data.empty:
             return {"status": "error", "message": f"No data available in DB for {currency_code}"}
+
         data = data.resample('D').last().ffill()
         data = data.dropna()
         data = data[data.index.notnull()]
@@ -301,6 +293,7 @@ class CurrenciesTrainedModelsService:
         }
         scaler_X = scaler_map.get(scaling_method, StandardScaler())
         scaler_y = StandardScaler()
+
         X, y = self.create_features_and_target(filtered_data, currency_code, short_term_lag, long_term_lag)
         print_debug_data("Features X", X)
         print_debug_data("Target y", y)

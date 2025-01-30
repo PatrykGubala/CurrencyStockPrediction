@@ -67,7 +67,7 @@ def get_stock_predictions(request, stock_symbol):
             'param_grid': openapi.Schema(
                 type=openapi.TYPE_OBJECT,
                 default={
-                    'rnn_type': ['LSTM'],
+                    'rnn_type': ['LSTM', 'GRU', 'SimpleRNN'],
                     'n_layers': [1],
                     'units': [50],
                     'activation': ['relu'],
@@ -77,19 +77,19 @@ def get_stock_predictions(request, stock_symbol):
                 },
                 description="Grid of parameters for model training."
             ),
-            'sequence_length': openapi.Schema(type=openapi.TYPE_INTEGER, default=14,
+            'sequence_length': openapi.Schema(type=openapi.TYPE_INTEGER, default=30,
                                               description="Length of input sequences."),
-            'dataset_time': openapi.Schema(type=openapi.TYPE_INTEGER, default=6,
+            'dataset_time': openapi.Schema(type=openapi.TYPE_INTEGER, default=3,
                                            description="Number of years of data to use."),
-            'prediction_steps': openapi.Schema(type=openapi.TYPE_INTEGER, default=90,
+            'prediction_steps': openapi.Schema(type=openapi.TYPE_INTEGER, default=30,
                                                description="Number of days to predict ahead."),
-            'short_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=7,
+            'short_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=3,
                                              description="Short-term lag in days."),
-            'long_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=30,
+            'long_term_lag': openapi.Schema(type=openapi.TYPE_INTEGER, default=14,
                                             description="Long-term lag in days."),
             'scaling_method': openapi.Schema(type=openapi.TYPE_STRING, default='standard',
                                              description="Scaling method for features."),
-            'output_directory': openapi.Schema(type=openapi.TYPE_STRING, default='forecasting_outputs',
+            'output_directory': openapi.Schema(type=openapi.TYPE_STRING, default='forecasting_stock_outputs',
                                                description="Directory to store output files."),
         },
         required=['stock_symbol']
@@ -117,7 +117,7 @@ def start_async_stock_training(request):
         return Response({"error": "Missing stock_symbol"}, status=status.HTTP_400_BAD_REQUEST)
 
     param_grid = request.data.get('param_grid', {
-        'rnn_type': ['LSTM'],
+        'rnn_type': ['LSTM', 'GRU', 'SimpleRNN'],
         'n_layers': [1],
         'units': [50],
         'activation': ['relu'],
@@ -126,13 +126,13 @@ def start_async_stock_training(request):
         'epochs': [50]
     })
 
-    sequence_length = int(request.data.get('sequence_length', 14))
-    dataset_time = int(request.data.get('dataset_time', 6))
-    prediction_steps = int(request.data.get('prediction_steps', 90))
-    short_term_lag = int(request.data.get('short_term_lag', 7))
-    long_term_lag = int(request.data.get('long_term_lag', 30))
+    sequence_length = int(request.data.get('sequence_length', 30))
+    dataset_time = int(request.data.get('dataset_time', 3))
+    prediction_steps = int(request.data.get('prediction_steps', 30))
+    short_term_lag = int(request.data.get('short_term_lag', 3))
+    long_term_lag = int(request.data.get('long_term_lag', 14))
     scaling_method = request.data.get('scaling_method', 'standard')
-    output_directory = request.data.get('output_directory', 'forecasting_outputs')
+    output_directory = request.data.get('output_directory', 'forecasting_stock_outputs')
 
     task = train_stock_model_async.delay(
         stock_symbol,

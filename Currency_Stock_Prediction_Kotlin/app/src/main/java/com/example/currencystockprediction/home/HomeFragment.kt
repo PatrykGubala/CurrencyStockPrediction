@@ -116,7 +116,7 @@ class HomeFragment : Fragment() {
             }
         } else {
             withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(), "Failed to load available currencies.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Nie załadowano dostępnych walut", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -133,16 +133,15 @@ class HomeFragment : Fragment() {
                     val stockObj = stocksArray.getJSONObject(i)
                     val stockSymbol = stockObj.getString("stock_symbol")
                     val shares = stockObj.getDouble("shares")
-                    // Tworzenie obiektu Stock z domyślnymi wartościami dla brakujących pól
                     val stock = Stock(
-                        id = 0, // Możesz ustawić odpowiednie ID, jeśli jest dostępne
+                        id = 0,
                         stock_symbol = stockSymbol,
-                        stock_name = stockSymbol, // Lub inna logika do pobrania nazwy
-                        company_id = 0, // Domyślna wartość lub pobranie z innego źródła
-                        exchange_id = 0, // Domyślna wartość lub pobranie z innego źródła
-                        share_class = null, // Lub odpowiednia wartość
-                        dataAvailability = true, // Lub odpowiednia logika
-                        monthlyPercentageChange = null // Lub odpowiednia wartość
+                        stock_name = stockSymbol,
+                        company_id = 0,
+                        exchange_id = 0,
+                        share_class = null,
+                        dataAvailability = true,
+                        monthlyPercentageChange = null
                     )
                     homeStocks.add(stock)
                 }
@@ -154,7 +153,6 @@ class HomeFragment : Fragment() {
                     }
                 }
             } catch (e: Exception) {
-                Log.e("HomeFragment", "Error parsing stocks: ${e.message}")
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Error", Toast.LENGTH_SHORT).show()
                 }
@@ -185,7 +183,7 @@ class HomeFragment : Fragment() {
                 )
             }
         } catch (e: Exception) {
-            Log.e("HomeFragment", "Error parsing account currencies: ${e.message}")
+            Log.e("HomeFragment", "Error: ${e.message}")
         }
         return currencies
     }
@@ -308,7 +306,7 @@ class HomeFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Error pobierając stan konta", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Error stan konta", Toast.LENGTH_SHORT).show()
                 }
             }
         } else {

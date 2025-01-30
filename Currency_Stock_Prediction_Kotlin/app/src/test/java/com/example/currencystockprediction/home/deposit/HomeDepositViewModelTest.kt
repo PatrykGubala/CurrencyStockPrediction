@@ -4,6 +4,8 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.Observer
 import com.example.currencystockprediction.utils.ApiClient
 import com.example.currencystockprediction.utils.FirebaseAuthManager
+import com.example.currencystockprediction.utils.SessionManager
+import com.example.currencystockprediction.utils.ShadowKeyStore
 import com.example.currencystockprediction.utils.TestHelper
 import com.google.firebase.auth.FirebaseAuth
 import io.mockk.*
@@ -15,7 +17,10 @@ import org.json.JSONObject
 import org.junit.*
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.annotation.Config
 
+@Config(shadows = [ShadowKeyStore::class])
 @ExperimentalCoroutinesApi
 @RunWith(RobolectricTestRunner::class)
 class HomeDepositViewModelTest {
@@ -92,7 +97,7 @@ class HomeDepositViewModelTest {
         viewModel.depositCurrency(500.0)
         advanceUntilIdle()
 
-        verify { depositResultObserver.onChanged(match { it.isFailure && it.exceptionOrNull()?.message == "Failed to deposit funds: Server error" }) }
+        verify { depositResultObserver.onChanged(match { it.isFailure && it.exceptionOrNull()?.message == "Error deposit currencies" }) }
     }
 
     @Test
@@ -104,7 +109,7 @@ class HomeDepositViewModelTest {
         viewModel.fetchAccountBalances()
         advanceUntilIdle()
 
-        verify { depositResultObserver.onChanged(match { it.isFailure && it.exceptionOrNull()?.message == "Failed to fetch account balances." }) }
+        verify { depositResultObserver.onChanged(match { it.isFailure && it.exceptionOrNull()?.message == "Error failed fetch balance" }) }
     }
 
     @Test
@@ -116,6 +121,6 @@ class HomeDepositViewModelTest {
         viewModel.fetchAccountBalances()
         advanceUntilIdle()
 
-        verify { depositResultObserver.onChanged(match { it.isFailure && it.exceptionOrNull()?.message == "Error parsing account balances." }) }
+        verify { depositResultObserver.onChanged(match { it.isFailure && it.exceptionOrNull()?.message == "Error account balance" }) }
     }
 }

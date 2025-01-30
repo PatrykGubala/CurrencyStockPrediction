@@ -9,17 +9,17 @@ def get_all_regions(request):
         regions_dto = service.get_all_regions_dto()
         return JsonResponse({"regions": regions_dto}, status=200)
     except Exception as e:
-        return JsonResponse({"error": "Wystąpił nieoczekiwany błąd podczas pobierania regionów.", "details": str(e)}, status=500)
+        return JsonResponse({"error": "Error get all regions", "details": str(e)}, status=500)
 
 def get_region(request, region_id):
     service = RegionsService()
     try:
         region_dto = service.get_region_by_id_dto(region_id)
         if not region_dto:
-            return JsonResponse({"error": "Region not found."}, status=404)
+            return JsonResponse({"error": "Region not found"}, status=404)
         return JsonResponse({"region": region_dto}, status=200)
     except Exception as e:
-        return JsonResponse({"error": "Wystąpił nieoczekiwany błąd podczas pobierania regionu.", "details": str(e)}, status=500)
+        return JsonResponse({"error": "Error get region", "details": str(e)}, status=500)
 
 @csrf_exempt
 def load_regions(request):
@@ -29,15 +29,15 @@ def load_regions(request):
         data = json.loads(request.body)
         regions = data.get('regions')
         if not regions or not isinstance(regions, list):
-            return JsonResponse({"error": "A list of regions is required."}, status=400)
+            return JsonResponse({"error": "A list of regions is required"}, status=400)
         service = RegionsService()
         added_regions = []
         for rn in regions:
             r = service.add_region(rn)
             added_regions.append(r)
-        return JsonResponse({"message": "Regions loaded successfully.", "regions": added_regions}, status=200)
+        return JsonResponse({"message": "Regions loaded successfully", "regions": added_regions}, status=200)
     except Exception as e:
-        return JsonResponse({"error": "Wystąpił nieoczekiwany błąd podczas ładowania regionów.", "details": str(e)}, status=500)
+        return JsonResponse({"error": "Error load regions", "details": str(e)}, status=500)
 
 @csrf_exempt
 def create_region(request):
@@ -47,12 +47,12 @@ def create_region(request):
         data = json.loads(request.body)
         region_name = data.get('region_name')
         if not region_name:
-            return JsonResponse({"error": "Region name is required."}, status=400)
+            return JsonResponse({"error": "Region name is required"}, status=400)
         service = RegionsService()
         region_dto = service.add_region(region_name)
         return JsonResponse({"region": region_dto}, status=201)
     except Exception as e:
-        return JsonResponse({"error": "Wystąpił nieoczekiwany błąd podczas tworzenia regionu.", "details": str(e)}, status=500)
+        return JsonResponse({"error": "Error create region", "details": str(e)}, status=500)
 
 @csrf_exempt
 def update_region(request, region_id):
@@ -62,14 +62,14 @@ def update_region(request, region_id):
         data = json.loads(request.body)
         new_name = data.get('region_name')
         if not new_name:
-            return JsonResponse({"error": "New region name is required."}, status=400)
+            return JsonResponse({"error": "New region name is required"}, status=400)
         service = RegionsService()
         region_dto = service.update_region(region_id, new_name)
         if not region_dto:
-            return JsonResponse({"error": "Region not found."}, status=404)
+            return JsonResponse({"error": "Region not found"}, status=404)
         return JsonResponse({"region": region_dto}, status=200)
     except Exception as e:
-        return JsonResponse({"error": "Wystąpił nieoczekiwany błąd podczas aktualizacji regionu.", "details": str(e)}, status=500)
+        return JsonResponse({"error": "Error update region", "details": str(e)}, status=500)
 
 @csrf_exempt
 def delete_region(request, region_id):
@@ -79,8 +79,8 @@ def delete_region(request, region_id):
         service = RegionsService()
         result = service.delete_region(region_id)
         if result:
-            return JsonResponse({"message": "Region deleted successfully."}, status=200)
+            return JsonResponse({"message": "Region deleted successfully"}, status=200)
         else:
-            return JsonResponse({"error": "Region not found."}, status=404)
+            return JsonResponse({"error": "Region not found"}, status=404)
     except Exception as e:
-        return JsonResponse({"error": "Wystąpił nieoczekiwany błąd podczas usuwania regionu.", "details": str(e)}, status=500)
+        return JsonResponse({"error": "Error delete region", "details": str(e)}, status=500)

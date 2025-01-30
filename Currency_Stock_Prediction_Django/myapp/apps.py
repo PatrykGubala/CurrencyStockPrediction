@@ -1,3 +1,5 @@
+import sys
+
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 import logging
@@ -9,9 +11,11 @@ class Config(AppConfig):
     name = 'myapp'
 
     def ready(self):
-
-        from myapp.signals import load_initial_data_after_migrate
-        post_migrate.connect(load_initial_data_after_migrate, sender=self)
+        if "test" not in sys.argv:
+            from myapp.signals import load_initial_data_after_migrate
+            post_migrate.connect(load_initial_data_after_migrate, sender=self)
+        else:
+            logger.info("TESTING")
 
 
 

@@ -20,30 +20,16 @@ from tensorflow.keras.callbacks import Callback
 from myapp.services.stocks_data_service import StocksDataService
 from myapp.repositories.stocks_data_repository import StocksDataRepository
 from myapp.repositories.stocks_trained_models_repository import StocksTrainedModelsRepository
-from myapp.utils.plotting_utils import (
-    plot_training_loss_by_rnn_type,
-    plot_validation_loss_by_rnn_type,
-    plot_residuals_over_time,
-    plot_scatter_actual_vs_predicted,
-    plot_results,
-    plot_heatmap,
-    plot_line_graph,
-    decompose_time_series
-)
+from myapp.utils.plotting_utils import (plot_training_loss_by_rnn_type, plot_validation_loss_by_rnn_type, plot_residuals_over_time,
+                                        plot_scatter_actual_vs_predicted, plot_results,plot_heatmap,plot_line_graph,decompose_time_series)
 
-def create_lstm_sequences(X, y, sequence_length=30):
-    X_seq = []
-    y_seq = []
-    for i in range(len(X) - sequence_length):
-        X_seq.append(X.iloc[i:i + sequence_length].values)
-        y_seq.append(y.iloc[i + sequence_length])
-    return np.array(X_seq), np.array(y_seq)
 
-def make_predictions(best_model, X_test_seq, y_test_seq, scaler_y):
-    predictions_scaled = best_model.predict(X_test_seq)
-    predictions = scaler_y.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
-    y_test_plot = scaler_y.inverse_transform(y_test_seq.reshape(-1, 1)).flatten()
-    return predictions, y_test_plot
+class PrintMetricsCallback(Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        logs = logs or {}
+        print(
+            f"loss={logs.get('loss')}, mae={logs.get('mae')}, val_loss={logs.get('val_loss')}, val_mae={logs.get('val_mae')}"
+        )
 
 class ModelCounter:
     def __init__(self, total):
@@ -54,12 +40,7 @@ class ModelCounter:
         self.count += 1
         return self.count
 
-class PrintMetricsCallback(Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        logs = logs or {}
-        print(
-            f"loss={logs.get('loss')}, mae={logs.get('mae')}, val_loss={logs.get('val_loss')}, val_mae={logs.get('val_mae')}"
-        )
+
 
 def print_debug_data(title, data):
     logging.info(f"===== {title} =====")
@@ -125,6 +106,21 @@ def create_rnn_model(
     model.add(Dense(horizon))
     model.compile(loss='mean_squared_error', optimizer=optimizer, metrics=['mae'])
     return model
+
+def create_lstm_sequences(X, y, sequence_length=30):
+    X_seq = []
+    y_seq = []
+    for i in range(len(X) - sequence_length):
+        X_seq.append(X.iloc[i:i + sequence_length].values)
+        y_seq.append(y.iloc[i + sequence_length])
+    return np.array(X_seq), np.array(y_seq)
+
+def make_predictions(best_model, X_test_seq, y_test_seq, scaler_y):
+    predictions_scaled = best_model.predict(X_test_seq)
+    predictions = scaler_y.inverse_transform(predictions_scaled.reshape(-1, 1)).flatten()
+    y_test_plot = scaler_y.inverse_transform(y_test_seq.reshape(-1, 1)).flatten()
+    return predictions, y_test_plot
+
 
 def add_stochastic_features(dataframe, stock_symbol):
     close_column = f'Close_{stock_symbol}'
@@ -239,6 +235,8 @@ def train_rnn_models(
     values = list(param_grid.values())
     param_combinations = list(product(*values))
     best_val_mse = float('inf')
+    best_val_r2 = float('inf')
+
     best_model = None
     best_params = None
     for parameters in param_combinations:
@@ -278,11 +276,12 @@ def train_rnn_models(
         histories.append(history)
         if val_mse < best_val_mse:
             best_val_mse = val_mse
+            best_val_r2 = val_r2
             best_model = model
             best_params = param_dict
             best_model_path = os.path.join(output_directory, f'best_model_{stock_symbol}.h5')
             best_model.save(best_model_path, save_format='h5')
-            print(f"New best model saved with params: {best_params} with val_mse: {val_mse}")
+            print(f"Nowy najlepszy model zapisany z parametrami: {best_params} o val_mse: {val_mse}, R²: {best_val_r2}")
     return results, histories, param_combinations, best_model, best_params
 
 def visualize_data(data, stock_symbol, output_directory):
@@ -399,21 +398,13 @@ class StocksTrainedModelsService:
         X, y = self.create_features_and_target(filtered_data, stock_symbol, short_term_lag, long_term_lag)
         print_debug_data("Features X", X)
         print_debug_data("Target y", y)
+
         if X.empty or y.empty:
             return {"status": "error", "message": f"No features/target available for {stock_symbol}"}
         string_columns = X.select_dtypes(include=['object', 'string']).columns
         if len(string_columns) > 0:
             X.drop(columns=string_columns, errors='ignore', inplace=True)
-        corr_matrix_before = X.corr()
-        heatmap_path_before = os.path.join(output_directory, f'{stock_symbol}_correlation_heatmap_before.png')
-        plot_heatmap(
-            data=corr_matrix_before.values,
-            title=f'{stock_symbol} Correlation Before Feature Selection',
-            x_tick_labels=corr_matrix_before.columns,
-            y_tick_labels=corr_matrix_before.index,
-            output_path=heatmap_path_before,
-            annotate=True
-        )
+
         X_fs, selected_features = feature_selection_rfe(X, y, k_best_features=5)
         print_debug_data("Selected features (X_fs)", X_fs)
         corr_matrix_after = X_fs.corr()
@@ -506,21 +497,21 @@ class StocksTrainedModelsService:
             })
             comparison_df.set_index('Date', inplace=True)
 
-            print("\n===== Actual vs Predicted (10) =====")
+            print("\n===== Rzeczywiste vs Przewidywane (10) =====")
             print(comparison_df.head(10))
 
             comparison_csv = os.path.join(output_directory, f'{stock_symbol}_predictions_comparison.csv')
             comparison_df.to_csv(comparison_csv)
 
-            print("\n===== Summary =====")
+            print("\n===== Podusmowanie =====")
             print(comparison_df.describe())
 
             mse = mean_squared_error(y_val_plot, predictions)
             rmse = np.sqrt(mse)
             r2 = r2_score(y_val_plot, predictions)
-            print(f'Mean Squared Error for {stock_symbol}: {mse}')
-            print(f'Root Mean Squared Error for {stock_symbol}: {rmse}')
-            print(f'R2 Score for {stock_symbol}: {r2}')
+            print(f'Mean Squared Error dla {stock_symbol}: {mse}')
+            print(f'Root Mean Squared Error dla {stock_symbol}: {rmse}')
+            print(f'R2 Score dla {stock_symbol}: {r2}')
 
             results_csv = os.path.join(output_directory, f'{stock_symbol}_mse_results.csv')
             sorted_results = sorted(results, key=lambda x: x['val_mse'])
@@ -528,14 +519,13 @@ class StocksTrainedModelsService:
             rank_number = 1
             for res in sorted_results:
                 params_str = '; '.join([f"{k}: {v}" for k, v in res['params'].items()])
-                r2 = res.get('val_r2', None)
+                r2_val = res.get('val_r2', None)
                 mean_mse_val = res['val_mse']
                 rmse_val = np.sqrt(mean_mse_val)
-                rows.append([rank_number, params_str, mean_mse_val, rmse_val, r2 ])
+                rows.append([rank_number, params_str, mean_mse_val, rmse_val, r2_val ])
                 rank_number += 1
             df_results = pd.DataFrame(rows, columns=["Rank", "Parameters", "Mean MSE", "RMSE", "R2SCORE"])
             df_results.to_csv(results_csv, index=False)
-            print(f"All tested parameters and their MSEs have been logged to {results_csv}.")
 
             model_filename = f"{stock_symbol}_{str(uuid.uuid4())}.h5"
             model_file_path = os.path.join(output_directory, model_filename)
@@ -589,7 +579,7 @@ class StocksTrainedModelsService:
         return {"status": "error", "message": "Lengths do not match in final predictions"}
 
     def create_features_and_target(self, dataframe, stock_symbol, short_term_lag, long_term_lag):
-        print_debug_data("create_features_and_target input dataframe", dataframe)
+        print_debug_data("create_features_and_target dataframe", dataframe)
         if dataframe is None or dataframe.empty:
             return pd.DataFrame(), pd.Series()
         data_copy = dataframe.copy()
@@ -611,7 +601,7 @@ class StocksTrainedModelsService:
             'Seasonal_Adjusted_Close'
         ]
         available_columns = [col for col in expected_columns if col in data_copy.columns]
-        print_debug_data("Available columns for X", available_columns)
+        print_debug_data("Available columns dla X", available_columns)
         if not available_columns:
             return pd.DataFrame(), pd.Series()
         data_copy.dropna(subset=available_columns, inplace=True)
@@ -622,6 +612,6 @@ class StocksTrainedModelsService:
         common_index = X.index.intersection(y.index)
         X = X.loc[common_index]
         y = y.loc[common_index]
-        print_debug_data("Final X shape in create_features_and_target", X)
-        print_debug_data("Final y shape in create_features_and_target", y)
+        print_debug_data("Final X w create_features_and_target", X)
+        print_debug_data("Final y w create_features_and_target", y)
         return X, y

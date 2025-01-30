@@ -66,7 +66,7 @@ def create_company(request):
     name = request.data.get('company_name')
     logo_url = request.data.get('logo_url')
     if not symbol or not name:
-        return Response({"error": "Company symbol and name are required."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "Company symbol and name are required"}, status=status.HTTP_400_BAD_REQUEST)
     company_created = companies_service.create_company(symbol, name, logo_url)
     return Response(company_created, status=status.HTTP_201_CREATED)
 
@@ -89,4 +89,4 @@ def delete_company(request, company_id: int):
     deleted = companies_service.delete_company(company_id)
     if not deleted:
         return Response({"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
-    return Response({"message": "Company deleted successfully."}, status=status.HTTP_200_OK)
+    return Response({"message": "Company deleted successfully"}, status=status.HTTP_200_OK)

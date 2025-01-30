@@ -13,7 +13,7 @@ from myapp.utils.auth_utils import token_required
 def get_account_id(request):
 
     if request.method != 'GET':
-        return Response({"error": "Only GET method is allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response({"error": "Only GET method is allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     try:
         service = AccountsService()
@@ -21,10 +21,10 @@ def get_account_id(request):
         if account:
             return Response({"account_id": account.id}, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "Account not found for the user."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Account not found for the user"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f"Error retrieving account ID: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
@@ -33,7 +33,7 @@ def get_account_id(request):
 def get_public_account_id(request):
 
     if request.method != 'GET':
-        return Response({"error": "Only GET method is allowed."}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response({"error": "Only GET method is allowed"}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     try:
         service = AccountsService()
@@ -41,10 +41,10 @@ def get_public_account_id(request):
         if account:
             return Response({"public_account_id": account.public_account_id  }, status=status.HTTP_200_OK)
         else:
-            return Response({"error": "Account not found for the user."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Account not found for the user"}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.error(f"Error retrieving account ID: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

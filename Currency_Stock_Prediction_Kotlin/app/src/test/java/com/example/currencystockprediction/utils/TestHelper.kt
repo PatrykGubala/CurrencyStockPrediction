@@ -7,4 +7,6 @@ object TestHelper {
     fun initializeFirebaseAuth(mockAuth: FirebaseAuth) {
         FirebaseAuthManager.firebaseAuth = mockAuth
     }
+
+
 }

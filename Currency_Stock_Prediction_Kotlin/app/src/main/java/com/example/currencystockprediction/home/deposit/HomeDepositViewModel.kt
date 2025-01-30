@@ -43,10 +43,10 @@ class HomeDepositViewModel : ViewModel() {
                     }
                     _usdBalance.postValue(usdBalanceValue)
                 } catch (e: Exception) {
-                    _depositResult.postValue(Result.failure(Exception("Error parsing account balances.")))
+                    _depositResult.postValue(Result.failure(Exception("Error account balance")))
                 }
             } else {
-                _depositResult.postValue(Result.failure(Exception("Failed to fetch account balances.")))
+                _depositResult.postValue(Result.failure(Exception("Error failed fetch balance")))
             }
         }
     }
@@ -66,13 +66,13 @@ class HomeDepositViewModel : ViewModel() {
                     _usdBalance.postValue(newBalance)
                     _depositResult.postValue(Result.success(newBalance))
                 } catch (e: Exception) {
-                    _depositResult.postValue(Result.failure(Exception("Error processing deposit response.")))
+                    _depositResult.postValue(Result.failure(Exception("Error deposit currencies")))
                 }
             } else {
                 _depositResult.postValue(
                     Result.failure(
                         Exception(
-                            "Failed to deposit funds: ${responsePair.second ?: "Unknown error."}"
+                            "Error deposit currencies"
                         )
                     )
                 )

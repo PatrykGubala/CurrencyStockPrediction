@@ -41,17 +41,7 @@
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
 
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="f07d-37-31-33-59.ngrok-free.app"
-                    android:pathPrefix="/verify_email_change" />
-            </intent-filter>
         </activity>
     </application>
 

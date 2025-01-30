@@ -21,7 +21,7 @@ def get_all_currencies_data(request):
         return Response({"data": data}, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error in get_all_currencies_data: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -34,10 +34,10 @@ def load_currency_data(request):
         logger.info(f"Loading data with frequency: {frequency}")
         task = load_currency_data_task.delay(currency_ids, frequency)
         logger.info("Data load initiated")
-        return Response({"message": "Data load initiated.", "task_id": task.id}, status=status.HTTP_202_ACCEPTED)
+        return Response({"message": "Data load initiated", "task_id": task.id}, status=status.HTTP_202_ACCEPTED)
     except Exception as e:
         logger.error(f"Error in load_currency_data: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])
@@ -46,11 +46,11 @@ def get_latest_currency_data(request, currency_id):
     try:
         latest_data = service.get_latest_data_for_currency(currency_id)
         if not latest_data:
-            return Response({"error": "No data found for this currency."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No data found for this currency"}, status=status.HTTP_404_NOT_FOUND)
         return Response({"latest_data": latest_data}, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error in get_latest_currency_data: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def get_percentage_change_for_currency(request, currency_id):
@@ -58,35 +58,35 @@ def get_percentage_change_for_currency(request, currency_id):
     try:
         change_data = service.get_percentage_change(currency_id)
         if not change_data:
-            return Response({"error": "Unable to calculate percentage change."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Unable to calculate percentage change"}, status=status.HTTP_404_NOT_FOUND)
         return Response({"change_data": change_data}, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error in get_percentage_change_for_currency: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @swagger_auto_schema(
     method='GET',
-    operation_description="Retrieve currency data for a specific currency code.",
+    operation_description="Retrieve currency data for currency code",
     manual_parameters=[
         openapi.Parameter(
             'currency_code',
             openapi.IN_PATH,
-            description="Currency code (e.g., PLN)",
+            description="Currency code (np. PLN)",
             type=openapi.TYPE_STRING,
             required=True
         ),
         openapi.Parameter(
             'frequency',
             openapi.IN_QUERY,
-            description="Frequency of the data (e.g., daily, hourly)",
+            description="Frequency (np. daily, hourly)",
             type=openapi.TYPE_STRING,
             required=False
         ),
         openapi.Parameter(
             'range',
             openapi.IN_QUERY,
-            description="Range of data to retrieve (e.g., last_month, all_data)",
+            description="Range (np. last_month, all_data)",
             type=openapi.TYPE_STRING,
             required=False
         ),
@@ -105,11 +105,11 @@ def get_currency_data(request, currency_code):
         range_param = request.GET.get('range')
         data = service.get_currency_data(currency_code, frequency, range_param)
         if data is None:
-            return Response({"error": "No data found for this currency."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No data found for this currency"}, status=status.HTTP_404_NOT_FOUND)
         return Response({"data": data}, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error fetching currency data for {currency_code}: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['GET'])
 def get_currency_percentage_changes(request, currency_code):
@@ -129,8 +129,8 @@ def get_monthly_percentage_change(request, currency_code):
     try:
         change_data = service.get_monthly_change(currency_code)
         if not change_data:
-            return Response({"error": "Unable to calculate monthly change."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Unable to calculate monthly change"}, status=status.HTTP_404_NOT_FOUND)
         return Response(change_data, status=status.HTTP_200_OK)
     except Exception as e:
         logger.error(f"Error in get_monthly_percentage_change for {currency_code}: {e}")
-        return Response({"error": "Internal server error."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({"error": "Internal server error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
