@@ -2,6 +2,7 @@ package com.example.currencystockprediction.utils
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
@@ -12,16 +13,24 @@ object SessionManager {
 
     private lateinit var prefs: SharedPreferences
 
+    private fun isTestRunner(): Boolean {
+        return Build.FINGERPRINT.equals("robolectric")
+    }
+
     fun initialize(context: Context) {
-        prefs = EncryptedSharedPreferences.create(
-            context,
-            PREFS_NAME,
-            MasterKey.Builder(context)
-                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-                .build(),
-            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-        )
+        prefs = if (isTestRunner()) {
+            context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        } else {
+            EncryptedSharedPreferences.create(
+                context,
+                PREFS_NAME,
+                MasterKey.Builder(context)
+                    .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                    .build(),
+                EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+                EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+        }
     }
 
     fun setAppInBackground(isInBackground: Boolean) {

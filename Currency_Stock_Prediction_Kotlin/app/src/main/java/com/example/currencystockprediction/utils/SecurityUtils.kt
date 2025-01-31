@@ -5,6 +5,7 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.os.Build
 import androidx.biometric.BiometricManager
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
@@ -19,7 +20,9 @@ object SecurityUtils {
     private const val PREFS_FILENAME = "secure_prefs"
 
 
-
+    private fun isTestRunner(): Boolean {
+        return Build.FINGERPRINT.equals("robolectric")
+    }
 
 
     private const val RE_AUTH_NEEDED_KEY = "re_auth_needed"
@@ -141,8 +144,12 @@ object SecurityUtils {
         return getEncryptedSharedPreferences(context)
     }
 
-    private fun getEncryptedSharedPreferences(context: Context) =
-        EncryptedSharedPreferences.create(
+    private fun getEncryptedSharedPreferences(context: Context) : SharedPreferences {
+        if (isTestRunner()) {
+            return context.getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
+        }
+
+        return EncryptedSharedPreferences.create(
             context,
             PREFS_FILENAME,
             MasterKey.Builder(context)
@@ -151,5 +158,5 @@ object SecurityUtils {
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
-
+    }
 }
